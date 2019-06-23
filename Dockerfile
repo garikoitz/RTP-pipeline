@@ -1,5 +1,5 @@
 
-# Create Docker container that can run afq analysis.
+# Create Docker container that can run Matlab (mrDiffusion and afq analysis), ANTs, FSL, mrTrix.
 
 # Start with the Matlab r2017a runtime container
 FROM  flywheel/matlab-mcr:v92.1
