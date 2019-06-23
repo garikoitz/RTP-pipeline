@@ -8,5 +8,5 @@ cd ../../../dtiinit/source/
 cd ../../
 git add .
 git commit -m "Commiting before building $GEAR:$1"
-GEAR=scitran/afq-pipeline
+GEAR=vistalab/RTP-pipeline
 docker build --tag $GEAR:$1 .
