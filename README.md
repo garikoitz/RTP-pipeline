@@ -3,7 +3,7 @@
 
 ## vistalab/RTP-pipeline
 Reproducible Tract Profiles pipeline. 
-Takes the preprocessed output from RTP-preproc and performs a series of operations:
+Takes the preprocessed output from RTP-preproc and performs a series of operations to the DWI data:
 1. Voxel level
     1. DTI
     2. CSD (single shell and multi-shell)
@@ -26,3 +26,5 @@ TODO:
 3. It requires renaming of some of the parameters, right now some of the options are being used for both DTI and CSD and it can be confusing. 
 4. Document how to download & use the Docker container locally without Flywheel. 
 5. Document how to run it in Singularity; test/document it. 
+6. Document best options (for example, tracking parameters) depending on the datasets analyzed and their characteristics (for example, adults vs kids, or modern Siemens MS (multi shell) HCP data vs ten year old GE SS (single shell) datasets)
+7. Document the SDK and how to interact with this gear programatically 
