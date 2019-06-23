@@ -2,7 +2,7 @@
 #
 #
 
-CONTAINER="[scitran/afq-pipeline]"
+CONTAINER="[vistalab/RTP-pipeline]"
 echo -e "$CONTAINER  Initiated"
 
 
@@ -48,19 +48,6 @@ fi
 # will remain in the input folder for debugging
 rm -rf $INPUT_DIR/work
 rm -rf $INPUT_DIR/dtiInit_Archive
-
-###############################################################################
-# AFQ-BROWSER
-
-# mkdir /tmp/afq
-# ${FLYWHEEL_BASE}/run_afq-browser.py
-# exit_status=$?
-
-# if [[ $exit_status != 0 ]]; then
-#   echo "$CONTAINER  AFQ-BROWSER failure!"
-#   #exit $exit_status
-# fi
-###############################################################################
 
 echo "$CONTAINER  DONE!"
 
