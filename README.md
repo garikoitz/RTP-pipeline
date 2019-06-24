@@ -19,8 +19,12 @@ It uses parts of these tools (depending on the options):
 5. ANTs
 6. SPM
 
+## Parameter recommendations
+For most of the cases, or at least in a first iteration, we would recommend using the defaults, and only then change some of the parameters to obtain better results. 
 
-TODO:
+Please check this page in the wiki for parameter recommendations depending on the different datasets. 
+
+## TODO:
 1. Add links and citations to external tools
 2. Document all the options
 3. It requires renaming of some of the parameters, right now some of the options are being used for both DTI and CSD and it can be confusing. 
