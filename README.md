@@ -19,6 +19,7 @@ It uses parts of these tools (depending on the options):
 5. ANTs
 6. SPM
 
+
 ## Parameter recommendations
 For most of the cases, or at least in a first iteration, we would recommend using the defaults, and only then change some of the parameters to obtain better results. 
 
