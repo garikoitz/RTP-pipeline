@@ -1,5 +1,5 @@
 {
-  "name": "RTP-pipeline",
+  "name": "rtp-pipeline",
   "label": "RTP Pipeline: Reproducible Tract Profiles Pipeline (DTIInit + MRtrix3 + ET + LiFE + AFQ + ANTs). ",
   "description": "DEBUG Edition. This gear contains a multi-step pipeline designed to run DTIInit, MRtrix3, LiFE, ET, and AFQ. DTIInit runs preprocessing steps, MRTrix3 + Ensemble Tractography + LiFE generate a connectome which is then run through Automated Fiber Quantification (AFQ). AFQ generates tract profiles of tissue properties for major fiber tracts in the brain. This gear also generates AFQ Browser outputs for visualization. Required inputs are (1) DWI NIfTI image, (2) BVEC file, (3) BVAL file, and (4) and Anatomical NIfTI file - which is optional and will be used to align the DWI data, if provided.",
   "maintainer": "Garikoitz Lerma <glerma@stanford.edu>",
@@ -14,6 +14,9 @@
     "docker-image": "vistalab/RTP-pipeline:3.0.8",
     "gear-builder": {
       "image": "vistalab/RTP-pipeline:3.0.8"
+    },
+    "flywheel": {
+      "suite": "RTP: Reproducible Tract Profiles"
     }
   },
   "inputs": {
