@@ -17,6 +17,6 @@ RTP uses parts of these tools (depending on the selected options):
 
 The documentation is in the wiki:
 * [Installation](https://github.com/vistalab/RTP-pipeline/wiki/Installation)
-* [Pipeline documentation](https://github.com/vistalab/RTP-pipeline/wiki/Pipeline-documentation)
+* [Pipeline documentation](https://github.com/vistalab/RTP-pipeline/wiki/Pipeline-steps)
 * [Parameter recommendations](https://github.com/vistalab/RTP-pipeline/wiki/Parameter-recommendations): for most of the cases, or at least in a first iteration, we would recommend using the defaults, and only then change some of the parameters to obtain better results. 
 * TO-DO list: see the [to-do list of the wiki](https://github.com/vistalab/RTP-pipeline/wiki/TO-DO)
