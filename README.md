@@ -8,7 +8,7 @@ Reproducible Tract Profiles (RTP) comprises a set of methods to manage and analy
 
 RTP uses parts of these tools (depending on the selected options):
 1. mrTrix 3 
-2. mrDiffusion and AFQ
+2. mrVista, mrDiffusion and AFQ
 3. Ensemble Tractography (ET)
 4. LiFE/SIFT2(TODO)
 5. ANTs
@@ -18,5 +18,6 @@ RTP uses parts of these tools (depending on the selected options):
 The documentation is in the wiki:
 * [Installation](https://github.com/vistalab/RTP-pipeline/wiki/Installation)
 * [Pipeline documentation](https://github.com/vistalab/RTP-pipeline/wiki/Pipeline-steps)
-* [Parameter recommendations](https://github.com/vistalab/RTP-pipeline/wiki/Parameter-recommendations): for most of the cases, or at least in a first iteration, we would recommend using the defaults, and only then change some of the parameters to obtain better results. 
-* TO-DO list: see the [to-do list of the wiki](https://github.com/vistalab/RTP-pipeline/wiki/TO-DO)
+* [Parameter recommendations](https://github.com/vistalab/RTP-pipeline/wiki/Parameter-recommendations): differences in acquisition sequences or subject populations require to use different parameters, in this page we collect the parameters and pipeline versions we used for better results. 
+* [Reporting and citation](reporting-citation) In this wiki page we include examples of how to report and cite RTP and all the included tools, it will change depending on the selected tools. 
+* [TO-DO list](https://github.com/vistalab/RTP-pipeline/wiki/TO-DO)
