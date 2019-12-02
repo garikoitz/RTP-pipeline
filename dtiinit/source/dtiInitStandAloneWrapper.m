@@ -83,11 +83,12 @@ function dtiInitStandAloneWrapper(json)
 % Use this command to launch in matlab
 %{
 
-jsonPath = '/data/localhome/glerma/soft/afq-pipeline/dtiinit/source';
-  % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit.json'));
-  dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4ltozziMS.json'));
-  % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4HCPMS.json'));
+jsonPath = '/data/localhome/glerma/soft/RTP-pipeline/dtiinit/source';
 
+  % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit.json'));
+  % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4ltozziMS.json'));
+  % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4HCPMS.json'));
+    dtiInitStandAloneWrapper(fullfile(jsonPath,'defining.json'));
 %}
 % Use this command to run the docker in the directory
 % 
@@ -217,8 +218,9 @@ else
     disp('Using default dtiInit params')
 end
 
-disp(J);
-disp(dwParams);
+disp(J)
+disp(J.params)
+disp(dwParams)
 
 
 %% Validate the JSON structure against the JSON schema
@@ -226,7 +228,6 @@ disp(dwParams);
 % fprintf('Validating JSON input against schema... ');
 % dtiInitStandAloneValidateJson(J);
 % fprintf('Success.\n');
-
 
 
 % Validate that the bval values are normalized

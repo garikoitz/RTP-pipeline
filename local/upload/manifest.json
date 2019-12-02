@@ -13,7 +13,8 @@
   "custom": {
     "docker-image": "vistalab/rtp-pipeline:3.0.8",
     "gear-builder": {
-      "image": "vistalab/rtp-pipeline:3.0.8"
+      "image": "vistalab/rtp-pipeline:3.0.8",
+      "category": "analysis"
     },
     "flywheel": {
       "suite": "RTP: Reproducible Tract Profiles"

@@ -13,7 +13,7 @@
   "custom": {
     "docker-image": "vistalab/rtp-pipeline:3.0.8",
     "gear-builder": {
-      "image": "vistalab/RTP-pipeline:3.0.8",
+      "image": "vistalab/rtp-pipeline:3.0.8",
       "category": "analysis"
     },
     "flywheel": {

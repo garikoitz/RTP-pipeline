@@ -4,7 +4,7 @@
 cat > build.m <<END
 
 addpath(genpath('/data/localhome/glerma/soft/AFQ'));
-addpath(genpath('/data/localhome/glerma/soft/afq-pipeline'));
+addpath(genpath('/data/localhome/glerma/soft/RTP-pipeline'));
 addpath(genpath('/data/localhome/glerma/soft/vistasoft'));
 addpath(genpath('/black/localhome/glerma/soft/spm8'));
 rmpath(genpath('/black/localhome/glerma/soft/spm8/toolbox/Beamforming'));
