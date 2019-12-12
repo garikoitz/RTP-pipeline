@@ -1,6 +1,6 @@
 dataDir="/black/localhome/glerma/TESTDATA/RTP-pipeline"
 
-# docker run -ti --rm --entrypoint /bin/bash  \
+#docker run -ti --rm --entrypoint /bin/bash  \
 docker run -ti --rm  \
 	       -v $dataDir/input:/flywheel/v0/input  \
    	       -v $dataDir/output:/flywheel/v0/output  \

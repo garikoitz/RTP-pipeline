@@ -2,7 +2,7 @@
 #
 #
 
-CONTAINER="[vistalab/RTP-pipeline]"
+CONTAINER="[vistalab/rtp-pipeline]"
 echo -e "$CONTAINER  Initiated"
 
 
