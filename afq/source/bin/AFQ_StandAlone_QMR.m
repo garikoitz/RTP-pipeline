@@ -48,7 +48,13 @@ jsonargs = ['{"input_dir" :' ...
             '"/data/localhome/glerma/TESTDATA/AFQ/output/defining", ' ...
             '"params"    : ' ...
             '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed_defining.json"}']     
-
+% Testing the defining white matter tracts from Bertsolari
+jsonargs = ['{"input_dir" :' ...
+            '"/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit_bertso/dti64trilin/",' ...
+            '"output_dir": ' ...
+            '"/data/localhome/glerma/TESTDATA/AFQ/output/bertso", ' ...
+            '"params"    : ' ...
+            '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed_bertso.json"}'] 
 AFQ_StandAlone_QMR(jsonargs);
 %}
 %
@@ -171,6 +177,17 @@ if ~isempty(params)
 %    end
 %    disp(afq.params);
 end
+
+%% See if I can read the templates
+disp('_____ HERE _______')
+% Get the AFQ base directory
+AFQbase = AFQ_directories
+% Template directory
+tdir = fullfile(AFQbase,'templates','labelMaps')
+% Path to the template
+Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz')
+% Load the template
+Timg = readFileNifti(Tpath)
 
 
 %% Create afq structure
