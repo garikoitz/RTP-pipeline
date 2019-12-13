@@ -204,6 +204,7 @@ dwParams.bvecsFile  = J.bvec_file;
 dwParams.bvalsFile  = J.bval_file;
 dwParams.bvalue     = dw.bvalue;
 
+% disp('This is dwParams: ', dwParams)
 
 %% Update the diffusion params from the JSON object
 

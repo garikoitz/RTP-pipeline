@@ -9,11 +9,11 @@
   "source": "https://github.com/vistalab/RTP-pipeline",
   "license": "Other",
   "flywheel": "0",
-  "version": "3.0.8",
+  "version": "3.0.10",
   "custom": {
-    "docker-image": "vistalab/rtp-pipeline:3.0.8",
+    "docker-image": "vistalab/rtp-pipeline:3.0.10",
     "gear-builder": {
-      "image": "vistalab/rtp-pipeline:3.0.8",
+      "image": "vistalab/rtp-pipeline:3.0.10",
       "category": "analysis"
     },
     "flywheel": {

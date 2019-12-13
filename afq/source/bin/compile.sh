@@ -23,6 +23,7 @@ addpath(genpath('/data/localhome/glerma/soft/jsonlab'));
 addpath(genpath('/data/localhome/glerma/soft/encode'));
 addpath(genpath('/data/localhome/glerma/soft/JSONio'));
 addpath(genpath('/data/localhome/glerma/soft/app-life'));
+addpath(genpath('/data/localhome/glerma/soft/freesurfer_mrtrix_afni_matlab_tools'));
 
 
 mcc -m -R -nodisplay -a /data/localhome/glerma/soft/RTP-pipeline/afq/includeFiles -a /data/localhome/glerma/soft/encode/mexfiles -a /data/localhome/glerma/soft/vistasoft/mrDiffusion -a /data/localhome/glerma/soft/AFQ/templates/labelMaps -d compiled AFQ_StandAlone_QMR.m
