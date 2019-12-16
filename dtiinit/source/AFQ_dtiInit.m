@@ -196,6 +196,9 @@ end
 % we're clobbering old data we doResampleRaw will be true. 
 doResampleRaw = dtiInitResample(dwParams, dwDir, doResamp);
 
+
+doResampleRaw = false;
+
 % Applying the dti-to-structural xform and the eddy-current correction
 % xforms. If dwParams.eddyCorrect == 0, dwDir.ecFile will be empty and
 % dtiRawResample will only do acpcAlignment.
@@ -222,7 +225,7 @@ clear dwRaw;
 
 
 %% XIV. Bootstrap parameters
-%{
+% {
 % We'll use the non-realigned bvecs since we want to count bvecs that are
 % only a little differnt due to motion correction as 'repeats'. Also, we
 % can count a direction with just a sign-flip as a 'repeat' since it will

@@ -1,0 +1,54 @@
+#! /bin/bash
+#
+#
+
+CONTAINER="[vistalab/rtp-pipeline]"
+echo -e "$CONTAINER  Initiated"
+
+
+
+###############################################################################
+# Built to flywheel-v0 spec.
+
+FLYWHEEL_BASE=/flywheel/v0
+OUTPUT_DIR=$FLYWHEEL_BASE/output
+INPUT_DIR=$FLYWHEEL_BASE/input
+
+
+###############################################################################
+# DTIINIT
+
+${FLYWHEEL_BASE}/run_dtiinit
+exit_status=$?
+
+if [[ $exit_status != 0 ]]; then
+  echo "$CONTAINER  DTIINIT failure!"
+  exit $exit_status
+fi
+###############################################################################
+
+###############################################################################
+# AFQ
+
+# Make AFQ DIRECTORY
+ZIP_DIR=$INPUT_DIR/dtiInit_Archive
+
+mkdir "$ZIP_DIR" && cp "$OUTPUT_DIR"/*.zip "$ZIP_DIR"
+
+${FLYWHEEL_BASE}/run_afq
+exit_status=$?
+
+if [[ $exit_status != 0 ]]; then
+  echo "$CONTAINER  AFQ failure!"
+  exit $exit_status
+fi
+###############################################################################
+
+# Delete the working folders only if it has been succesful, otherwise the folders
+# will remain in the input folder for debugging
+rm -rf $INPUT_DIR/work
+rm -rf $INPUT_DIR/dtiInit_Archive
+
+echo "$CONTAINER  DONE!"
+
+exit 0
