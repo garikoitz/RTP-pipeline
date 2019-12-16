@@ -178,6 +178,12 @@ end
 % also be resampled to the T1 resolution.
 [doAlign, doResamp] = dtiInitAlign(dwParams,dwDir,doResamp);
 
+% Hardcode it, we don't want resampling. 
+% We only want the alignment part so that we get the .mat file required
+% downstream
+doAlign  = true;
+doResamp = false;
+
 if doAlign
     dtiRawAlignToT1(dwDir.mnB0Name, t1FileName, dwDir.acpcFile); 
 end
@@ -216,7 +222,7 @@ clear dwRaw;
 
 
 %% XIV. Bootstrap parameters
-
+%{
 % We'll use the non-realigned bvecs since we want to count bvecs that are
 % only a little differnt due to motion correction as 'repeats'. Also, we
 % can count a direction with just a sign-flip as a 'repeat' since it will
@@ -240,7 +246,7 @@ if size(dwRawAligned.data,4)<14
     bs.n = 0;
 end
 bs.showProgress = false;
-
+%}
 
 %% XV. Name the folder that will contain the dt6.mat file
 
