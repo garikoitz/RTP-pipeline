@@ -88,7 +88,8 @@ jsonPath = '/data/localhome/glerma/soft/RTP-pipeline/dtiinit/source';
   % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit.json'));
   % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4ltozziMS.json'));
   % dtiInitStandAloneWrapper(fullfile(jsonPath,'dtiInit_with_aparcAseg_4HCPMS.json'));
-    dtiInitStandAloneWrapper(fullfile(jsonPath,'defining.json'));
+  % dtiInitStandAloneWrapper(fullfile(jsonPath,'defining.json'));
+    dtiInitStandAloneWrapper(fullfile(jsonPath,'HCPdep.json'));
 %}
 % Use this command to run the docker in the directory
 % 

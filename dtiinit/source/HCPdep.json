@@ -1,0 +1,20 @@
+{   "bvec_file"        : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep/dwi.bvec", 
+	"bval_file"        : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep/dwi.bval", 
+	"dwi_file"         : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep/dwi.nii.gz", 
+	"t1_file"          : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep/t1w.nii.gz", 
+	"aparcaseg_file"   : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep/t1w.nii.gz", 
+	"input_dir" : "/data/localhome/glerma/TESTDATA/DTIINIT/inputHCPdep", 
+	"output_dir": "/data/localhome/glerma/TESTDATA/DTIINIT/output/HCPdep", 
+	"params": { "numBootStrapSamples": 500, 
+				"noiseCalcMethod": "b0", 
+				"flipLrApFlag": 0, 
+				"rotateBvecsWithCanXform": 1, 
+				"phaseEncodeDir": 2, 
+				"eddyCorrect": -1, 
+				"rotateBvecsWithRx": 0, 
+				"dwOutMm": [2, 2, 2], 
+				"fitMethod": "ls", 
+				"bsplineInterpFlag": 0, 
+				"nStep": 50
+				}
+}

@@ -1,0 +1,68 @@
+#! /bin/bash
+#
+# Run dtiinit Gear
+# Built to flywheel-v0 spec.
+#
+CONTAINER="[scitran/dtiinit]"
+echo -e "$CONTAINER  Initiated"
+
+# Configure the ENV
+export FSLOUTPUTTYPE=NIFTI_GZ
+export LD_LIBRARY_PATH=/opt/mcr/v92/runtime/glnxa64:/opt/mcr/v92/bin/glnxa64:/opt/mcr/v92/sys/os/glnxa64:$LD_LIBRARY_PATH
+export XAPPLRESDIR=/opt/mcr/v92/X11/app-defaults
+
+# Configure paths
+FLYWHEEL_BASE=/flywheel/v0
+OUTPUT_DIR=$FLYWHEEL_BASE/output
+INPUT_DIR=$FLYWHEEL_BASE/input
+NIFTI_DIR=$INPUT_DIR/dwi
+ANAT_DIR=$INPUT_DIR/anatomical
+BVEC_DIR=$INPUT_DIR/bvec
+BVAL_DIR=$INPUT_DIR/bval
+APARCASEG_DIR=$INPUT_DIR/aparcaseg
+WORK_DIR=/tmp/`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1`
+PARAMS_FILE=$WORK_DIR/dtiInit.json
+
+# Ensure there is an output directory
+if [[ ! -d "$OUTPUT_DIR" ]]
+    then
+        echo "$CONTAINER  $OUTPUT_DIR not found!"
+        exit 1
+fi
+
+# Make the directories
+mkdir $WORK_DIR
+
+# Convert the config json to a dtiinit_params json file
+$FLYWHEEL_BASE/dtiinit_parse_config.py \
+    --input_file ${FLYWHEEL_BASE}/config.json \
+    --output_file ${PARAMS_FILE} \
+    --input_dir ${WORK_DIR} \
+    --output_dir ${OUTPUT_DIR} \
+    --bvec_dir ${BVEC_DIR} \
+    --bval_dir ${BVAL_DIR} \
+    --nifti_dir ${NIFTI_DIR} \
+    --anat_dir ${ANAT_DIR} \
+    --aparcaseg_dir ${APARCASEG_DIR} 
+
+# Make sure the params file is saved with the output
+cp ${PARAMS_FILE} ${OUTPUT_DIR}
+
+# Execute the algorithm
+time /usr/local/bin/dtiInit $WORK_DIR 2>&1 | tee $OUTPUT_DIR/dtiInit.log
+
+# Check for the output zip file
+outputs=$(find $OUTPUT_DIR/* -maxdepth 0 -type f -name "*.zip")
+
+# If outputs exist, generate metadata, and exit
+if [[ -z $outputs ]]
+    then
+        echo "$CONTAINER  Errors encountered: Results not found in output directory... Preserving log/config and exiting(1)!"
+        exit 1
+    else
+        cd $OUTPUT_DIR
+        echo -e "$CONTAINER  Wrote: `ls`"
+        echo -e "$CONTAINER  Done!"
+fi
+
+exit 0
