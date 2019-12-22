@@ -357,14 +357,19 @@ files.fa        = fullfile(pBinDir,'fa.nii.gz');
 
 % This is new, we are going to copy the input data as output data and call it alligned in dt6
 copyfile(dwRawFileName, dwParams.outDir);
-files.alignedDwRaw   = fullfile(dwParams.outDir, dwRawFileName);
+[~,fname,ext] = fileparts(dwRawFileName);
+files.alignedDwRaw   = fullfile(dwParams.outDir, [fname ext]);
+dwDir.dwAlignedRawFile = files.alignedDwRaw;
 
 copyfile(dwParams.bvecsFile, dwParams.outDir);
-files.alignedDwBvecs = fullfile(pBinDir, dwParams.bvecsFile);
+[~,fname,ext] = fileparts(dwParams.bvecsFile);
+files.alignedDwBvecs = fullfile(dwParams.outDir,[fname ext]) 
+dwDir.alignedBvecsFile = files.alignedDwBvecs;
 
 copyfile(dwParams.bvalsFile, dwParams.outDir);
-files.alignedDwBvals = fullfile(pBinDir,dwParams.bvalsFile);
- 
+[~,fname,ext] = fileparts(dwParams.bvalsFile);
+files.alignedDwBvals = fullfile(dwParams.outDir,[fname ext]);
+dwDir.alignedBvalsFile = files.alignedDwBvals;
 
 
 save(dt6FileName,'adcUnits','params','files');
