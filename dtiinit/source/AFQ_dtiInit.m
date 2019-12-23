@@ -363,7 +363,7 @@ dwDir.dwAlignedRawFile = files.alignedDwRaw;
 
 copyfile(dwParams.bvecsFile, dwParams.outDir);
 [~,fname,ext] = fileparts(dwParams.bvecsFile);
-files.alignedDwBvecs = fullfile(dwParams.outDir,[fname ext]) 
+files.alignedDwBvecs = fullfile(dwParams.outDir,[fname ext]); 
 dwDir.alignedBvecsFile = files.alignedDwBvecs;
 
 copyfile(dwParams.bvalsFile, dwParams.outDir);
@@ -374,6 +374,9 @@ dwDir.alignedBvalsFile = files.alignedDwBvals;
 
 save(dt6FileName,'adcUnits','params','files');
 dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
+
+
+
 
 % Now move the mrtrxinit part here and create all the files except the
 % tractogram already. Then create here the nifti files. 
