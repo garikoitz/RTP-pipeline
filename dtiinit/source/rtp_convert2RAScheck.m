@@ -5,9 +5,9 @@ function [convert2RAS,dsline] = rtp_convert2RAScheck(fname)
 % fname = '/Users/glerma/soft/rtp-pipeline/local/DTIINIT/input/T1w.nii.gz';
 
     convert2RAS     = false;
-    [status,result] = system(sprintf('mrinfo %s',fname));
+    [status,result] = AFQ_mrtrix_cmd(sprintf('mrinfo %s',fname));
     if status ~= 0 
-        error("Mrtrix's mrinfo did return expected results, check if it installed properly")
+        error('Mrtrixs mrinfo did return expected results, check if it installed properly')
     end
     
     TextAsCells     = regexp(result, '\n', 'split');

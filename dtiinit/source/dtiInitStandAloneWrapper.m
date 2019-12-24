@@ -376,7 +376,7 @@ for nc=1:length(checkfiles)
                 cmd = sprintf('mrconvert -quiet -force -fslgrad %s %s -stride 1,2,3,4  -export_grad_fsl %s %s %s %s', ...
                               J.bvec_file, J.bval_file,fslRASbvec,fslRASbval,fname, fslRASname);
                 
-                s = system(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
+                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
                 % 2: change filenames to continue with processing normally
                 J.bvec_file        = fslRASbvec;
                 J.bval_file        = fslRASbval;
@@ -388,7 +388,7 @@ for nc=1:length(checkfiles)
                 % 1: Do the strides to RAS conversion
                 fRASname = fullfile(p,[f 'ras.nii.gz']);
                 cmd = sprintf('mrconvert -quiet -force -stride 1,2,3 %s %s', fname, fRASname);
-                s = system(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
+                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
                 % 2: change filenames to continue with processing normally
                 J.(checkfiles{nc}) = fRASname;
         end
