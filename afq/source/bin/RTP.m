@@ -1,4 +1,4 @@
-function AFQ_StandAlone_QMR(jsonargs)
+function RTP_StandAlone_QMR(jsonargs)
 %
 % AFQ_StandAlone_QMR(jsonargs)
 %
@@ -56,6 +56,14 @@ jsonargs = ['{"input_dir" :' ...
             '"params"    : ' ...
             '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed_bertso.json"}'] 
 AFQ_StandAlone_QMR(jsonargs);
+
+jsonargs = ['{"input_dir" :' ...
+            '"/Users/glerma/soft/rtp-pipeline/local/DTIINIT/output/dtiInit_24-Dec-2019_07-55-23/dticsd/",' ...
+            '"output_dir": ' ...
+            '"/Users/glerma/soft/rtp-pipeline/local/AFQ/output", ' ...
+            '"params"    : ' ...
+            '"/Users/glerma/soft/rtp-pipeline/local/AFQ/input/config_parsed.json"}'] 
+RTP(jsonargs);
 %}
 %
 %#ok<*AGROW>
@@ -188,6 +196,114 @@ tdir = fullfile(AFQbase,'templates','labelMaps')
 Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz')
 % Load the template
 Timg = readFileNifti(Tpath)
+
+%% CHECK IF INPUT IS RAS
+% New in 3.1.2: check the file is RAS If not, convert to RAS Be careful, bvecs
+% needs to be changed as well accordingly Instead of changing bvecs manually, we
+% will let mrtrix take care of it Convert files to mif, add the bvecs and bvals
+% as part of the file, do the conversion and then output the fsl type bvecs
+% again. This we can maintain coherence in the whole process. Therefore, if
+% there is a - in the strides or the order is not 123, we need to convert (with
+% freesurfer it is easier because it gives you RAS or PIR or LAS or whatever but
+% it is not installed in the Docker container)
+% This was originially done in the dtiinit wrapper but mrtrix did not work
+% there... It was anoother step in removing the whoole dtiinit thing
+
+
+% Read the input file names and convert them
+basedir = split(input_dir,filesep);
+basedir = strcat(basedir(1:end-2));
+basedir = fullfile('/',basedir{:});
+J       = load(fullfile(input_dir,'dt6.mat'));
+
+J.files.t1path    = fullfile(basedir,J.files.t1);
+J.files.aparcaseg = fullfile(basedir,J.files.t1);
+% Solve the aparc+aseg case
+asegFiles = dir(fullfile(basedir,'*aseg*'));
+for ii = 1:length(asegFiles)
+    if length(strfind(asegFiles(ii).name, 'aseg')) > 0
+        J.files.aparcaseg = fullfile(session, asegFiles(ii).name);
+    end
+    if length(strfind(asegFiles(ii).name, 'aparc')) > 0
+        J.files.aparcaseg = fullfile(session, asegFiles(ii).name);
+    end
+end
+if ~(exist(J.files.aparcaseg, 'file') == 2)
+    disp(['inputFile = ' J.files.aparcaseg]);
+    warning(['Cannot find aseg file, please copy it to ' basedir]);
+    
+    J.files.aparcaseg = fullfile(basedir, J.files.t1);
+    if ~(exist(J.files.aparcaseg, 'file') == 2)
+        error(['Cannot find T1, please copy it to ' basedir]);
+    end
+end
+
+% Check it in these files
+checkfiles = {'alignedDwRaw','t1path','aparcaseg'};
+for nc=1:length(checkfiles)
+    fname = J.files.(checkfiles{nc});
+    [c2r,orientation] = rtp_convert2RAScheck(fname);
+    if ~c2r
+        fprintf('%s has orientation %s (RAS), no transformation required.\n',fname,orientation)
+    else
+        fprintf('%s has orientation %s, converting to 123(4) (RAS) \n',fname,orientation)
+        [p,f,e] = fileparts(fname);
+        % Check that it is .nii.gz
+        if strcmp(e,'.gz')
+            [~,f] = fileparts(f);
+            e = '.nii.gz';
+        elseif strcmp(e,'.nii')
+            % do nothing
+        else
+            error('File extension should be .nii.gz or .nii')
+        end
+        % If it is diffusion, we need to take care of gradients
+        switch checkfiles{nc}
+            case 'alignedDwRaw'
+                % 1: Do the strides to RAS conversion
+                fslRASname = fullfile(p,[f 'ras.nii.gz']);
+                fslRASbvec = fullfile(p,[f 'ras.bvec']);
+                fslRASbval = fullfile(p,[f 'ras.bval']);
+                cmd = sprintf('mrconvert -quiet -force -fslgrad %s %s -stride 1,2,3,4  -export_grad_fsl %s %s %s %s', ...
+                              J.files.alignedDwBvecs, J.files.alignedDwBvals,fslRASbvec,fslRASbval,fname, fslRASname);
+                
+                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[RTP] Could not change the strides to RAS');end
+                % 2: change filenames to continue with processing normally
+                J.files.alignedDwBvecs = fslRASbvec;
+                J.files.alignedDwBvals = fslRASbval;
+                J.files.alignedDwRaw   = fslRASname;
+                % dwRawFileName      = J.(checkfiles{nc});
+                % dwParams.bvecsFile = J.bvec_file;
+                % dwParams.bvalsFile = J.bval_file;
+            otherwise
+                % 1: Do the strides to RAS conversion
+                fRASname = fullfile(p,[f 'ras.nii.gz']);
+                cmd = sprintf('mrconvert -quiet -force -stride 1,2,3 %s %s', ...
+                               fname, fRASname);
+                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
+                % 2: change filenames to continue with processing normally
+                J.files.(checkfiles{nc}) = fRASname;
+                
+        end
+    end
+end
+% Change t1 back
+[p,f,e] = fileparts(J.files.t1path);
+J.files.t1 = [f,e];
+% Save the new dt6 file 
+adcUnits = '';
+params   = J.params;
+files    = J.files;
+save(fullfile(input_dir,'dt6.mat'),'adcUnits','params','files');
+
+
+
+
+
+
+
+
+
 
 
 %% Create afq structure

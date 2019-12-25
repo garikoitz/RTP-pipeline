@@ -178,7 +178,7 @@ COPY dtiinit/source/parse_config.py ${FLYWHEEL}/dtiinit_parse_config.py
 
 # AND THIS IF WE ARE COPYING THE BINARY FROM LOCAL
 # ADD the source Code and Binary to the container
-COPY afq/source/bin/compiled/AFQ_StandAlone_QMR /usr/local/bin/AFQ
+COPY afq/source/bin/compiled/RTP /usr/local/bin/AFQ
 COPY afq/run ${FLYWHEEL}/run_afq
 COPY afq/source/parse_config.py ${FLYWHEEL}/afq_parse_config.py
 RUN chmod +x /usr/local/bin/AFQ ${FLYWHEEL}/afq_parse_config.py
