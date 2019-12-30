@@ -187,7 +187,7 @@ if ~isempty(params)
 end
 
 %% See if I can read the templates
-disp('_____ HERE _______')
+disp('_____ CHECK IF IT CAN READ TEMPLATES  _______')
 % Get the AFQ base directory
 AFQbase = AFQ_directories
 % Template directory
@@ -195,8 +195,11 @@ tdir = fullfile(AFQbase,'templates','labelMaps')
 % Path to the template
 Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz')
 % Load the template
-Timg = readFileNifti(Tpath)
-
+if exist(Tpath,'file')
+    Timg = readFileNifti(Tpath)
+else
+    error('Cannot read %s', Tpath)
+end
 %% CHECK IF INPUT IS RAS
 % New in 3.1.2: check the file is RAS If not, convert to RAS Be careful, bvecs
 % needs to be changed as well accordingly Instead of changing bvecs manually, we
@@ -212,11 +215,36 @@ Timg = readFileNifti(Tpath)
 
 % Read the input file names and convert them
 basedir = split(input_dir,filesep);
-basedir = strcat(basedir(1:end-2));
+basedir = strcat(basedir(1:end-1));
 basedir = fullfile('/',basedir{:});
+
+fprintf('This is input_dir: %s\n', input_dir)
+fprintf('This is basedir: %s\n',   basedir)
+
 J       = load(fullfile(input_dir,'dt6.mat'));
+disp('This are the contents of dt6.mat')
+J.files
+
+% DWI file
+[p,f,e]= fileparts(J.files.alignedDwRaw);
+if ~strcmp(p,basedir); J.files.alignedDwRaw = fullfile(basedir,[f e]); end
+
+% BVEC file
+[p,f,e]= fileparts(J.files.alignedDwBvecs);
+if ~strcmp(p,basedir); J.files.alignedDwBvecs = fullfile(basedir,[f e]); end
+
+% BVAL file
+[p,f,e]= fileparts(J.files.alignedDwBvals);
+if ~strcmp(p,basedir); J.files.alignedDwBvals = fullfile(basedir,[f e]); end
+
 
 J.files.t1path    = fullfile(basedir,J.files.t1);
+fprintf('This is the absolute path to the t1: %s\n', J.files.t1path)
+if exist(J.files.t1path,'file')
+    fprintf('T1 file %s Exists. \n', J.files.t1path)
+else
+    error('Cannot find %s', J.files.t1path)
+end
 J.files.aparcaseg = fullfile(basedir,J.files.t1);
 % Solve the aparc+aseg case
 asegFiles = dir(fullfile(basedir,'*aseg*'));
@@ -232,7 +260,7 @@ if ~(exist(J.files.aparcaseg, 'file') == 2)
     disp(['inputFile = ' J.files.aparcaseg]);
     warning(['Cannot find aseg file, please copy it to ' basedir]);
     
-    J.files.aparcaseg = fullfile(basedir, J.files.t1);
+    J.files.aparcaseg = J.files.t1path;
     if ~(exist(J.files.aparcaseg, 'file') == 2)
         error(['Cannot find T1, please copy it to ' basedir]);
     end
@@ -312,10 +340,14 @@ if notDefined('out_name')
     out_name = ['afq_', getDateAndTime];
 end
 
+disp('Running AFQ_create with the following options...');
+fprintf('sub_dirs: %s', sub_dirs{1})
+fprintf('output_dir: %s', output_dir)
+fprintf('out_name: %s', out_name)
 afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
                  'outdir', output_dir, 'outname', out_name, ...
                  'params', P);  
-
+disp('... end running AFQ_Create')
 % disp(afq.params);
 
 % Run control comparison by default
@@ -329,9 +361,12 @@ afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
 
 %% RUN AFQ
 
-disp('Running AFQ...');
+disp('Running AFQ_run with the following options...');
+fprintf('sub_dirs: %s', sub_dirs{1})
+disp('This is the afq struct');
+afq
 afq = AFQ_run(sub_dirs, sub_group, afq);
-
+disp('... end running AFQ_run');
 
 %% Check for empty fiber groups
 disp('Checking for empty fiber groups...');

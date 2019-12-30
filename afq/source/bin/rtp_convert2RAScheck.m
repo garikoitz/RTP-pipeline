@@ -14,12 +14,20 @@ function [convert2RAS,dsline] = rtp_convert2RAScheck(fname)
     dsline          = TextAsCells(contains(TextAsCells, "Data strides:"));
     dsline          = dsline{1};
     negs            = regexp(dsline, '-','once');
-    if ~isempty(negs);convert2RAS=true;end
+    if ~isempty(negs)
+        disp('Negative direction detected, requires converting to RAS')
+        convert2RAS=true;
+    end
     dsline          = strrep(dsline,'Data strides:','');
     dsline          = strrep(dsline,'[','');
     dsline          = strrep(dsline,']','');
     dsline          = strrep(dsline,' ','');
-    if (~strcmp(dsline,'123') || ~strcmp(dsline,'1234'));convert2RAS=true;end
+    if (strcmp(dsline,'123') || strcmp(dsline,'1234'));
+        disp('This file is RAS already, no conversion required')
+    else    
+        disp('This file is not RAS, conversion required')
+        convert2RAS=true;
+    end
 
 end
 
