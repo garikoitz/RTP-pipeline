@@ -7,6 +7,6 @@
 # . ./compile.sh
 # cd ../../
 # git add .
-git commit -m "Commiting before building $GEAR:$1"
-GEAR=vistalab/rtp-pipeline
+# git commit -m "Commiting before building $GEAR:$1"
+GEAR=garikoitz/rtp-pipeline
 docker build --tag $GEAR:$1 .

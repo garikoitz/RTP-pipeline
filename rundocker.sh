@@ -5,4 +5,4 @@ docker run -ti --rm  $2 \
 	       -v $dataDir/input:/flywheel/v0/input  \
    	       -v $dataDir/output:/flywheel/v0/output  \
            -v $(pwd)/example_config.json:/flywheel/v0/config.json \
-   	       vistalab/rtp-pipeline:$1
+   	       garikoitz/rtp-pipeline:$1

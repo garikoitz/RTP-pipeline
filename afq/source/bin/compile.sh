@@ -1,5 +1,4 @@
 #!/bin/bash
-# module load matlab/2017a
 
 cat > build.m <<END
 
@@ -30,7 +29,7 @@ mcc -m -R -nodisplay -a /data/localhome/glerma/soft/RTP-pipeline/afq/includeFile
 
 exit
 END
-Matlabr2017a -nodisplay -nosplash -r build && rm build.m
+/software/matlab/r2018b/bin/matlab -nodisplay -nosplash -r build && rm build.m
 
 
 # Teh compiled file is bigger than 100Mb, then it fails when pushing to github

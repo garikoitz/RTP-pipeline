@@ -1,3 +1,5 @@
 *~
 *.swp
-afq/source/bin/compiled/AFQ_StandAlone_QMR
+afq/source/bin/compiled/RTP
+afq/source/bin/compiled/*
+

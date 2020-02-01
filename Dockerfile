@@ -1,9 +1,9 @@
 
 # Create Docker container that can run Matlab (mrDiffusion and afq analysis), ANTs, FSL, mrTrix.
 
-# Start with the Matlab r2017a runtime container
-FROM  flywheel/matlab-mcr:v92.1
-MAINTAINER Michael Perry <lmperry@stanford.edu>
+# Start with the Matlab r2018b runtime container
+FROM  flywheel/matlab-mcr:v95
+MAINTAINER Garkoitz Lerma  <glerma@stanford.edu>
 
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
@@ -92,104 +92,54 @@ ENV PATH /usr/lib/mrtrix3/bin:$PATH
 
 
 ############################
-# DTIINIT
+# DTIINIT: DELETE THIS: RIGHT NOW,  just commenting
 
 # ADD the dtiInit Matlab Stand-Alone (MSA) into the container.
-COPY dtiinit/source/bin/dtiInitStandAloneWrapper /usr/local/bin/dtiInit
+# COPY dtiinit/source/bin/dtiInitStandAloneWrapper /usr/local/bin/dtiInit
 
 # Add bet2 (FSL) to the container
+# Maintain this here until we are sure we are not using it anymore
 ADD https://github.com/vistalab/vistasoft/raw/97aa8a8/mrAnatomy/Segment/bet2 /usr/local/bin/
-
-# ADD AFQ and mrD templates via svn hackery
-ENV TEMPLATES /templates
-RUN mkdir $TEMPLATES
-RUN svn export --force https://github.com/yeatmanlab/AFQ.git/trunk/templates/ $TEMPLATES
-RUN svn export --force https://github.com/vistalab/vistasoft.git/trunk/mrDiffusion/templates/ $TEMPLATES
-
-# Add the MNI_EPI template and JSON schema files to the container
-ADD https://github.com/vistalab/vistasoft/raw/97aa8a8/mrDiffusion/templates/MNI_EPI.nii.gz $TEMPLATES
-ADD https://github.com/vistalab/vistasoft/raw/97aa8a8/mrDiffusion/dtiInit/standalone/dtiInitStandAloneJsonSchema.json $TEMPLATES
-
-# Copy the help text to display when no args are passed in.
-COPY dtiinit/source/doc/help.txt /opt/help.txt
-
 # Ensure that the executable files are executable
-RUN chmod +x /usr/local/bin/bet2 /usr/local/bin/dtiInit
-
+RUN chmod +x /usr/local/bin/bet2 
 # Configure environment variables for bet2
 ENV FSLOUTPUTTYPE NIFTI_GZ
 
+# ADD AFQ and mrD templates via svn hackery
+# this stopped working at some point, it is better to just use the templates we know we need and add them in the matlab compilation compilation
+# Maintaining the folder just in case, maybe we can edit the code so that copies templates directly there, I guess this will be empty
+ENV TEMPLATES /templates
+RUN mkdir $TEMPLATES
+# RUN svn export --force https://github.com/yeatmanlab/AFQ.git/trunk/templates/ $TEMPLATES
+# RUN svn export --force https://github.com/vistalab/vistasoft.git/trunk/mrDiffusion/templates/ $TEMPLATES
+
+# Add the MNI_EPI template and JSON schema files to the container
+# ADD https://github.com/vistalab/vistasoft/raw/97aa8a8/mrDiffusion/templates/MNI_EPI.nii.gz $TEMPLATES
+# ADD https://github.com/vistalab/vistasoft/raw/97aa8a8/mrDiffusion/dtiInit/standalone/dtiInitStandAloneJsonSchema.json $TEMPLATES
+
+# Copy the help text to display when no args are passed in.
+# COPY dtiinit/source/doc/help.txt /opt/help.txt
+
+
+
 # Copy and configure code
 WORKDIR ${FLYWHEEL}
-COPY dtiinit/source/run ${FLYWHEEL}/run_dtiinit
-COPY dtiinit/source/parse_config.py ${FLYWHEEL}/dtiinit_parse_config.py
 
 
-############################
-# AFQ Browser
-# It built the docker container but then it failed in the execution. Just removing it, never used. 
-# RUN apt-get update -qq \
-#     && apt-get install -y \
-#     git \
-#     python-dev \
-#     libblas-dev \
-#     liblapack-dev \
-#     libatlas-base-dev \
-#     gfortran \
-#     python-numpy \
-#     python-pandas \
-#     python-scipy \
-#     python-pip
-
-# We need to start by upgrading setuptools, or run into https://github.com/yeatmanlab/AFQ-Browser/issues/101
-# RUN pip install --upgrade setuptools
-
-# Bust the cache to force the next steps:
-# ENV BUSTCACHE 11
-
-# Install AFQ-Browser from my branch:
-# RUN pip install git+https://github.com/arokem/AFQ-Browser.git@zip
-
-# Copy AFQ Browser run
-# COPY afq-browser/run ${FLYWHEEL}/run_afq-browser.py
-
+# This is what we dont want to happen anymore
+# COPY dtiinit/source/run ${FLYWHEEL}/run_dtiinit
+# COPY dtiinit/source/parse_config.py ${FLYWHEEL}/dtiinit_parse_config.py
 
 ############################
 # AFQ
 
 
-# THIS IS IF WE ARE USING THE GIT LFS VERSION
-# Install git-lfs
-# RUN apt-get install -y software-properties-common && \
-#     add-apt-repository -y ppa:git-core/ppa && \
-#     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
-#     apt-get install -y git-lfs && \
-#     git lfs install
-
-# Download binary from git-lfs
-# WORKDIR /tmp
-# ENV COMMIT 9a8c9c9
-# RUN git clone https://github.com/scitran-apps/afq-pipeline.git && \
-#     cd /tmp/afq-pipeline && \
-#     git reset ${COMMIT} && \
-#     git lfs pull && \
-#     cp /tmp/afq-pipeline/afq/source/bin/compiled/AFQ_StandAlone_QMR /usr/local/bin/AFQ
-
-
 # AND THIS IF WE ARE COPYING THE BINARY FROM LOCAL
 # ADD the source Code and Binary to the container
-COPY afq/source/bin/compiled/RTP /usr/local/bin/AFQ
-COPY afq/run ${FLYWHEEL}/run_afq
-COPY afq/source/parse_config.py ${FLYWHEEL}/afq_parse_config.py
-RUN chmod +x /usr/local/bin/AFQ ${FLYWHEEL}/afq_parse_config.py
-
-
-# AND THIS WAS COMMON
-# ADD the source Code and Binary to the container
-COPY afq/run ${FLYWHEEL}/run_afq
-COPY afq/source/parse_config.py ${FLYWHEEL}/afq_parse_config.py
-RUN chmod +x /usr/local/bin/AFQ ${FLYWHEEL}/afq_parse_config.py
-
+COPY afq/source/bin/compiled/RTP /usr/local/bin/RTP
+COPY afq/run ${FLYWHEEL}/run
+COPY afq/source/parse_config.py ${FLYWHEEL}/parse_config.py
+RUN chmod +x /usr/local/bin/RTP ${FLYWHEEL}/parse_config.py
 
 # Set the diplay env variable for xvfb
 ENV DISPLAY :1.0
@@ -197,7 +147,7 @@ ENV DISPLAY :1.0
 ############################
 
 # Configure entrypoint
-COPY run ${FLYWHEEL}/run
+# COPY run ${FLYWHEEL}/run
 RUN chmod +x ${FLYWHEEL}/*
 ENTRYPOINT ["/flywheel/v0/run"]
 COPY manifest.json ${FLYWHEEL}/manifest.json

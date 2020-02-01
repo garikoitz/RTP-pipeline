@@ -1,10 +1,10 @@
 #! /bin/bash
 #
-# Run afq Gear
+# Run rtp-pipeline Gear
 # Built to flywheel-v0 spec.
 #
 
-CONTAINER="[scitran/afq]"
+CONTAINER="[garikoitz/rtp-pipeline]"
 echo -e "$CONTAINER  Initiated"
 
 # Configure the ENV for FSL
@@ -13,8 +13,9 @@ source /etc/fsl/5.0/fsl.sh
 
 # Configure the ENV
 export FSLOUTPUTTYPE=NIFTI_GZ
-export LD_LIBRARY_PATH=/opt/mcr/v92/runtime/glnxa64:/opt/mcr/v92/bin/glnxa64:/opt/mcr/v92/sys/os/glnxa64:$LD_LIBRARY_PATH
-export XAPPLRESDIR=/opt/mcr/v92/X11/app-defaults
+# export LD_LIBRARY_PATH=/opt/mcr/v92/runtime/glnxa64:/opt/mcr/v92/bin/glnxa64:/opt/mcr/v92/sys/os/glnxa64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
+export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
 
 # Add mrtrix and ants to the path
 export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
@@ -31,10 +32,14 @@ start_xvfb() {
 FLYWHEEL_BASE=/flywheel/v0
 OUTPUT_DIR=$FLYWHEEL_BASE/output
 INPUT_DIR=$FLYWHEEL_BASE/input
-ZIP_DIR=$INPUT_DIR/dtiInit_Archive # Must match input from the manifest
 WORK_DIR=$INPUT_DIR/work
+NIFTI_DIR=$INPUT_DIR/dwi
+ANAT_DIR=$INPUT_DIR/anatomical
+BVEC_DIR=$INPUT_DIR/bvec
+BVAL_DIR=$INPUT_DIR/bval
+FS_DIR=$INPUT_DIR/fs
 CONFIG_FILE=${FLYWHEEL_BASE}/config.json
-PARAMS_FILE=${WORK_DIR}/AFQ_params.json
+PARAMS_FILE=${WORK_DIR}/params.json
 
 
 
@@ -49,21 +54,33 @@ fi
 mkdir $WORK_DIR
 
 # Move files into work directory and do the work
-ZIP_FILE=$(find ${ZIP_DIR} -type f -name "*.zip" | head -1)
-unzip $ZIP_FILE -d $WORK_DIR
+# ZIP_FILE=$(find ${ZIP_DIR} -type f -name "*.zip" | head -1)
+# unzip $ZIP_FILE -d $WORK_DIR
+
 
 # Find the dt6.mat file and use that as the input to AFQ
-DT6_FILE=$(find ${WORK_DIR} -type f -name "dt6.mat" | head -1)
-AFQ_INPUT_DIR=$(dirname $DT6_FILE)
+# This will be done now inside matlab file
+# DT6_FILE=$(find ${WORK_DIR} -type f -name "dt6.mat" | head -1)
+# AFQ_INPUT_DIR=$(dirname $DT6_FILE)
 
-# Convert the config json to a dtiinit_params json file
-$FLYWHEEL_BASE/afq_parse_config.py --input_file ${CONFIG_FILE} --output_file ${PARAMS_FILE} --input_dir ${AFQ_INPUT_DIR} --output_dir ${OUTPUT_DIR}
+# Convert the config json to a AFQ_params json file
+$FLYWHEEL_BASE/parse_config.py \
+		--input_file ${CONFIG_FILE} \
+		--output_file ${PARAMS_FILE} \
+		--input_dir ${INPUT_DIR} \
+		--output_dir ${OUTPUT_DIR} \
+	    --bvec_dir ${BVEC_DIR} \
+   	 	--bval_dir ${BVAL_DIR} \
+    	--nifti_dir ${NIFTI_DIR} \
+    	--anat_dir ${ANAT_DIR} \
+    	--fs_dir ${FS_DIR}
+
 
 # Make sure the params file is saved with the output
 cp ${PARAMS_FILE} ${OUTPUT_DIR}
 
 # Start Xvfb and pass the input arguments to AFQ execute the algorithm
-start_xvfb && time /usr/local/bin/AFQ "$PARAMS_FILE"
+start_xvfb && time /usr/local/bin/RTP "$PARAMS_FILE" 
 
 # Xvfb occasionally hangs -- make sure that Xvfb dies
 kill -9 %1

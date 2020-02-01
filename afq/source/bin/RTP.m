@@ -63,6 +63,8 @@ jsonargs = ['{"input_dir" :' ...
             '"/Users/glerma/soft/rtp-pipeline/local/AFQ/output", ' ...
             '"params"    : ' ...
             '"/Users/glerma/soft/rtp-pipeline/local/AFQ/input/config_parsed.json"}'] 
+jsonargs = ['{"params"    : ' ...
+            '"/black/localhome/glerma/soft/RTP-pipeline/example_output.json"}'] 
 RTP(jsonargs);
 %}
 %
@@ -89,17 +91,17 @@ disp(jsonargs)
 if exist('jsonargs', 'var') && ~isempty(jsonargs);
     args = loadjson(jsonargs);
 
-    if isfield(args, 'input_dir')
-        input_dir = args.input_dir;
-    end
+    % if isfield(args, 'input_dir')
+    %     input_dir = args.input_dir;
+    % end
 
-    if isfield(args, 'out_name')
-        out_name = args.out_name;
-    end
+    % if isfield(args, 'out_name')
+    %     out_name = args.out_name;
+    % end
 
-    if isfield(args, 'output_dir')
-        output_dir = args.output_dir;
-    end
+    % if isfield(args, 'output_dir')
+    %     output_dir = args.output_dir;
+    % end
 
     if isfield(args, 'params')
         params = args.params;
@@ -111,6 +113,14 @@ if exist('jsonargs', 'var') && ~isempty(jsonargs);
 
 end
 
+%% Parse the params and setup the AFQ structure
+if ~isempty(params)
+    if ischar(params)
+        P = loadjson(params);
+    else
+        P = params;
+    end
+end
 % Run control comparison by default
 % if ~isfield(params, 'runcontrolcomp');
 %     params.runcontrolcomp = true;
@@ -118,7 +128,8 @@ end
 
 
 %% Configure inputs and defaults
-
+input_dir = P.input_dir;
+output_dir = P.output_dir;
 if notDefined('input_dir')
     if exist('/input', 'dir')
         input_dir = '/input';
@@ -141,50 +152,9 @@ if ~exist(output_dir, 'dir'); mkdir(output_dir); end
 % Just one group here
 sub_group = ones(numel(sub_dirs),1);
 
-% Set defaults for metadata
-% if notDefined('metadata') % TODO: These should be checked individually
-%     metadata.age = '';
-%     metadata.sex = '';
-%     metadata.ndirs = 30;
-%     metadata.bvalue = 1000;
-%     metadata.age_comp = false;
-% end
-
-% Set the age range for group comparisson
-% if isnumeric(metadata.age) && metadata.age > 1
-%     if metadata.age <= 11
-%         metadata.age_range = [ 5 11 ];
-%     elseif metadata.age >= 12 && metadata.age <= 18
-%         metadata.age_range = [ 12 18 ];
-%     elseif metadata.age >= 19 && metadata.age <= 50
-%         metadata.age_range = [ 19 50 ];
-%     elseif metadata.age >= 51 && metadata.age <= 65
-%         metadata.age_range = [ 51 65 ];
-%     elseif metadata.age > 65
-%         metadata.age_range = [ 65 100 ];
-%     end
-% else
-%     metadata.age_comp = false;
-% end
 
 
-%% Load the control data
 
-% control_data = load('/opt/qmr_control_data.mat');
-
-%% Parse the params and setup the AFQ structure
-if ~isempty(params)
-    if ischar(params)
-        P = loadjson(params);
-    else
-        P = params;
-    end
-%    fNames = fieldnames(P);
-%    for f = 1:numel(fNames)
-%       afq.params.(fNames{f}) =  P.(fNames{f});
-%    end
-%    disp(afq.params);
-end
 
 %% See if I can read the templates
 disp('_____ CHECK IF IT CAN READ TEMPLATES  _______')

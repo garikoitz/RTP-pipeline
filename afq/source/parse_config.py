@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 # Parse a config file and create a dtiInit params json file.
-def parse_config(input_file, output_file, input_dir, output_dir):
+def parse_config(input_file, output_file, input_dir, output_dir, bvec_dir, bval_dir, nifti_dir, anat_dir, fs_dir):
     import os
     import json
     import glob
@@ -110,6 +110,11 @@ def parse_config(input_file, output_file, input_dir, output_dir):
     # Add input directory for dtiInit
     config['input_dir'] = input_dir
     config['output_dir'] = output_dir
+    config['bvec_dir'] = bvec_dir
+    config['bval_dir'] = bval_dir
+    config['nifti_dir'] = nifti_dir
+    config['anat_dir'] = anat_dir
+    config['fs_dir'] = fs_dir
 
     # Add additional keys
     config['params']['run_mode'] = [],
@@ -128,9 +133,15 @@ if __name__ == '__main__':
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument('--input_file', default='/flwywheel/v0/config.json', help='Full path to the input file.')
-    ap.add_argument('--output_file', default='/flywheel/v0/json/dtiinit_params.json', help='Full path to the output file.')
+    ap.add_argument('--output_file', default='/flywheel/v0/json/params.json', help='Full path to the output file.')
     ap.add_argument('--input_dir', default='/flwywheel/v0/input', help='Full path to the input file.')
     ap.add_argument('--output_dir', default='/flywheel/v0/output', help='Full path to the output file.')
+    ap.add_argument('--bvec_dir', default='/flwywheel/v0/input/bvec', help='Full path to the input file.')
+    ap.add_argument('--bval_dir', default='/flywheel/v0/input/bval', help='Full path to the output file.')
+    ap.add_argument('--nifti_dir', default='/flwywheel/v0/input/dwi', help='Full path to the input file.')
+    ap.add_argument('--anat_dir', default='/flywheel/v0/input/anatomical', help='Full path to the output file.')
+    ap.add_argument('--fs_dir', default='/flywheel/v0/input/fs', help='Full path to the output file.')
+
     args = ap.parse_args()
 
-    parse_config(args.input_file, args.output_file, args.input_dir, args.output_dir)
+    parse_config(args.input_file, args.output_file, args.input_dir, args.output_dir, args.bvec_dir, args.bval_dir, args.nifti_dir, args.anat_dir, args.fs_dir)
