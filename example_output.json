@@ -42,9 +42,6 @@
         "phaseEncodeDir": 2,
         "rotateBvecsWithCanXform": 1,
         "rotateBvecsWithRx": 0,
-        "run_mode": [
-            []
-        ],
         "savefigs": 0,
         "track": {
             "ET_angleValues": [

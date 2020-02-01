@@ -63,6 +63,9 @@ jsonargs = ['{"input_dir" :' ...
             '"/Users/glerma/soft/rtp-pipeline/local/AFQ/output", ' ...
             '"params"    : ' ...
             '"/Users/glerma/soft/rtp-pipeline/local/AFQ/input/config_parsed.json"}'] 
+
+
+
 jsonargs = ['{"params"    : ' ...
             '"/black/localhome/glerma/soft/RTP-pipeline/example_output.json"}'] 
 RTP(jsonargs);
@@ -91,25 +94,9 @@ disp(jsonargs)
 if exist('jsonargs', 'var') && ~isempty(jsonargs);
     args = loadjson(jsonargs);
 
-    % if isfield(args, 'input_dir')
-    %     input_dir = args.input_dir;
-    % end
-
-    % if isfield(args, 'out_name')
-    %     out_name = args.out_name;
-    % end
-
-    % if isfield(args, 'output_dir')
-    %     output_dir = args.output_dir;
-    % end
-
     if isfield(args, 'params')
         params = args.params;
     end
-
-%     if isfield(args, 'metadata')
-%         metadata = args.metadata;
-%     end
 
 end
 
@@ -121,10 +108,6 @@ if ~isempty(params)
         P = params;
     end
 end
-% Run control comparison by default
-% if ~isfield(params, 'runcontrolcomp');
-%     params.runcontrolcomp = true;
-% end
 
 
 %% Configure inputs and defaults
@@ -170,7 +153,272 @@ if exist(Tpath,'file')
 else
     error('Cannot read %s', Tpath)
 end
-%% CHECK IF INPUT IS RAS
+
+
+
+%% CHECK INPUTS AND OPTIONALS
+% LMX: until now I think it should have worked. Here we need to be sure first
+%      that we can read the input files correctly. 
+% The path and the variable names below might seems arbitrtraty, but we need to
+% try to maintain them the same names because we don't know where they might
+% fail down the line. There are old functions that still rely on the dt6.mat
+% thing to know where the files are. If we decide to change it (what we snould
+% do maybe in a later version) we should do it very throughly. 
+
+% The next section is new, the RAS conversion, but you'll see that I am
+% maintaining the ugly paths and old system. There is no J.files structure at
+% this point, so we can create it here. 
+
+
+
+% I AM GOING TO COPY HERE THE RELEVANT CODE COMING FROM DTI INIT
+
+% File and folder checks
+% LMX: not going to copy here, bad code. Check the files exist and the folder exist
+% otherwise create them. You can check the code, but it basically assummes that
+% the filenames are the same otherwise it breaks, etc. I prefer to be explicit.
+% Give the actual correct names or break, I don't want to work but with the
+% wrong files and not knowing. You can check dtiInitStandAloneWrapper line 180,
+% but I would just ignore it.
+
+
+% Templates: 
+% This is the default template is using right now, it is very bad... add it for
+% now but we will substitute it
+% Variable names might need adjusting
+if ~isfield(J, 't1_file') || ~exist(J.t1_file, 'file')
+    template_t1 = '/templates/MNI_EPI.nii.gz'; 
+    J.t1_file = template_t1;
+end
+
+%% Initialize diffusion parameters
+% LMX: maintain this structure for now, we'll see if we need it later
+dwParams            = dtiInitParams;
+dwParams.outDir     = J.output_dir;
+dwParams.bvecsFile  = J.bvec_file;
+dwParams.bvalsFile  = J.bval_file;
+dwParams.bvalue     = dw.bvalue;
+
+%% Update the diffusion params from the JSON object
+% LMX: ths was reading the dtiinit params, that we are not reading now but that
+% they are in manifest.json. I think we don't need them, maintain this commented
+% here and we will decide what to delete and what to add to the afq json params.
+% 
+% if isfield(J, 'params')
+%     param_names = fieldnames(J.params);
+%     for f = 1:numel(param_names)
+%         if isfield(dwParams,param_names{f}) && ~isempty(J.params.(param_names{f}))
+%             dwParams.(param_names{f}) = J.params.(param_names{f});
+%         end
+%     end
+% else
+%     disp('Using default dtiInit params')
+% end
+% % Print what is being passed to do sanity check when running in Docker mode
+% disp(J)
+% disp(J.params)
+% disp(dwParams)
+
+%% Validate that the bval values are normalized
+% LMX II added this because downstream it was required to be normaliized. Maybe
+% we can make it optional later. 
+% If not, write again the file normalized so that it can be read downstream
+% Determine shell
+bvals = dlmread(J.bval_file);
+roundedBval  = 100 * round(bvals/100);
+paramsShells = unique(roundedBval);
+if 0 == min(paramsShells)
+    paramsShells = paramsShells(paramsShells ~= 0);
+    numShells    = length(paramsShells);
+else
+    error('It seems that this file have no b0. Check it please.')
+end
+
+% Write the files back
+warning('The bVals were normalized.')
+dlmwrite(J.bval_file, roundedBval, 'delimiter',' ');
+
+
+
+%% Run dtiInit
+% From 3.0.5 onwards I am forking dtiInit and giving it less
+% functionalities. I will remove the tensor fitting and do it with mrTrix,
+% it is much faster and the rest of the code relies in it anyways. 
+% First iteration, stop dtiInit doing it and later on mrtrixInit will paste
+% the fa to the bin folder. 
+% In 3.1.1 it was doing nothing already
+% In 3.1.2 I am removing the call altogether to make this thing simpler
+%        AFQ_dtiInit(J.dwi_file, J.t1_file, dwParams);
+% Plans for 3.2.0: remove afq-browser and dtiInit altogether
+% We are in 4.0.0 now, that we already removed dtiInit and afq-browser.
+%   As you see, from 3.1.2 I copied all the functionalities into this file, so
+%   everything should be done here. Be careful with filenames and paths and the
+%   like, before this was a different container, now both are ni the same
+%   container, and some of the stuff I was doing was to be sure the right files
+%   were passed from container to container. 
+
+
+% Here dtiInit was called, assign variables
+dwRawFileName = J.dwi_file;
+t1FileName    = J.t1_file;
+
+% I. Load the diffusion data, set up parameters and directories structure
+% Load the difusion data
+disp('Loading preprocessed (use rtp-preproc or already preprocessed) data...');
+dwRaw = niftiRead(dwRawFileName);
+
+% By default all processed nifti's will be at the same resolution as the
+% dwi data
+% if notDefined('dwParams'); 
+%   dwParams         = dtiInitParams; 
+% we are going to ignore whatever we pass in the dtinit params. 
+% remove them from manifest too in next version
+  dwParams.dwOutMm = dwRaw.pixdim(1:3);
+% end 
+
+% Initialize the structure containing all directory info and file names
+dwDir      = dtiInitDir(dwRawFileName,dwParams);
+outBaseDir = dwDir.outBaseDir;
+fprintf('Dims = [%d %d %d %d] \nData Dir = %s \n', size(dwRaw.data), dwDir.dataDir);
+fprintf('Output Dir = %s \n', dwDir.subjectDir);
+
+
+% II. Select the anatomy file
+
+% Check for the case that the user wants to align to MNI instead of T1.
+% LMX: WE SHOULD NEVER DO THIS! but, once I had a subjet without T1 so I used
+% it so...
+if exist('t1FileName','var') && strcmpi(t1FileName,'MNI')
+    t1FileName = fullfile(mrDiffusionDir,'templates','MNI_EPI.nii.gz');
+    disp('The MNI EPI template will be used for alignment.');
+end
+
+if notDefined('t1FileName') || ~exist(t1FileName,'file')
+    t1FileName = mrvSelectFile('r',{'*.nii.gz';'*.*'},'Select T1 nifti file');
+    if isempty(t1FileName); disp('dtiInit canceled by user.'); return; end
+end
+fprintf('t1FileName = %s;\n', t1FileName);
+
+
+% (lmx: see that I am moving the old code with notes and everything, once we
+% make it work, we'll clearn everything, but just in case it helps us debugging
+% I am going to maintain it for now)
+
+% XV. Name the folder that will contain the dt6.mat file
+% If the user passed in a full path to dt6BaseName and outDir ... if
+% they're different the dt6.mat file will be saved to dt6BaseName while the
+% other data will be saved to outDir. See dtiInitDir for the fix.
+% I removed the nUniqueDirs thing as well, why should it be in the folder name
+if isempty(dwParams.dt6BaseName) 
+    % nUniqueDirs from dtiBootGetPermMatrix
+    % dwParams.dt6BaseName = fullfile(dwDir.subjectDir,sprintf('dti%02d',nUniqueDirs));
+    dwParams.dt6BaseName = fullfile(dwDir.subjectDir,'dticsd');
+    %if ~dwParams.bsplineInterpFlag 
+        % Using trilinear interpolation 
+     %   dwParams.dt6BaseName = [dwParams.dt6BaseName 'trilin'];
+    %end
+else
+    if isempty(fileparts(dwParams.dt6BaseName)) 
+        dwParams.dt6BaseName = fullfile(dwDir.subjectDir,dwParams.dt6BaseName);
+    end
+end
+
+
+
+% XVII. Build the dt6.files field and append it to dt6.mat
+% GLU: This was the old version before I commented XVI
+% Need to handle the case where there is more than one dt6 file. 
+% for dd = 1:numel(dt6FileName)
+%     dtiInitDt6Files(dt6FileName{dd},dwDir,t1FileName);
+% end
+
+% GLU: the new one
+outBaseName = dwParams.dt6BaseName;
+dt6FileName = fullfile(outBaseName, 'dt6.mat');
+binDirName  = fullfile(outBaseName, 'bin');
+if(~exist(outBaseName,'dir'));mkdir(outBaseName);end
+if(~exist(binDirName,'dir')) ;mkdir(binDirName);end
+if(~exist('adcUnits','var')); adcUnits = ''; end
+
+params.buildDate = datestr(now,'yyyy-mm-dd HH:MM');
+l = license('inuse');
+params.buildId = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
+if(ischar(dwRawFileName)); [dataDir,rawDataFileName] = fileparts(dwRawFileName);  % dwRawAligned);
+else                      [dataDir,rawDataFileName] = fileparts(dwRawFileName.fname);end  % dwRawAligned.fname); end
+endparams.rawDataDir = dataDir;
+params.rawDataFile   = rawDataFileName;
+% We assume that the raw data file is a directory inside the 'subject' directory.
+params.subDir = fileparts(dataDir);
+
+
+
+% Some day I will try to understand why they are doing this...
+[fullParentDir, binDir] = fileparts(binDirName);
+[ppBinDir, pBinDir] = fileparts(fullParentDir);
+pBinDir = fullfile(pBinDir,binDir);
+
+
+% Now decide which ones of this files I will create with mrTrix and which
+% ones I will leave uncreated
+
+% LMX: MAINTAIN THIS HERE. Here I just created the path names to the files that
+% were created in dtiinit. So I just created the paths in dtiinit and then ni
+% afq using mrtrix I created the files themselves. Rigth now we should change th
+%e order of things, but it shuoold continue working
+
+files.b0        = fullfile(pBinDir,'b0.nii.gz');
+files.brainMask = fullfile(pBinDir,'brainMask.nii.gz');
+files.wmMask    = fullfile(pBinDir,'wmMask.nii.gz');
+% files.wmProb    = fullfile(pBinDir,'wmProb.nii.gz');
+files.tensors   = fullfile(pBinDir,'tensors.nii.gz');
+files.fa        = fullfile(pBinDir,'fa.nii.gz');
+% files.vecRgb    = fullfile(pBinDir,'vectorRGB.nii.gz');
+% files.faStd     = fullfile(pBinDir,'faStd.nii.gz');
+% files.mdStd     = fullfile(pBinDir,'mdStd.nii.gz');
+% files.pddDisp   = fullfile(pBinDir,'pddDispersion.nii.gz');
+
+% This is new, we are going to copy the input data as output data and call it alligned in dt6
+
+% LMX: Check this one, if we have been leaving the files in the correct place,
+% this should not be necessary, check. 
+
+copyfile(dwRawFileName, dwParams.outDir);
+[~,fname,ext] = fileparts(dwRawFileName);
+files.alignedDwRaw   = fullfile(dwParams.outDir, [fname ext]);
+dwDir.dwAlignedRawFile = files.alignedDwRaw;
+
+copyfile(dwParams.bvecsFile, dwParams.outDir);
+[~,fname,ext] = fileparts(dwParams.bvecsFile);
+files.alignedDwBvecs = fullfile(dwParams.outDir,[fname ext]); 
+dwDir.alignedBvecsFile = files.alignedDwBvecs;
+
+copyfile(dwParams.bvalsFile, dwParams.outDir);
+[~,fname,ext] = fileparts(dwParams.bvalsFile);
+files.alignedDwBvals = fullfile(dwParams.outDir,[fname ext]);
+dwDir.alignedBvalsFile = files.alignedDwBvals;
+
+% LMX: this is required. we are saving the dt6.mat file with all the required
+% variables and file names, required for the rest of the thing
+save(dt6FileName,'adcUnits','params','files');
+dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
+
+
+% XX. Save out parameters, svn revision info, etc. for future reference
+
+dtiInitLog(dwParams,dwDir);
+
+
+
+% Exit operations (lmx: check what is necessary here, probably nothing, as we don't need to pass files between conotainers now)
+disp('***************** IMPORTANT *****************')
+disp(sprintf('Copying the following files from dtiInit to AFQ: %s and %s',J.t1_file,J.aparcaseg_file))
+disp('***************** IMPORTANT *****************')
+copyfile(J.t1_file, J.output_dir)
+copyfile(J.aparcaseg_file, J.output_dir)
+
+% (HERE  IT ENDS WHAT IT WAS IN DTI INIT)
+
+%% CHECK IF INPUT IS RAS  (THIS WAS IN AFQ CONTAINER)
 % New in 3.1.2: check the file is RAS If not, convert to RAS Be careful, bvecs
 % needs to be changed as well accordingly Instead of changing bvecs manually, we
 % will let mrtrix take care of it Convert files to mif, add the bvecs and bvals
@@ -182,6 +430,11 @@ end
 % This was originially done in the dtiinit wrapper but mrtrix did not work
 % there... It was anoother step in removing the whoole dtiinit thing
 
+
+% (lmx: now you can adapt this, you already now what are the files and where they are)
+% First thing we do once we now where we are and we have the dt6.mat file, is
+% checking that the files are RAS. If they are coming from rtp-preproc they will
+% be, but it is not always the case. So we need to check. 
 
 % Read the input file names and convert them
 basedir = split(input_dir,filesep);
