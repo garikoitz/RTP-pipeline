@@ -1,4 +1,4 @@
-function RTP_StandAlone_QMR(jsonargs)
+function RTP(jsonargs)
 %
 % AFQ_StandAlone_QMR(jsonargs)
 %
@@ -186,6 +186,23 @@ end
 % This is the default template is using right now, it is very bad... add it for
 % now but we will substitute it
 % Variable names might need adjusting
+
+%% copy input files to output/AFQ/
+if(~exist(fullfile(P.output_dir,'AFQ'),'dir'));mkdir(fullfile(P.output_dir,'AFQ'));end
+copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'AFQ/'));
+copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'AFQ/'));
+copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'AFQ/'));
+copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'AFQ/'));
+copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'AFQ/'));
+J.aparcaseg_file = fullfile(P.output_dir,'AFQ','aparc+aseg.nii.gz');
+J.t1_file = fullfile(P.output_dir,'AFQ', 't1.nii.gz');
+J.bvec_file = fullfile(P.output_dir,'AFQ', 'dwi.bvecs');
+J.bval_file = fullfile(P.output_dir,'AFQ', 'dwi.bvals');
+J.dwi_file = fullfile(P.output_dir,'AFQ', 'dwi.nii.gz');
+
+J.input_dir = fullfile(P.output_dir,'AFQ');
+J.output_dir = P.output_dir;
+sub_dirs{1} = J.input_dir;
 if ~isfield(J, 't1_file') || ~exist(J.t1_file, 'file')
     template_t1 = '/templates/MNI_EPI.nii.gz'; 
     J.t1_file = template_t1;
@@ -197,7 +214,7 @@ dwParams            = dtiInitParams;
 dwParams.outDir     = J.output_dir;
 dwParams.bvecsFile  = J.bvec_file;
 dwParams.bvalsFile  = J.bval_file;
-dwParams.bvalue     = dw.bvalue;
+%dwParams.bvalue     = dw.bvalue;
 
 %% Update the diffusion params from the JSON object
 % LMX: ths was reading the dtiinit params, that we are not reading now but that
@@ -312,7 +329,7 @@ fprintf('t1FileName = %s;\n', t1FileName);
 if isempty(dwParams.dt6BaseName) 
     % nUniqueDirs from dtiBootGetPermMatrix
     % dwParams.dt6BaseName = fullfile(dwDir.subjectDir,sprintf('dti%02d',nUniqueDirs));
-    dwParams.dt6BaseName = fullfile(dwDir.subjectDir,'dticsd');
+    dwParams.dt6BaseName = fullfile(dwDir.dataDir,'dticsd');
     %if ~dwParams.bsplineInterpFlag 
         % Using trilinear interpolation 
      %   dwParams.dt6BaseName = [dwParams.dt6BaseName 'trilin'];
@@ -339,7 +356,10 @@ binDirName  = fullfile(outBaseName, 'bin');
 if(~exist(outBaseName,'dir'));mkdir(outBaseName);end
 if(~exist(binDirName,'dir')) ;mkdir(binDirName);end
 if(~exist('adcUnits','var')); adcUnits = ''; end
-
+J.params = P.params;
+J.params.input_dir = J.input_dir;
+J.params.output_dir = J.output_dir;
+params = J.params;
 params.buildDate = datestr(now,'yyyy-mm-dd HH:MM');
 l = license('inuse');
 params.buildId = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
@@ -348,8 +368,8 @@ else                      [dataDir,rawDataFileName] = fileparts(dwRawFileName.fn
 endparams.rawDataDir = dataDir;
 params.rawDataFile   = rawDataFileName;
 % We assume that the raw data file is a directory inside the 'subject' directory.
-params.subDir = fileparts(dataDir);
-
+%params.subDir = fileparts(dataDir);
+params.subDir = dataDir;
 
 
 % Some day I will try to understand why they are doing this...
@@ -401,7 +421,7 @@ dwDir.alignedBvalsFile = files.alignedDwBvals;
 % variables and file names, required for the rest of the thing
 save(dt6FileName,'adcUnits','params','files');
 dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
-
+copyfile(dt6FileName, J.input_dir);
 
 % XX. Save out parameters, svn revision info, etc. for future reference
 
@@ -413,8 +433,8 @@ dtiInitLog(dwParams,dwDir);
 disp('***************** IMPORTANT *****************')
 disp(sprintf('Copying the following files from dtiInit to AFQ: %s and %s',J.t1_file,J.aparcaseg_file))
 disp('***************** IMPORTANT *****************')
-copyfile(J.t1_file, J.output_dir)
-copyfile(J.aparcaseg_file, J.output_dir)
+copyfile(J.t1_file, J.output_dir);
+copyfile(J.aparcaseg_file, J.output_dir);
 
 % (HERE  IT ENDS WHAT IT WAS IN DTI INIT)
 
@@ -437,6 +457,7 @@ copyfile(J.aparcaseg_file, J.output_dir)
 % be, but it is not always the case. So we need to check. 
 
 % Read the input file names and convert them
+input_dir = J.input_dir;
 basedir = split(input_dir,filesep);
 basedir = strcat(basedir(1:end-1));
 basedir = fullfile('/',basedir{:});
@@ -446,7 +467,7 @@ fprintf('This is basedir: %s\n',   basedir)
 
 J       = load(fullfile(input_dir,'dt6.mat'));
 disp('This are the contents of dt6.mat')
-J.files
+J
 
 % DWI file
 [p,f,e]= fileparts(J.files.alignedDwRaw);
@@ -473,10 +494,10 @@ J.files.aparcaseg = fullfile(basedir,J.files.t1);
 asegFiles = dir(fullfile(basedir,'*aseg*'));
 for ii = 1:length(asegFiles)
     if length(strfind(asegFiles(ii).name, 'aseg')) > 0
-        J.files.aparcaseg = fullfile(session, asegFiles(ii).name);
+        J.files.aparcaseg = fullfile(basedir, asegFiles(ii).name);
     end
     if length(strfind(asegFiles(ii).name, 'aparc')) > 0
-        J.files.aparcaseg = fullfile(session, asegFiles(ii).name);
+        J.files.aparcaseg = fullfile(basedir, asegFiles(ii).name);
     end
 end
 if ~(exist(J.files.aparcaseg, 'file') == 2)
@@ -567,9 +588,10 @@ disp('Running AFQ_create with the following options...');
 fprintf('sub_dirs: %s', sub_dirs{1})
 fprintf('output_dir: %s', output_dir)
 fprintf('out_name: %s', out_name)
+mkdir(input_dir, 'bin')
 afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
                  'outdir', output_dir, 'outname', out_name, ...
-                 'params', P);  
+                 'params', J.params);  
 disp('... end running AFQ_Create')
 % disp(afq.params);
 
@@ -668,7 +690,7 @@ copyfile([predti '/*.bv*'], output_dir);
 copyfile([predti '/*.nii*'], output_dir);
 
 % Obtain the files
-if isdeployed
+%if isdeployed
     % Convert the ROIs from mat to .nii.gz
     % Read the b0
     img  = niftiRead(fullfile(input_dir, 'bin', 'b0.nii.gz'));
@@ -726,7 +748,7 @@ if isdeployed
     end
     % Now we can copy the output to the vis_files, and decide later if copying
     % it to results so that it can be visualized in FW
-    
+%{    
 else
     % This will be used to download the files when using matlab online:
     % The important part is to make work the isdeployed part. 
@@ -814,7 +836,7 @@ else
         AFQ_FgToTck(fgClipSF, sfClipFgName, saveToMrtrixFolder, createObjFiles)
     end
 end
-
+%}
 %% Create Plots and save out the images
 %{
 if afq.params.runcontrolcomp

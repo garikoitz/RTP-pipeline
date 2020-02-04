@@ -32,7 +32,7 @@ start_xvfb() {
 FLYWHEEL_BASE=/flywheel/v0
 OUTPUT_DIR=$FLYWHEEL_BASE/output
 INPUT_DIR=$FLYWHEEL_BASE/input
-WORK_DIR=$INPUT_DIR/work
+#WORK_DIR=$INPUT_DIR/work
 NIFTI_DIR=$INPUT_DIR/dwi
 ANAT_DIR=$INPUT_DIR/anatomical
 BVEC_DIR=$INPUT_DIR/bvec
@@ -51,7 +51,7 @@ then
 fi
 
 # Make the directories
-mkdir $WORK_DIR
+#mkdir $WORK_DIR
 
 # Move files into work directory and do the work
 # ZIP_FILE=$(find ${ZIP_DIR} -type f -name "*.zip" | head -1)
@@ -103,8 +103,8 @@ else
   cp $AFQ_DIR/*.mat $AFQ_DIR/*.json $OUTPUT_DIR
 
 
-  # Copy DTIINIT input/ouputs to AFQ
-  cp -a $AFQ_INPUT_DIR $AFQ_DIR
+  # Copy DTIINIT input/ouputs to AFQ (lmx: done in matlab)
+  # cp -a $AFQ_INPUT_DIR $AFQ_DIR
 
   # Get basename for AFQ ouput zip
   AFQ_NAME=$(basename `find $AFQ_DIR/ -type f -name "afq*.mat"` .mat)
