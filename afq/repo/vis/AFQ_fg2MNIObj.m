@@ -68,7 +68,7 @@ end
 
 if exist(fname,'file') && ~overwrite
     disp('The file already exists.  Press space bar to over-write');
-    pause
+    %pause
 end
 
 % We should probably test if the file exists already!

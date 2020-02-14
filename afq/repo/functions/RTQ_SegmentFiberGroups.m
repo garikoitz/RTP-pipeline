@@ -160,7 +160,7 @@ if ischar(fg), fg = dtiLoadFiberGroup(fg); end
 % Set the directory where templates can be found
 tdir = fullfile(fileparts(which('mrDiffusion.m')), 'templates');
 % Initialize spm defualts for normalization
-
+%{
 spm_get_defaults; 
 global defaults; 
 % In my case it is not reading the estimate, just the .write, copied this values
@@ -173,7 +173,7 @@ defaults.normalise.estimate.cutoff  = 25;
 defaults.normalise.estimate.nits    = 16;
 defaults.normalise.estimate.reg     = 1;
 params = defaults.normalise.estimate;
-
+%}
 
 
 
@@ -220,8 +220,8 @@ alignIm = mrAnatHistogramClip(double(dt.b0),0.3,0.99);
 % Compute normalization
 
 % commented by LMX, 14 FEB, we don't need normalization for SPM
-[sn, Vtemplate, invDef] = mrAnatComputeSpmSpatialNorm(alignIm, dt.xformToAcpc, ...
-                                                            template, params);
+%[sn, Vtemplate, invDef] = 	(alignIm, dt.xformToAcpc, ...
+%                                                            template, params);
 % check the normalization
 %{
 mm = diag(chol(Vtemplate.mat(1:3,1:3)'*Vtemplate.mat(1:3,1:3)))';
@@ -282,10 +282,11 @@ if sum(cellfun(@length, fg.fibers)<5)~=0
     fg.fibers(cellfun(@length, fg.fibers)<5)=[];
 end
 
- 
 % Warp the fibers to the MNI standard space so they can be compared to the
 % template
-fg_sn = dtiXformFiberCoords(fg, invDef);
+%{
+    by lmx, no warp
+ fg_sn = dtiXformFiberCoords(fg, invDef); 
 
 % moriTracts.data is a an XxYxZx20 array contianing the 20 Mori probability
 % atlases (range is 0-100 where 100 represents p(1)).
@@ -318,7 +319,7 @@ for(ii=1:sz(4))
     end
 end
 clear p fgCoords;
-
+%}
 %% Find fibers that pass through both waypoint ROIs eg. Wakana 2007
 %Warp Mori ROIs to individual space; collect candidates for each fiber
 %group based on protocol of 2 or > ROIs a fiber should travel through. The
@@ -368,11 +369,8 @@ if useRoiBasedApproach
     for roiID=1:size(moriRois, 1)
         % Load the nifit image containing ROI-1 in MNI space
 		%% LMX: need to fix this hard code path for native space ROI
-       % find ROI location
-       RoiPara = load(dt6File);
-       fs_dir = RoiPara.params.fs_dir;
-       moridir = fullfile(fs_dir, 'MORI');
-       ROI_img_file=fullfile(moridir, ['MORI_' moriRois{roiID, 1}]);
+       moridir = '/share/wandell/users/glerma/TESTDATA/FS/17_CAMINO_6835_2/pipeline/input'
+        ROI_img_file=fullfile(moridir, 'MORI',  ['MORI_' moriRois{roiID, 1}]);
         % Transform ROI-1 to an individuals native space
 %         if recomputeROIs
 %             % Default is to use the spm normalization unless a superior
@@ -397,7 +395,7 @@ if useRoiBasedApproach
         [fgOut,contentiousFibers, keep1(:, roiID)] = dtiIntersectFibersWithRoi([], 'and', minDist, roi1(roiID), fg);
         keepID1=find(keep1(:, roiID));
         % Load the nifit image containing ROI-2 in MNI space
-         ROI_img_file=fullfile(moridir, ['MORI_', moriRois{roiID, 2}]);
+         ROI_img_file=fullfile(moridir, 'MORI',  ['MORI_', moriRois{roiID, 2}]);
 
 %         % Transform ROI-2 to an individuals native space
 %         if recomputeROIs
@@ -430,14 +428,14 @@ if useRoiBasedApproach
     % fp is the variable containing each fibers score for matching the
     % atlas. We will set each fibers score to 0 if it does not pass through
     % the necessary ROIs
-    
-   
+    %{ 
+    commented by lmx, we are not doing anything with the atlas so far
     fp(~(keep1'&keep2'&~keep3'))=0;
     %Also note: Tracts that cross through slf_t rois should be automatically
     %classified as slf_t, without considering their probs.
     fp(19, (keep1(:, 19)'&keep2(:, 19)'&~keep3(:, 19)'))=max(fp(:));
     fp(20, (keep1(:, 20)'&keep2(:, 20)'&~keep3(:, 20)'))=max(fp(:));
-    
+    %}
 end
 
 %% Eliminate fibers that don't match any of the atlases very well

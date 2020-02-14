@@ -128,6 +128,8 @@ if notDefined('output_dir')
 end
 output_dir = fullfile(output_dir, 'AFQ');
 if ~exist(output_dir, 'dir'); mkdir(output_dir); end
+% update ROI directory
+P.params.fs_dir = P.fs_dir;
 
 % Just one group here
 sub_group = ones(numel(sub_dirs),1);
@@ -353,6 +355,7 @@ binDirName  = fullfile(outBaseName, 'bin');
 if(~exist(outBaseName,'dir'));mkdir(outBaseName);end
 if(~exist(binDirName,'dir')) ;mkdir(binDirName);end
 if(~exist('adcUnits','var')); adcUnits = ''; end
+
 J.params = P.params;
 J.params.input_dir = J.input_dir;
 J.params.output_dir = J.output_dir;
