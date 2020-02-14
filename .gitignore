@@ -2,4 +2,4 @@
 *.swp
 afq/source/bin/compiled/RTP
 afq/source/bin/compiled/*
-
+local/*
