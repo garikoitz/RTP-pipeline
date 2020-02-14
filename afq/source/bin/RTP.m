@@ -86,21 +86,18 @@ params     = [];
 % metadata   = [];
 
 %% Handle jsonargs
-disp("This is the json string to be read by loadjson:")
+disp('This is the json string to be read by loadjson:')
 disp(jsonargs)
 
 
 
 if exist('jsonargs', 'var') && ~isempty(jsonargs);
-    args = loadjson(jsonargs);
-
-    if isfield(args, 'params')
-        params = args.params;
-    end
+    P = loadjson(jsonargs);
 
 end
 
 %% Parse the params and setup the AFQ structure
+%{
 if ~isempty(params)
     if ischar(params)
         P = loadjson(params);
@@ -108,8 +105,8 @@ if ~isempty(params)
         P = params;
     end
 end
-
-
+%}
+P
 %% Configure inputs and defaults
 input_dir = P.input_dir;
 output_dir = P.output_dir;

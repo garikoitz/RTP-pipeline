@@ -2,9 +2,9 @@
 
 cat > build.m <<END
 
-addpath(genpath('/data/localhome/glerma/soft/AFQ'));
-addpath(genpath('/data/localhome/glerma/soft/RTP-pipeline'));
-addpath(genpath('/data/localhome/glerma/soft/vistasoft'));
+addpath(genpath('/data/localhome/lmx/TESTDATA/AFQ'));
+addpath(genpath('/data/localhome/lmx/TESTDATA/RTP-pipeline'));
+addpath(genpath('/data/localhome/lmx/TESTDATA/vistasoft'));
 addpath(genpath('/data/localhome/glerma/soft/spm8'));
 rmpath(genpath('/data/localhome/glerma/soft/spm8/toolbox/Beamforming'));
 rmpath(genpath('/data/localhome/glerma/soft/spm8/toolbox/DARTEL'));
@@ -25,7 +25,7 @@ addpath(genpath('/data/localhome/glerma/soft/app-life'));
 addpath(genpath('/data/localhome/glerma/soft/freesurfer_mrtrix_afni_matlab_tools'));
 
 
-mcc -m -R -nodisplay -a /data/localhome/glerma/soft/RTP-pipeline/afq/includeFiles -a /data/localhome/glerma/soft/encode/mexfiles -a /data/localhome/glerma/soft/vistasoft/mrDiffusion -a /data/localhome/glerma/soft/AFQ/templates/labelMaps -d compiled RTP.m
+mcc -m -R -nodisplay -a /data/localhome/lmx/TESTDATA/RTP-pipeline/afq/includeFiles -a /data/localhome/glerma/soft/encode/mexfiles -a /data/localhome/lmx/TESTDATA/vistasoft/mrDiffusion -a /data/localhome/lmx/TESTDATA/AFQ/templates/labelMaps -d compiled RTP.m
 
 exit
 END
