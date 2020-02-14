@@ -11,6 +11,12 @@ WORKDIR ${FLYWHEEL}
 # Because we're coming in from a Matlab-MCR we need to unset LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH ""
 
+RUN apt-get update --fix-missing \
+ && apt-get install -y wget bzip2 ca-certificates \
+      libglib2.0-0 libxext6 libsm6 libxrender1 \
+      git mercurial subversion curl grep sed dpkg gcc
+RUN apt-get install -y libxt6 libxcomposite1 libfontconfig1 libasound2
+
 ###########################
 # Configure neurodebian (https://github.com/neurodebian/dockerfiles/blob/master/dockerfiles/xenial-non-free/Dockerfile)
 RUN set -x \
