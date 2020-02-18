@@ -158,6 +158,7 @@ end
 % Load fiber group - Can be filename or the data
 if ischar(fg), fg = dtiLoadFiberGroup(fg); end
 % Set the directory where templates can be found
+%{
 tdir = fullfile(fileparts(which('mrDiffusion.m')), 'templates');
 % Initialize spm defualts for normalization
 
@@ -174,7 +175,7 @@ defaults.normalise.estimate.nits    = 16;
 defaults.normalise.estimate.reg     = 1;
 params = defaults.normalise.estimate;
 
-
+%}
 
 
 
@@ -212,18 +213,20 @@ for sub in doSubs:
 
 
 
+% commented by LMX, 14 FEB, we don't need normalization for SPM
 
+%{
 %% Register diffusion data to the MNI (ICBM) template
 template = fullfile(tdir,'MNI_JHU_T2.nii.gz');
 % Rescale image valueds to get better gray/white/CSF contrast
 alignIm = mrAnatHistogramClip(double(dt.b0),0.3,0.99);
 % Compute normalization
 
-% commented by LMX, 14 FEB, we don't need normalization for SPM
+
 [sn, Vtemplate, invDef] = mrAnatComputeSpmSpatialNorm(alignIm, dt.xformToAcpc, ...
                                                             template, params);
 % check the normalization
-%{
+
 mm = diag(chol(Vtemplate.mat(1:3,1:3)'*Vtemplate.mat(1:3,1:3)))';
 bb = mrAnatXformCoords(Vtemplate.mat,[1 1 1; Vtemplate.dim]);
 alignIm_sn = mrAnatResliceSpm(alignIm, sn, bb, [2 2 2], [1 1 1 0 0 0], 0);
@@ -235,7 +238,7 @@ im(:,:,:,3) = im(:,:,:,2);
 % alignment
 imwrite(makeMontage(im),fullfile(baseDir, 'SpatialNormalization.png'));
 %}
-
+%{
 %% Compute fiber group probabilities using the atlas proceedure of Hua.2008
 % Load the Mori atlas maps these are saved in nifti images
 moriTracts = readFileNifti(fullfile(tdir, Atlas));
@@ -243,6 +246,8 @@ moriTracts = readFileNifti(fullfile(tdir, Atlas));
 % we subtract 19 from 15 and 20 from 16.
 moriTracts.data(:,:,:,15) = moriTracts.data(:,:,:,15)-moriTracts.data(:,:,:,19);
 moriTracts.data(:,:,:,16) = moriTracts.data(:,:,:,16)-moriTracts.data(:,:,:,20);
+%}
+
 % Load the fiber group labels
 %labels = readTab(fullfile(tdir,'MNI_JHU_tracts_prob.txt'),',',false);
 %labels = labels(1:20,2);
@@ -282,7 +287,7 @@ if sum(cellfun(@length, fg.fibers)<5)~=0
     fg.fibers(cellfun(@length, fg.fibers)<5)=[];
 end
 
- 
+%{
 % Warp the fibers to the MNI standard space so they can be compared to the
 % template
 fg_sn = dtiXformFiberCoords(fg, invDef);
@@ -318,6 +323,8 @@ for(ii=1:sz(4))
     end
 end
 clear p fgCoords;
+%}
+
 
 %% Find fibers that pass through both waypoint ROIs eg. Wakana 2007
 %Warp Mori ROIs to individual space; collect candidates for each fiber
@@ -367,8 +374,7 @@ if useRoiBasedApproach
     fgCopy=fg; fgCopy.subgroup=[];
     for roiID=1:size(moriRois, 1)
         % Load the nifit image containing ROI-1 in MNI space
-		%% LMX: need to fix this hard code path for native space ROI
-       % find ROI location
+		% find ROI location
        RoiPara = load(dt6File);
        fs_dir = RoiPara.params.fs_dir;
        moridir = fullfile(fs_dir, 'MORI');
@@ -430,7 +436,7 @@ if useRoiBasedApproach
     % fp is the variable containing each fibers score for matching the
     % atlas. We will set each fibers score to 0 if it does not pass through
     % the necessary ROIs
-    
+    fp=ones(size(keep3'));
    
     fp(~(keep1'&keep2'&~keep3'))=0;
     %Also note: Tracts that cross through slf_t rois should be automatically
@@ -439,7 +445,8 @@ if useRoiBasedApproach
     fp(20, (keep1(:, 20)'&keep2(:, 20)'&~keep3(:, 20)'))=max(fp(:));
     
 end
-
+% temporarily
+sz(4)=20;
 %% Eliminate fibers that don't match any of the atlases very well
 % We have a set of atlas scores for each each fiber. To categorize the
 % fibers, we will find the atlas with the highest score (using 'sort').
