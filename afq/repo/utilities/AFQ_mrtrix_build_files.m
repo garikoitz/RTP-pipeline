@@ -54,9 +54,9 @@ files.csd = strcat(fname_trunk, sprintf('_csd_lmax%i.mif',lmax));
 
 % This was inside the if multishell before. Now create the 5tt files no matter what
     % Create tissue type segmentation to be used in multishell: 
-    files.tt5   = strcat(fname_trunk, '_5tt.mif');
-    files.gmwmi = strcat(fname_trunk, '_gmwmi.mif');
-
+        files.tt5   = strcat(fname_trunk, '_5tt.mif');
+        files.gmwmi = strcat(fname_trunk, '_gmwmi.mif');
+    
 % The same with this. It is recommended now that the response function is calculated
 % using dhollander function, so we need all
 % if multishell

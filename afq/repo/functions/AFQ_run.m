@@ -135,10 +135,12 @@ for ii = runsubs
     
     % If ANTS was used to compute a spatial normalization then load it for
     % this subject
-    antsInvWarp = AFQ_get(afq,'ants inverse warp',ii);
+    % EDIT GLU: no, delete this line
+    % antsInvWarp = AFQ_get(afq,'ants inverse warp',ii);
     
     %% Perform Whole Brain Streamlines Tractography
-    
+    % If required, it will be done in RTP_TractsGet()
+    %{
     %Check if there is a fibers directory, otherwise make one.
     fibDir = fullfile(sub_dirs{ii},'fibers');
     if ~exist(fibDir,'dir')
@@ -165,17 +167,121 @@ for ii = runsubs
         % Wholebrain fiber group needs to be loaded
         loadWholebrain = 1;
     end
-    
+    %}
+  
     %% Segment 20 Fiber Groups
     
     % Check if fiber group segmentation was already done
     if AFQ_get(afq, 'do segmentation',ii) == 1
         % Load the wholebrain fiber group if necessary
-        if loadWholebrain == 1
-            fg = AFQ_get(afq,'wholebrain fiber group',ii);
-        end
+        % if loadWholebrain == 1
+        %     fg = AFQ_get(afq,'wholebrain fiber group',ii);
+        % end
         % Segment fiber group
-        fg_classified = AFQ_SegmentFiberGroups(dtFile, fg, [], [],[], antsInvWarp);
+        % TODO: delete this line
+        % fg_classified = RTP_TractsGet(dtFile, fg, [], [],[], antsInvWarp);
+        
+        
+        
+        % NEW: 
+        % We need to obtain the information to populate this table from a json
+        % file or somewhere. It will have defaults. Right now leave it hardcoded
+        % for tests. 
+        moriRois=["ATR_roi1_L.nii.gz", "ATR_roi2_L.nii.gz", ""; ...
+                  "ATR_roi1_R.nii.gz", "ATR_roi2_R.nii.gz", ""; ...
+                  "CST_roi1_L.nii.gz", "CST_roi2_L.nii.gz", ""; ...
+                  "CST_roi1_R.nii.gz", "CST_roi2_R.nii.gz", ""; ...
+                  "CGC_roi1_L.nii.gz", "CGC_roi2_L.nii.gz", ""; ...
+                  "CGC_roi1_R.nii.gz", "CGC_roi2_R.nii.gz", ""; ...
+                  "HCC_roi1_L.nii.gz", "HCC_roi2_L.nii.gz", ""; ...
+                  "HCC_roi1_R.nii.gz", "HCC_roi2_R.nii.gz", ""; ...
+                  "FP_R.nii.gz"      , "FP_L.nii.gz"      , ""; ...
+                  "FA_L.nii.gz"      , "FA_R.nii.gz"      , ""; ...
+                  "IFO_roi1_L.nii.gz", "IFO_roi2_L.nii.gz", ""; ...
+                  "IFO_roi1_R.nii.gz", "IFO_roi2_R.nii.gz", ""; ...
+                  "ILF_roi1_L.nii.gz", "ILF_roi2_L.nii.gz", ""; ...
+                  "ILF_roi1_R.nii.gz", "ILF_roi2_R.nii.gz", ""; ...
+                  "SLF_roi1_L.nii.gz", "SLF_roi2_L.nii.gz", ""; ...
+                  "SLF_roi1_R.nii.gz", "SLF_roi2_R.nii.gz", ""; ...
+                  "UNC_roi1_L.nii.gz", "UNC_roi2_L.nii.gz", ""; ...
+                  "UNC_roi1_R.nii.gz", "UNC_roi2_R.nii.gz", ""; ...
+                  "SLF_roi1_L.nii.gz", "SLFt_roi2_L.nii.gz", ""; ...
+                  "SLF_roi1_R.nii.gz", "SLFt_roi2_R.nii.gz", ""];
+        labels = ["Left Thalamic Radiation","Right Thalamic Radiation", ...
+                  "Left Corticospinal","Right Corticospinal", ...
+                  "Left Cingulum Cingulate", "Right Cingulum Cingulate", ...
+                  "Left Cingulum Hippocampus","Right Cingulum Hippocampus", ...
+                  "Callosum Forceps Major", "Callosum Forceps Minor", ...
+                  "Left IFOF","Right IFOF", ...
+                  "Left ILF","Right ILF", ...
+                  "Left SLF","Right SLF", ...
+                  "Left Uncinate","Right Uncinate", ...
+                  "Left Arcuate","Right Arcuate"]'; 
+        slabels = ["LTR","RTR", "LCST","RCST", ...
+                  "LCC", "RCC", "LCH","RCH", ...
+                  "CFM", "CFMr", "LIFOF","RIFO", ...
+                  "LILF","RILF", "LSLF","RSLF", ...
+                  "LUF","RUF", "LAF","RAF"]'; 
+        nhlabels = ["TR","TR", "CST","CST", ...
+                    "CC", "CC", "CH","CH", ...
+                    "CFMAJ", "CFMIN", "IFOF","IFO", ...
+                    "ILF","ILF", "SLF","SLF", ...
+                    "UF","UF", "AF","AF"]'; 
+        tracts           = table();
+        tracts.roi1      = moriRois(:,1);
+        tracts.roi2      = moriRois(:,2);
+        tracts.roi3      = moriRois(:,3);
+        tracts.label     = labels;
+        tracts.hemi      = repmat(["Left","Right"]',[length(labels)/2,1]);
+        tracts.slabel    = slabels;
+        tracts.shemi     = repmat(["L","R"]',[length(labels)/2,1]);
+        tracts.nhlabel   = nhlabels;
+        tracts.wbt       = repmat(true,[length(labels),1]);
+        tracts.usecortex = repmat(false,[length(labels),1]);
+        tracts.quiet     = repmat("-quiet",[length(labels),1]);
+        tracts.force     = repmat("-force",[length(labels),1]);
+        tracts.maxlen    = repmat(200,[length(labels),1]);
+        tracts.cmaxlen   = strcat("-maxlength ",num2str(tracts.maxlen));
+        tracts.minlen    = repmat(10,[length(labels),1]);
+        tracts.cminlen   = strcat("-minlength ",num2str(tracts.minlen));
+        % Codify all options in the tract name? Or in a folder?
+        tracts.fname     = strcat(tracts.slabel,".tck");
+        tracts.cfname    = strcat(tracts.slabel,"_clean.tck");
+        tracts.fdir      = repmat("/Volumes/group/users/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output/AFQ/dticsd/mrtrix",[length(labels),1]);
+        tracts.fpath     = strcat(tracts.fdir,filesep,tracts.fname);
+        tracts.cfpath    = strcat(tracts.fdir,filesep,tracts.cfname);
+        tracts.clean     = repmat(true,[length(labels),1]);
+        tracts.nfibers   = zeros(size(labels));
+        tracts.cnfibers  = zeros(size(labels));
+
+        
+        % Obtain the segmented tracts. 
+        % In the new version:
+        %   - Uses mrtrix tools for the tracking/segmentation
+        %   - If requested, it will return cleaned fibers. 
+        %   - It saves everything to disk. We can do a cleaning routine at the
+        %     end if required. 
+        %   - It will save clip to roi == 1 and 0 files to disk, but 
+        
+        fg_classified = RTP_TractsGet(dtFile, afq, tracts);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         % Save segmented fiber group
         dtiWriteFiberGroup(fg_classified, fullfile(fibDir,segName));
         % If the full trajectory of each fiber group will be analyzed (eg.
@@ -201,7 +307,9 @@ for ii = runsubs
     clear dtFile fgFile
     
     %% Remove fiber outliers from each fiber tract so it is a compact bundle    
+    % Now this is done in RTP_TractsGet
     
+    %{
     % Run AFQ cleaning proceedure if it is called for in
     % afq.params.cleanFibers and if has not yet been done
     if afq.params.cleanFibers == 1 && AFQ_get(afq, 'do cleaning', ii) == 1
@@ -257,7 +365,7 @@ for ii = runsubs
         fg_classified = AFQ_get(afq, 'cleaned fibers',ii);
         fg_classified = dtiFgArrayToFiberGroup(fg_classified, AFQ_get(afq,'cleanfgname',ii));  
     end
-    
+    %}
     %% Compute Tract Profiles
     
     if AFQ_get(afq,'compute profiles',ii)

@@ -3,7 +3,8 @@ function [status,results] = AFQ_mrtrix_response(files, ...
                                                  bkgrnd,  ...
                                                  lmax, ...
                                                  verbose, ...
-                                                 mrtrixVersion)
+                                                 mrtrixVersion, ...
+                                                 force)
 % Calculate the fiber response function utilized by MRtrix for the spherical
 % deconvolution analysis.
 %
@@ -27,10 +28,11 @@ function [status,results] = AFQ_mrtrix_response(files, ...
 % Garikoitz Lerma-Usabiaga, Stanford University 2019
 
 
-if notDefined('verbose'),             verbose = true;end
-if notDefined('bkgrnd'),               bkgrnd = false;end
-if notDefined('lmax'),                   lmax = 6; end
-if notDefined('mrtrixVersion'), mrtrixVersion = 3;end
+if notDefined('verbose')      , verbose       = true ; end
+if notDefined('bkgrnd')       , bkgrnd        = false; end
+if notDefined('lmax')         , lmax          = 6    ; end
+if notDefined('mrtrixVersion'), mrtrixVersion = 3    ; end
+if notDefined('force')        , force         = true ; end
 
 
 % D TOurnier recommends here using the MS even for single shell
@@ -46,7 +48,14 @@ if notDefined('mrtrixVersion'), mrtrixVersion = 3;end
 % dhollander to calculate the response function
 
 % Build the generic cmd_str that will always be applied
-cmd_str = ['dwi2response dhollander -force ' ...
+if force
+    f = '-force';
+else
+    f = '';
+end
+
+cmd_str = ['dwi2response dhollander ' ...
+                          f ' ' ...
                           files.dwi ' ' ...
                           files.wmResponse  ' ' ...
                           files.gmResponse  ' ' ...

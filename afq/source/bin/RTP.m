@@ -68,6 +68,8 @@ jsonargs = ['{"input_dir" :' ...
 
 jsonargs = ['{"params"    : ' ...
             '"/black/localhome/glerma/soft/RTP-pipeline/example_output.json"}'] 
+
+jsonargs = "/Volumes/group/users/glerma/TESTDATA/FS/paramsMBP.json";
 RTP(jsonargs);
 %}
 %
@@ -91,9 +93,8 @@ disp(jsonargs)
 
 
 
-if exist('jsonargs', 'var') && ~isempty(jsonargs);
-    P = loadjson(jsonargs);
-
+if exist('jsonargs', 'var') && ~isempty(jsonargs)
+    P = jsondecode(fileread(jsonargs));
 end
 
 %% Parse the params and setup the AFQ structure
@@ -108,7 +109,7 @@ end
 %}
 P
 %% Configure inputs and defaults
-input_dir = P.input_dir;
+input_dir  = P.input_dir;
 output_dir = P.output_dir;
 if notDefined('input_dir')
     if exist('/input', 'dir')
@@ -186,13 +187,14 @@ end
 % now but we will substitute it
 % Variable names might need adjusting
 
-%% copy input files to output/AFQ/
+%% Copy input files to output/AFQ/
 if(~exist(fullfile(P.output_dir,'AFQ'),'dir'));mkdir(fullfile(P.output_dir,'AFQ'));end
-copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'AFQ/'));
-copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'AFQ/'));
-copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'AFQ/'));
-copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'AFQ/'));
-copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'AFQ/'));
+if(~exist(fullfile(P.output_dir,'AFQ/t1.nii.gz')));copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'AFQ/t1.nii.gz'));end
+if(~exist(fullfile(P.output_dir,'AFQ/dwi.bvecs')));copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'AFQ/'));end
+if(~exist(fullfile(P.output_dir,'AFQ/dwi.bvals')));copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'AFQ/'));end
+if(~exist(fullfile(P.output_dir,'AFQ/dwi.nii.gz')));copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'AFQ/'));end
+if(~exist(fullfile(P.output_dir,'AFQ/aparc+aseg.nii.gz')));copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'AFQ/'));end
+
 J.aparcaseg_file = fullfile(P.output_dir,'AFQ','aparc+aseg.nii.gz');
 J.t1_file = fullfile(P.output_dir,'AFQ', 't1.nii.gz');
 J.bvec_file = fullfile(P.output_dir,'AFQ', 'dwi.bvecs');
@@ -256,7 +258,7 @@ dlmwrite(J.bval_file, roundedBval, 'delimiter',' ');
 
 
 
-%% Run dtiInit
+%% Run (the equivalent ) dtiInit
 % From 3.0.5 onwards I am forking dtiInit and giving it less
 % functionalities. I will remove the tensor fitting and do it with mrTrix,
 % it is much faster and the rest of the code relies in it anyways. 

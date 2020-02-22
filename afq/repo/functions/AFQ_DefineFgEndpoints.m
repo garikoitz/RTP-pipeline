@@ -102,12 +102,17 @@ if ~exist('invDef','var') || isempty(invDef)
 end
 % Get the AFQ base directory
 AFQbase = AFQ_directories;
+
+% GLU: we want to remove the templates, all templating should be done in FS gear
+% and select the best template for the task there. 
+% Remove and fix the errors (then delete)
+
 % Template directory
-tdir = fullfile(AFQbase,'templates','labelMaps');
+% tdir = fullfile(AFQbase,'templates','labelMaps');
 % Path to the template
-Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz');
+% Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz');
 % Load the template
-Timg = readFileNifti(Tpath);
+% Timg = readFileNifti(Tpath);
 
 %% Reorient the fibers within each suplied fiber group
 % Pre allocate variables

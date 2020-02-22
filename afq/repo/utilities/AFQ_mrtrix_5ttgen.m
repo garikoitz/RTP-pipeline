@@ -4,7 +4,8 @@ function [status, results] = AFQ_mrtrix_5ttgen(input_file, ...
                                                   bkgrnd, ...
                                                   verbose, ...
                                                   mrtrixVersion,...
-                                                  tool) 
+                                                  tool, ...
+                                                  force) 
 %
 % Convert a nifti image to a mrtrix .mif image.
 % Do this: 5ttgen fsl T1.mif 5tt.mif
@@ -20,6 +21,13 @@ if notDefined('bkgrnd'),  bkgrnd  = false;end
 if notDefined('verbose'), verbose = true; end
 if notDefined('mrtrixVersion'), mrtrixVersion = 3; end
 if notDefined('tool'), tool = 'fsl'; end
+if notDefined('force'), force = false; end
+
+if force
+    f = '-force';
+else
+    f='';
+end
 
 % There were problems in the cluster with the /tmp directory, and there
 % have been reports with the same problems. Just in case use a tmp dir in
@@ -32,13 +40,13 @@ if ~exist(tmpDir, 'dir'), mkdir(tmpDir), end
 
 % fsl or freesurfer can be selected
 if strcmp(tool, 'fsl')
-    cmd_str = ['5ttgen fsl -force ' ...
+    cmd_str = ['5ttgen fsl ' f '  ' ...
                input_file ' ' ...
                tt5_filename ' ' ...
                '-nocrop -tempdir ' tmpDir];
 else
     lutPath = flutlocation();
-    cmd_str = ['5ttgen freesurfer -force ' ...
+    cmd_str = ['5ttgen freesurfer ' f ' ' ...
                '-lut ' lutPath ' ' ...
                input_file   ' ' ...
                tt5_filename ' ' ...
@@ -53,7 +61,8 @@ end
                               
 
 % Create the seed with this 5tt2gmwmi
-cmd_str   = ['5tt2gmwmi -force ' tt5_filename  ' ' gmwmi_filename ];
+
+cmd_str   = ['5tt2gmwmi ' f ' ' tt5_filename  ' ' gmwmi_filename ];
 AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose, mrtrixVersion)
 
 

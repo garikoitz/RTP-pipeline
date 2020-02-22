@@ -27,6 +27,9 @@ function afq = AFQ_Create(varargin)
 
 %% Define the type of structure
 afq.type = 'afq version 1';
+
+afq.force = false;
+
 %% Names of all the fiber groups
 afq.fgnames = {'Left Thalamic Radiation','Right Thalamic Radiation','Left Corticospinal','Right Corticospinal', 'Left Cingulum Cingulate', 'Right Cingulum Cingulate'...
     'Left Cingulum Hippocampus','Right Cingulum Hippocampus', 'Callosum Forceps Major', 'Callosum Forceps Minor'...
@@ -361,7 +364,8 @@ if true
                                afq.software.mrtrixVersion, ...
                                afq.params.track.multishell, ... % true/false
                                afq.params.track.tool, ... % 'fsl', 'freesurfer'
-                               afq.params.track.faMaskThresh);
+                               afq.params.track.faMaskThresh, ...
+                               afq.force);
         % In order to not modify much the previous code, I created new
         % files types. 
         % In mrTrix2 and mrTrix3 not-multishell, files.wm was the wm mask,
@@ -395,7 +399,9 @@ if true
         binfiles.fa        = fullfile(bindir,'fa.nii.gz');
         
         % use a series of AFQ_mrtrix_convert-s for this
-        AFQ_mrtrix_mrconvert(files.b0, binfiles.b0,0,0,afq.software.mrtrixVersion);
+        if exist(binfiles.b0,'file') && afq.force == false
+            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+        else; AFQ_mrtrix_mrconvert(files.b0, binfiles.b0,0,0,afq.software.mrtrixVersion);end
         % The b0 coming from mrtrix has multiple volumes, and I think
         % mrDiffusion is expecting a single volume, obtain the mean here
         A       = niftiRead(binfiles.b0); % Reading nifti created by mrtrix
@@ -405,10 +411,23 @@ if true
         A.pixdim= A.pixdim(1:3);
         niftiWrite(A);
         % Continue with the rest of conversions
-        disp('Here the conversion of mif files to /bin/*.nii.gz-s is done');
-        AFQ_mrtrix_mrconvert(files.brainmask, binfiles.brainmask,0,0,afq.software.mrtrixVersion); 
-        AFQ_mrtrix_mrconvert(files.wmMask, binfiles.wmMask,0,0,afq.software.mrtrixVersion); 
-        AFQ_mrtrix_mrconvert(files.dt, binfiles.tensors,0,0,afq.software.mrtrixVersion); 
+        % disp('Here the conversion of mif files to /bin/*.nii.gz-s is done');
+        if exist(binfiles.brainmask,'file') && afq.force == false
+            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+        else; AFQ_mrtrix_mrconvert(files.brainmask, binfiles.brainmask,0,0,afq.software.mrtrixVersion); end
+        
+        if exist(binfiles.wmMask,'file') && afq.force == false
+            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+        else; AFQ_mrtrix_mrconvert(files.wmMask, binfiles.wmMask,0,0,afq.software.mrtrixVersion); end
+        
+        if exist(binfiles.tensors,'file') && afq.force == false
+            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+        else; AFQ_mrtrix_mrconvert(files.dt, binfiles.tensors,0,0,afq.software.mrtrixVersion); end
+        
+        if exist(binfiles.fa,'file') && afq.force == false
+            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+        else; AFQ_mrtrix_mrconvert(files.fa, binfiles.fa,0,0,afq.software.mrtrixVersion);  end
+        
         % In order to make the rest of the flow work well, we will modify the
         % tensor file to be the same mrDiffusion is expecting
         B       = niftiRead(binfiles.tensors); % Reading nifti created by mrtrix
@@ -422,8 +441,7 @@ if true
         B.ndim  = length(B.dim);
         B.pixdim= [B.pixdim, 1];
         niftiWrite(B);
-        % Write the FA values as well
-        AFQ_mrtrix_mrconvert(files.fa, binfiles.fa,0,0,afq.software.mrtrixVersion); 
+        
     end
 end
          

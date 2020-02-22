@@ -1,10 +1,11 @@
-function [fg_classified,fg_unclassified,classification,fg]=RTP_SegmentFiberGroups(...
+function [fg_classified,fg_unclassified,classification,fg]=RTP_TractsGet(...
                                                    dt6File, ...
-                                                   fg, ...
-                                                   Atlas, ...
-                                                   useRoiBasedApproach, ...
-                                                   useInterhemisphericSplit, ...
-                                                   antsInvWarp)
+                                                   afq, ...
+                                                   tracts) % , ...
+                                                   % Atlas, ...
+                                                   % useRoiBasedApproach, ...
+                                                   % useInterhemisphericSplit, ...
+                                                   % antsInvWarp)
 % Categorizes each fiber in a group into one of the 20 tracts defined in
 % the Mori white matter atlas. 
 %
@@ -111,35 +112,7 @@ function [fg_classified,fg_unclassified,classification,fg]=RTP_SegmentFiberGroup
 % (c) Vistalab
 
 %% Check arguments
-
-if ~exist('useInterhemisphericSplit', 'var') || isempty(useInterhemisphericSplit)
-    useInterhemisphericSplit=true;
-end
-
-if ~exist('useRoiBasedApproach', 'var')|| isempty(useRoiBasedApproach)
-    useRoiBasedApproach=true;
-end
-% Decide on the recomputeROI condition
-if useRoiBasedApproach==false,         recomputeROIs = false;
-elseif length(useRoiBasedApproach)<2,  recomputeROIs = 1;
-else                                   recomputeROIs = useRoiBasedApproach(2);
-end
-if recomputeROIs
-    disp('You chose to recompute ROIs');
-end
-%E.g., to avoid recomputing  ROIs and use minDist of 4mm one would pass [useRoiBasedApproach=[4 0]];
-if isnumeric(useRoiBasedApproach)
-    minDist=useRoiBasedApproach(1);
-    useRoiBasedApproach='true';
-else
-    minDist=.89;  % GLU: there was a 2 here; % default is .89;
-end
-disp(['Fibers that get as close to the ROIs as ' num2str(minDist) 'mm will become candidates for the Mori Groups']);
-% This is left as an option in case an updated atlas is released
-if(~exist('Atlas','var') || isempty(Atlas))
-    %Default scenario: use original Mori Atlas
-    Atlas='MNI_JHU_tracts_prob.nii.gz';
-end
+disp(['[RTP_TractsGet] Using MORI ROIs to select fibers from whole brain tractogram']);
 
 %% Read the data
 % Load the dt6 file
@@ -151,44 +124,195 @@ else
     baseDir = fileparts(dt.dataFile);
     dt6File = dt.dataFile;
 end
+
+
+% TODO: remove the whole brain tracking from the AFQ_Create and do it here. 
+% We might have created the other CSD and other stuff, but we can do tracking
+% here.
+
+
+% TODO: substitute this. The WBT will only be done here. 
+if sum(tracts.wbt) > 0
+    fprintf('\nPerforming whole-brain tractograpy\n');
+    fg = AFQ_WholebrainTractography(dt, afq.params.run_mode, afq);
+    % Save fiber group to fibers directory
+    dtiWriteFiberGroup(fg,fullfile(fibDir,'WholeBrainFG.mat'));
+    % Set the path to the fibers in the afq structure
+    afq = AFQ_set(afq,'wholebrain fg path','subnum',ii,fullfile(fibDir,'WholeBrainFG.mat'));
+
+
+
+
+end
 % Track wholebrain fiber group if one was not passed in
 if ~exist('fg','var') || isempty(fg)
     fg = AFQ_WholebrainTractography(dt);
 end
 % Load fiber group - Can be filename or the data
 if ischar(fg), fg = dtiLoadFiberGroup(fg); end
-% Set the directory where templates can be found
-tdir = fullfile(fileparts(which('mrDiffusion.m')), 'templates');
 
 
-% This is hte code I used in python for ANTs in 2016
-%{
-print "Register all images to MNI T1 of the Krauth atlas \n\n"
-os.chdir(SUBJECTS_DIRacpc)
-for sub in doSubs: 
-    mriDir = join(SUBJECTS_DIRacpc, sub, 'mri')
-    path2atlas = '/bcbl/home/public/Gari/Atlas_Krauth/MorelAtlasMNI152'
 
-    opDir=join(mriDir,'KrauthMorel')
-    if not os.path.isdir(opDir):
-        os.mkdir(opDir)
-    os.chdir(opDir)
+% Start simple, with the existing tracts that we only want to do the tckedit
+for roiID=1:height(tracts)
+    % Mount all the components of the call based on the options in tracts table
+    ts = tracts(roiID,:);
+    % Add the path
+    RoiPara = load(dt6File);
+    fs_dir  = RoiPara.params.fs_dir;
+    moridir = fullfile(fs_dir, 'MORI');
+    roi1    = fullfile(moridir, strcat("MORI_",ts.roi1));
+    roi2    = fullfile(moridir, strcat("MORI_",ts.roi2));
+    roi3    = "";
+    if ~strcmp(ts.roi3,"");join("-include", fullfile(moridir, strcat("MORI_",ts.roi3)));end
     
-    fixedImage   = join(mriDir, 'brainmask.nii.gz ')
-    fixedMask    = join(mriDir,'binbrainmask.nii.gz ')
-    movingImage  = join(path2atlas, 'MNI152_T1_1mm.nii.gz')
-    movingMask   = join(path2atlas, 'MNI152mask.nii.gz')
+    
+    % The most important is wbt (whole brain tractography), whether we want to
+    % use it or track the tract ourselves (ex OR)
+    if ts.wbt
+        % Select the tracts that go in to tckedit
+       tracks_in = fullfile(char(ts.fdir),[fg.name '.tck']);
+       cmd       = join([ "tckedit", ts.quiet, ts.force, ...
+                    "-include",roi1, "-include",roi2, roi3, ...
+                    ts.cmaxlen, ts.cminlen, ...
+                    tracks_in, ts.fpath]);
+       spres     = system(cmd);
+       % Make it readable and writeable
+       fileattrib(ts.fpath, '+w +x') 
+       % Read the tract, we want to have the same fg struct as before
+       track = fgRead(ts.fpath);
+       
+       
+       
+       
+    else
+        %         cmd       = join([ "tckgen", ts.quiet, ts.force, ...
+        %                     "-include",roi1, "-include",roi2, roi3, ...
+        %                     ts.cmaxlen, ts.cminlen, ...
+        %                     tracks_in, ts.fpath]);
+        %        spres     = system(cmd);
+    end
+    % Update the value of the number of fibers
+    ts.nfibers = size(track.fibers,1);
+    % If requested, clean it here
+    if ts.clean && ts.nfibers>10
+       clean_track = AFQ_removeFiberOutliers(track,maxDist,maxLen,100,'median',1,maxIter);
 
-    cmd = str('antsRegistration -d 3 -v 0 ' +
-              '-o ['+join(opDir,'ants,')+join(opDir,'antsWarped.nii.gz,')+join(opDir,'antsInverseWarped.nii.gz')+'] '+
-              '-r ['+ fixedMask+','+movingMask+','+'1] ' +
-              '-t SyN[0.1,3,0] ' +
-              '-c [100x75x20x0,0,10] ' +
-              '-m CC['+fixedImage+','+movingImage+',1,4] '+
-              '-f 4x3x2x1 '+
-              '-s 1x1x0x0 '+
-              '-x ['+fixedMask+','+movingMask+']')
-    spcmdcall = sp.call(cmd, shell=True) 
+       fgWrite(clean_track, tracks_cleaned,'tck');
+       fileattrib(tracks_cleaned, '+w +x') % make it readable and writeable
+        % Update the value of the number of fibers
+        ts.nfibers = size(track.fibers,1);    
+    end
+    
+    
+    
+    
+    % Update the table, maybe we updated some of the fields (e.g. nfibers)
+    tracts(roiID,:) = ts;
+    
+end
+
+
+
+fg_clean = fg2Array(fg_classified);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Load the fiber group labels
+%labels = readTab(fullfile(tdir,'MNI_JHU_tracts_prob.txt'),',',false);
+%labels = labels(1:20,2);
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% If you wanted to inverse-normalize the maps to this subject's brain:
+% invDef.outMat = moriTracts.qto_ijk;
+% bb = mrAnatXformCoords(dt.xformToAcpc,[1 1 1; size(dt.b0)]);
+% tprob = mrAnatResliceSpm(tprob, invDef, bb, dt.mmPerVoxel, [1 1 1 0 0 0]);
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+% Cut the fibers below the acpc plane, to disentangle CST & ATL crossing 
+% at the level of the pons
+if useInterhemisphericSplit
+    fgname  = fg.name;
+    fg      = dtiSplitInterhemisphericFibers(fg, dt, -10);
+    fg.name = fgname;
+end
+% Throw out fibers that are too short to span between two ROIs
+if sum(cellfun(@length, fg.fibers)<5)~=0
+    if isfield(fg, 'subgroup')&&~isempty(fg.subgroup)
+        fg.subgroup(cellfun(@length, fg.fibers)<5)=[];
+    end
+    if isfield(fg, 'seeds')&&~isempty(fg.seeds)
+        fg.seeds(cellfun(@length, fg.fibers)<5, :)=[];
+    end
+    fg.fibers(cellfun(@length, fg.fibers)<5)=[];
+end
+
+%{
+% Warp the fibers to the MNI standard space so they can be compared to the
+% template
+fg_sn = dtiXformFiberCoords(fg, invDef);
+
+% moriTracts.data is a an XxYxZx20 array contianing the 20 Mori probability
+% atlases (range is 0-100 where 100 represents p(1)).
+sz = size(moriTracts.data);
+% fg_sn fiber coords are in MNI space- now convert them to atlas space by
+% applying the affine xform from the atlas NIFTI header. Since the atlas is
+% already in MNI space, this transform will just account for any
+% translation and scale differences between the atlas maps and the MNI
+% template used to compute our sn.
+fgCoords = mrAnatXformCoords(moriTracts.qto_ijk, horzcat(fg_sn.fibers{:}));
+clear fg_sn;   % what we need from fg_sn is now stored in fgCoords
+fgLen = cellfun('size',fg.fibers,2);
+
+% Now loop over the 20 atlases and get the atlas probability score for each
+% fiber point. We collapse the scores across all points in a fiber by taking
+% the mean. Below, we will use these 20 mean scores to categorize the fibers.
+% TO DO: consider doing something more sophisticated than taking the mean.
+fp = zeros(sz(4),numel(fg.fibers));
+for(ii=1:sz(4))
+    % Get the Mori atlas score for each point in the fibers using
+    % trilinear interpolation.
+    p = myCinterp3(double(moriTracts.data(:,:,:,ii))/100, sz([1,2]), sz(3), fgCoords(:,[2,1,3]));
+    % The previous line interpolated one giant array with all fiber points
+    % concatenated. The next loop will separate the coordinates back into
+    % fibers and take the mean score for the points within each fiber.
+    fiberCoord = 1;
+    for(jj=1:numel(fg.fibers))
+        fp(ii,jj) = nanmean(p([fiberCoord:fiberCoord+fgLen(jj)-1]));
+        fiberCoord = fiberCoord+fgLen(jj);
+    end
+end
+clear p fgCoords;
 %}
 
 
@@ -209,29 +333,11 @@ for sub in doSubs:
 if useRoiBasedApproach 
     % A 20x2 cell array containing the names of both waypoint ROIs for each
     % of 20 fiber groups
-    moriRois={'ATR_roi1_L.nii.gz', 'ATR_roi2_L.nii.gz'; ...
-              'ATR_roi1_R.nii.gz', 'ATR_roi2_R.nii.gz'; ...
-              'CST_roi1_L.nii.gz', 'CST_roi2_L.nii.gz'; ...
-              'CST_roi1_R.nii.gz', 'CST_roi2_R.nii.gz'; ...
-              'CGC_roi1_L.nii.gz', 'CGC_roi2_L.nii.gz'; ...
-              'CGC_roi1_R.nii.gz', 'CGC_roi2_R.nii.gz'; ...
-              'HCC_roi1_L.nii.gz', 'HCC_roi2_L.nii.gz'; ...
-              'HCC_roi1_R.nii.gz', 'HCC_roi2_R.nii.gz'; ...
-              'FP_R.nii.gz'      , 'FP_L.nii.gz'      ; ...
-              'FA_L.nii.gz'      , 'FA_R.nii.gz'      ; ...
-              'IFO_roi1_L.nii.gz', 'IFO_roi2_L.nii.gz'; ...
-              'IFO_roi1_R.nii.gz', 'IFO_roi2_R.nii.gz'; ...
-              'ILF_roi1_L.nii.gz', 'ILF_roi2_L.nii.gz'; ...
-              'ILF_roi1_R.nii.gz', 'ILF_roi2_R.nii.gz'; ...
-              'SLF_roi1_L.nii.gz', 'SLF_roi2_L.nii.gz'; ...
-              'SLF_roi1_R.nii.gz', 'SLF_roi2_R.nii.gz'; ...
-              'UNC_roi1_L.nii.gz', 'UNC_roi2_L.nii.gz'; ...
-              'UNC_roi1_R.nii.gz', 'UNC_roi2_R.nii.gz'; ...
-              'SLF_roi1_L.nii.gz', 'SLFt_roi2_L.nii.gz'; ...
-              'SLF_roi1_R.nii.gz', 'SLFt_roi2_R.nii.gz'};
+
     % Make an ROI for the mid saggital plane
     midSaggitalRoi= dtiRoiMakePlane([0, dt.bb(1, 2), dt.bb(1, 3); 0 , dt.bb(2, 2) , dt.bb(2, 3)], 'midsaggital', 'g');
-    keep1=zeros(length(fg.fibers), size(moriRois, 1)); keep2=zeros(length(fg.fibers), size(moriRois, 1));
+    keep1=zeros(length(fg.fibers), size(moriRois, 1)); 
+    keep2=zeros(length(fg.fibers), size(moriRois, 1));
     % Find fibers that cross mid saggital plane
     [fgOut, contentiousFibers, InterHemisphericFibers] = dtiIntersectFibersWithRoi([], 'not', [], midSaggitalRoi, fg); 
     %NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
@@ -240,41 +346,55 @@ if useRoiBasedApproach
     fgCopy=fg; fgCopy.subgroup=[];
     for roiID=1:size(moriRois, 1)
         % Load the nifit image containing ROI-1 in MNI space
-        ROI_img_file=fullfile(tdir, 'MNI_JHU_tracts_ROIs',  [moriRois{roiID, 1}]);
+		% find ROI location
+       RoiPara = load(dt6File);
+       fs_dir = RoiPara.params.fs_dir;
+       moridir = fullfile(fs_dir, 'MORI');
+       ROI_img_file=fullfile(moridir, ['MORI_' moriRois{roiID, 1}]);
         % Transform ROI-1 to an individuals native space
-        if recomputeROIs
-            % Default is to use the spm normalization unless a superior
-            % ANTS normalization was passed in
-            if exist('antsInvWarp','var') && ~isempty(antsInvWarp)
-                outfile = fullfile(fileparts(dt6File),'ROIs',moriRois{roiID, 1});
-                roi1(roiID) = ANTS_CreateRoiFromMniNifti(ROI_img_file, antsInvWarp, [], outfile);
-            else
-                [RoiFileName, invDef, roi1(roiID)]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
-            end
-        else
-            RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(ROI_img_file, 'short'), 'short') '.mat']);
-            roi1(roiID) = dtiReadRoi(RoiFileName);  
-        end
+%         if recomputeROIs
+%             % Default is to use the spm normalization unless a superior
+%             % ANTS normalization was passed in
+%             if exist('antsInvWarp','var') && ~isempty(antsInvWarp)
+%                 outfile = fullfile(fileparts(dt6File),'ROIs',moriRois{roiID, 1});
+%                 roi1(roiID) = ANTS_CreateRoiFromMniNifti(ROI_img_file, antsInvWarp, [], outfile);
+%             else
+%                 [RoiFileName, invDef, roi1(roiID)]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
+%             end
+%         else
+%             RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(ROI_img_file, 'short'), 'short') '.mat']);
+%            roi1(roiID) = dtiReadRoi(RoiFileName);  
+             RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(moriRois{roiID, 1}, 'short'), 'short') '.mat']);
+             roi1(roiID) = dtiImportRoiFromNifti(ROI_img_file);
+             if ~exist(fullfile(fileparts(dt6File), 'ROIs'), 'dir')
+                 mkdir(fullfile(fileparts(dt6File), 'ROIs'))
+             end
+             dtiWriteRoi(roi1(roiID), RoiFileName)
+%        end
         % Find fibers that intersect the ROI
         [fgOut,contentiousFibers, keep1(:, roiID)] = dtiIntersectFibersWithRoi([], 'and', minDist, roi1(roiID), fg);
         keepID1=find(keep1(:, roiID));
         % Load the nifit image containing ROI-2 in MNI space
-        ROI_img_file=fullfile(tdir, 'MNI_JHU_tracts_ROIs',  [moriRois{roiID, 2}]);
-        % Transform ROI-2 to an individuals native space
-        if recomputeROIs
-            [RoiFileName, invDef, roi]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
-            % Default is to use the spm normalization unless a superior
-            % ANTS normalization was passed in
-            if exist('antsInvWarp','var') && ~isempty(antsInvWarp)
-                outfile = fullfile(fileparts(dt6File),'ROIs',moriRois{roiID, 2});
-                roi2(roiID) = ANTS_CreateRoiFromMniNifti(ROI_img_file, antsInvWarp, [], outfile);
-            else
-                [RoiFileName, invDef, roi2(roiID)]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
-            end   
-        else
-            RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(ROI_img_file, 'short'), 'short') '.mat']);
-            roi2(roiID) = dtiReadRoi(RoiFileName);
-        end
+         ROI_img_file=fullfile(moridir, ['MORI_', moriRois{roiID, 2}]);
+
+%         % Transform ROI-2 to an individuals native space
+%         if recomputeROIs
+%             [RoiFileName, invDef, roi]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
+%             % Default is to use the spm normalization unless a superior
+%             % ANTS normalization was passed in
+%             if exist('antsInvWarp','var') && ~isempty(antsInvWarp)
+%                 outfile = fullfile(fileparts(dt6File),'ROIs',moriRois{roiID, 2});
+%                 roi2(roiID) = ANTS_CreateRoiFromMniNifti(ROI_img_file, antsInvWarp, [], outfile);
+%             else
+%                 [RoiFileName, invDef, roi2(roiID)]=dtiCreateRoiFromMniNifti(dt6File, ROI_img_file, invDef, true);
+%             end   
+%         else
+%             RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(ROI_img_file, 'short'), 'short') '.mat']);
+%            roi2(roiID) = dtiReadRoi(RoiFileName);
+             roi2(roiID) = dtiImportRoiFromNifti(ROI_img_file);
+             RoiFileName=fullfile(fileparts(dt6File), 'ROIs',  [prefix(prefix(moriRois{roiID, 2}, 'short'), 'short') '.mat']);
+             dtiWriteRoi(roi1(roiID), RoiFileName)
+%        end
         %To speed up the function, we intersect with the second ROI not all the
         %fibers, but only those that passed first ROI.
         fgCopy.fibers=fg.fibers(keepID1(keepID1>0));
@@ -288,13 +408,17 @@ if useRoiBasedApproach
     % fp is the variable containing each fibers score for matching the
     % atlas. We will set each fibers score to 0 if it does not pass through
     % the necessary ROIs
+    fp=ones(size(keep3'));
+   
     fp(~(keep1'&keep2'&~keep3'))=0;
     %Also note: Tracts that cross through slf_t rois should be automatically
     %classified as slf_t, without considering their probs.
     fp(19, (keep1(:, 19)'&keep2(:, 19)'&~keep3(:, 19)'))=max(fp(:));
     fp(20, (keep1(:, 20)'&keep2(:, 20)'&~keep3(:, 20)'))=max(fp(:));
+    
 end
-
+% temporarily
+sz(4)=20;
 %% Eliminate fibers that don't match any of the atlases very well
 % We have a set of atlas scores for each each fiber. To categorize the
 % fibers, we will find the atlas with the highest score (using 'sort').
