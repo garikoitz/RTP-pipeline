@@ -413,34 +413,36 @@ if true
         % Continue with the rest of conversions
         % disp('Here the conversion of mif files to /bin/*.nii.gz-s is done');
         if exist(binfiles.brainmask,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.b0);
         else; AFQ_mrtrix_mrconvert(files.brainmask, binfiles.brainmask,0,0,afq.software.mrtrixVersion); end
         
         if exist(binfiles.wmMask,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.wmMask);
         else; AFQ_mrtrix_mrconvert(files.wmMask, binfiles.wmMask,0,0,afq.software.mrtrixVersion); end
         
         if exist(binfiles.tensors,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.tensors);
         else; AFQ_mrtrix_mrconvert(files.dt, binfiles.tensors,0,0,afq.software.mrtrixVersion); end
         
         if exist(binfiles.fa,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.fa);
         else; AFQ_mrtrix_mrconvert(files.fa, binfiles.fa,0,0,afq.software.mrtrixVersion);  end
         
         % In order to make the rest of the flow work well, we will modify the
         % tensor file to be the same mrDiffusion is expecting
         B       = niftiRead(binfiles.tensors); % Reading nifti created by mrtrix
         sz      = size(B.data);
-        B.data  = reshape(B.data,[sz(1:3),1,sz(4)]);
-        % This is horrible. Mrtrix and mrDiffusion use the same format dxx,dyy,dzz...
-        % in order to make the workflow work I need to convert it when
-        % writing and when reading in order to maintain existing functions
-        B.data = B.data(:,:,:,1,[1 4 2 5 6 3]);
-        B.dim   = size(B.data);
-        B.ndim  = length(B.dim);
-        B.pixdim= [B.pixdim, 1];
-        niftiWrite(B);
+        if sz(4)~=1
+            B.data  = reshape(B.data,[sz(1:3),1,sz(4)]);
+            % This is horrible. Mrtrix and mrDiffusion use the same format dxx,dyy,dzz...
+            % in order to make the workflow work I need to convert it when
+            % writing and when reading in order to maintain existing functions
+            B.data = B.data(:,:,:,1,[1 4 2 5 6 3]);
+            B.dim   = size(B.data);
+            B.ndim  = length(B.dim);
+            B.pixdim= [B.pixdim, 1];
+            niftiWrite(B);
+        end
         
     end
 end

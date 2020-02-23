@@ -17,59 +17,8 @@ function RTP(jsonargs)
 %                           age_comp = false;
 %{
 % EXAMPLE USAGE:
-%       jsonargs = '{"input_dir": "/home/lmperry/AFQ_docker/mrDiffusion_sampleData/dti40", "out_name": "afq.mat", "output_dir": "/black/lmperry/AFQ_docker/mrDiffusion_sampleData/dti40/AFQ3" }'
-%       jsonargs = '{"input_dir" : "/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit222/dti90trilin", "output_dir": "/data/localhome/glerma/TESTDATA/AFQ/output/withDtiinit222_mrtrix","params"    :"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}'%       jsonargs = '{"input_dir" : "/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit111/dti90trilin", "output_dir": "/data/localhome/glerma/TESTDATA/AFQ/output/withDtiinit111_mrtrix","params"    :"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}'
-%       jsonargs = '{"input_dir" : "/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit222/dti90trilin", "output_dir": "/data/localhome/glerma/TESTDATA/AFQ/output/withDtiinit222_mrtrix","params"    :"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}'
-%       jsonargs = '{"input_dir" : "/data/localhome/glerma/TESTDATA/AFQ/input/MareikeS13/dti96trilin", "output_dir": "/data/localhome/glerma/TESTDATA/AFQ/output/MareikeS13","params"    :"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}'
-%       jsonargs = '{"input_dir" : "/data/localhome/glerma/TESTDATA/AFQ/input/MareikeS13act/dti96trilin", "output_dir": "/data/localhome/glerma/TESTDATA/AFQ/output/MareikeS13act","params"    :"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}'
-jsonargs = ['{"input_dir" :' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/MareikeS13/dti96trilin",' ...
-            '"output_dir": ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/output/MareikeS13", ' ...
-            '"params"    : ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}']
-jsonargs = ['{"input_dir" :' ...
-            '"/Volumes/users/glerma/TESTDATA/AFQ/input/MareikeS13/dti96trilin",' ...
-            '"output_dir": ' ...
-            '"/Volumes/users/glerma/TESTDATA/AFQ/output/MareikeS13", ' ...
-            '"params"    : ' ...
-            '"/Volumes/users/glerma/TESTDATA/AFQ/input/config_parsed.json"}']
-
-jsonargs = ['{"input_dir" :' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit_LTOZZI/dti150trilin",' ...
-            '"output_dir": ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/output/ltozzi", ' ...
-            '"params"    : ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json"}']
-% Testing the defining white matter tracts from Kurt Schilling
-jsonargs = ['{"input_dir" :' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit_defining/dti90trilin/",' ...
-            '"output_dir": ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/output/defining", ' ...
-            '"params"    : ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed_defining.json"}']     
-% Testing the defining white matter tracts from Bertsolari
-jsonargs = ['{"input_dir" :' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit_bertso/dti64trilin/",' ...
-            '"output_dir": ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/output/bertso", ' ...
-            '"params"    : ' ...
-            '"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed_bertso.json"}'] 
-AFQ_StandAlone_QMR(jsonargs);
-
-jsonargs = ['{"input_dir" :' ...
-            '"/Users/glerma/soft/rtp-pipeline/local/DTIINIT/output/dtiInit_24-Dec-2019_07-55-23/dticsd/",' ...
-            '"output_dir": ' ...
-            '"/Users/glerma/soft/rtp-pipeline/local/AFQ/output", ' ...
-            '"params"    : ' ...
-            '"/Users/glerma/soft/rtp-pipeline/local/AFQ/input/config_parsed.json"}'] 
-
-
-
-jsonargs = ['{"params"    : ' ...
-            '"/black/localhome/glerma/soft/RTP-pipeline/example_output.json"}'] 
-
 jsonargs = "/Volumes/group/users/glerma/TESTDATA/FS/paramsMBP.json";
+jsonargs = "/black/localhome/glerma/TESTDATA/FS/paramsBLACK.json";
 RTP(jsonargs);
 %}
 %
@@ -78,7 +27,7 @@ RTP(jsonargs);
 
 %% Begin
 
-disp('Starting AFQ...');
+disp('Starting RTP...');
 
 % Initialize args
 input_dir  = [];
@@ -140,6 +89,7 @@ sub_group = ones(numel(sub_dirs),1);
 
 
 %% See if I can read the templates
+%{
 disp('_____ CHECK IF IT CAN READ TEMPLATES  _______')
 % Get the AFQ base directory
 AFQbase = AFQ_directories
@@ -153,7 +103,7 @@ if exist(Tpath,'file')
 else
     error('Cannot read %s', Tpath)
 end
-
+%}
 
 
 %% CHECK INPUTS AND OPTIONALS
@@ -625,7 +575,7 @@ end
 
 
 %% Export the data to csv files (don't use AFQ_exportData)
-
+%{
 disp('Exporting data to csv files...');
 
 % We will add the diffusion parameters and the series number to the name
@@ -656,6 +606,12 @@ for ii = 1:numel(properties)
         writetable(T,fullfile(csv_dir,['AFQ_' lower(properties{ii}) '.csv']));
     end
 end
+%}
+
+
+
+
+
 
 %% Create the tck files for visualizing the results
 %{

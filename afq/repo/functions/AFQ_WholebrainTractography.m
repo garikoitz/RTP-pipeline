@@ -106,27 +106,28 @@ if exist('mrtrix','var') && mrtrix == 1
                                                        mrtrixVersion, ...
                                                        opts);
 else
+    error('[AFQ_WholebrainTractography] mrTrix could not be used to create Whole Brain Tractography')  
     %% Otherwise track with mrdiffusion
     % Compute FA at every voxel
-    fa = dtiComputeFA(dt.dt6);
+%     fa = dtiComputeFA(dt.dt6);
     % Sometimes noise can cause impossible FA values so we clip them
-    fa(fa>1) = 1; fa(fa<0) = 0;
+%     fa(fa>1) = 1; fa(fa<0) = 0;
     
     %% Create an ROI for wholebrain tractography
-    roiAll = dtiNewRoi('all');
+%     roiAll = dtiNewRoi('all');
     % Make a mask of voxels with FA>faMaskThresh
-    mask = fa >= opts.faMaskThresh;
+%     mask = fa >= opts.faMaskThresh;
     % Convert mask image to a list of coordinates
-    [x,y,z] = ind2sub(size(mask), find(mask));
-    clear mask fa;
+%     [x,y,z] = ind2sub(size(mask), find(mask));
+%     clear mask fa;
     % Transofrm mask coordinates to subjects ACPC space
-    roiAll.coords = mrAnatXformCoords(dt.xformToAcpc, [x,y,z]);
-    clear x y z;
+%     roiAll.coords = mrAnatXformCoords(dt.xformToAcpc, [x,y,z]);
+%     clear x y z;
     % Smooth the ROI and fill holes
-    roiAll = dtiRoiClean(roiAll,3,{'fillHoles'});
+%     roiAll = dtiRoiClean(roiAll,3,{'fillHoles'});
     
     %% Perform wholebrain tractography
-    fg = dtiFiberTrack(dt.dt6, roiAll.coords, dt.mmPerVoxel, dt.xformToAcpc, 'wholeBrain', opts);
+%     fg = dtiFiberTrack(dt.dt6, roiAll.coords, dt.mmPerVoxel, dt.xformToAcpc, 'wholeBrain', opts);
     
 end
 

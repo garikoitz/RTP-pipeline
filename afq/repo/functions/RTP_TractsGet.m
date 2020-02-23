@@ -1,7 +1,5 @@
-function [fg_classified,fg_unclassified,classification,fg]=RTP_TractsGet(...
-                                                   dt6File, ...
-                                                   afq, ...
-                                                   tracts) % , ...
+% function [fg_classified,fg_unclassified,classification,fg]=RTP_TractsGet(...
+function [fg_classified,fg_clean,fg]=RTP_TractsGet(dt6File,afq,tracts) 
                                                    % Atlas, ...
                                                    % useRoiBasedApproach, ...
                                                    % useInterhemisphericSplit, ...
@@ -126,38 +124,55 @@ else
 end
 
 
-% TODO: remove the whole brain tracking from the AFQ_Create and do it here. 
-% We might have created the other CSD and other stuff, but we can do tracking
-% here.
+% Make sure fiber folder exist before tracking or checking
+fibDir = fullfile(baseDir,'fibers');
+if ~exist(fibDir,'dir'); mkdir(fibDir); end
+% Make sure mrtrix folder exist before tracking or checking
+mrtrixDir = fullfile(baseDir,'mrtrix');
+if ~exist(mrtrixDir,'dir'); mkdir(mrtrixDir); end
 
-
-% TODO: substitute this. The WBT will only be done here. 
+% The Whole Brain Tactrography will only be done here. 
 if sum(tracts.wbt) > 0
-    fprintf('\nPerforming whole-brain tractograpy\n');
-    fg = AFQ_WholebrainTractography(dt, afq.params.run_mode, afq);
-    % Save fiber group to fibers directory
-    dtiWriteFiberGroup(fg,fullfile(fibDir,'WholeBrainFG.mat'));
-    % Set the path to the fibers in the afq structure
-    afq = AFQ_set(afq,'wholebrain fg path','subnum',ii,fullfile(fibDir,'WholeBrainFG.mat'));
+	% Check if it exist and force is false:
+	if exist(fullfile(fibDir,'WholeBrainFG.mat'),'file') && afq.force==false
+		fprintf('WBT file %s exists and will not be overwritten\n',fullfile(fibDir,'WholeBrainFG.mat'))
+        fg = AFQ_get(afq,'wholebrain fiber group',1);
+	else
+   		 fprintf('\nPerforming whole-brain tractograpy\n');
+   		 fg = AFQ_WholebrainTractography(dt, afq.params.run_mode, afq);
 
-
-
-
+   		 % Save it
+   		 dtiWriteFiberGroup(fg,fullfile(fibDir,'WholeBrainFG.mat'));
+   		 % Set the path to the fibers in the afq structure
+   		 afq = AFQ_set(afq,'wholebrain fg path','subnum',1,fullfile(fibDir,'WholeBrainFG.mat'));
+	end
 end
-% Track wholebrain fiber group if one was not passed in
-if ~exist('fg','var') || isempty(fg)
-    fg = AFQ_WholebrainTractography(dt);
-end
-% Load fiber group - Can be filename or the data
-if ischar(fg), fg = dtiLoadFiberGroup(fg); end
-
-
 
 % Start simple, with the existing tracts that we only want to do the tckedit
+
 for roiID=1:height(tracts)
+
+	% TODO: add the clipping, create fg_clip and write the fibers. 
+
+
+
     % Mount all the components of the call based on the options in tracts table
     ts = tracts(roiID,:);
-    % Add the path
+    fprintf('[RTP_TractsGet] Getting %s ...\n', ts.label)
+    if exist(ts.fpath,'file') && afq.force==false
+        fprintf('[RTP_TractsGet] Using exisging one because force=false\n')
+    	% Read the tract, we want to have the same fg struct as before
+        tract = fgRead(ts.fpath);
+        if roiID==1;fg_classified=tract;
+        else; fg_classified(roiID)=tract;end
+	    if exist(ts.cfpath,'file') 
+			clean_tract = fgRead(ts.cfpath);
+	        % Add it to fg_clean
+    	    if roiID==1; fg_clean=clean_tract;
+       		 else; fg_clean(roiID)=clean_tract; end
+        end
+	else
+	% Add the path
     RoiPara = load(dt6File);
     fs_dir  = RoiPara.params.fs_dir;
     moridir = fullfile(fs_dir, 'MORI');
@@ -176,32 +191,36 @@ for roiID=1:height(tracts)
                     "-include",roi1, "-include",roi2, roi3, ...
                     ts.cmaxlen, ts.cminlen, ...
                     tracks_in, ts.fpath]);
-       spres     = system(cmd);
+       spres     = AFQ_mrtrix_cmd(cmd);
        % Make it readable and writeable
        fileattrib(ts.fpath, '+w +x') 
        % Read the tract, we want to have the same fg struct as before
-       track = fgRead(ts.fpath);
-       
-       
-       
+       tract = fgRead(ts.fpath);
+       if roiID==1; fg_classified=tract;
+	   else; fg_classified(roiID)=tract; end
        
     else
+		% DO AD-HOC TRACKING HERE
+        % 
         %         cmd       = join([ "tckgen", ts.quiet, ts.force, ...
         %                     "-include",roi1, "-include",roi2, roi3, ...
         %                     ts.cmaxlen, ts.cminlen, ...
         %                     tracks_in, ts.fpath]);
-        %        spres     = system(cmd);
+        %        spres     = AFQ_matrix_cmd(cmd);
     end
     % Update the value of the number of fibers
-    ts.nfibers = size(track.fibers,1);
+    ts.nfibers = size(tract.fibers,1);
     % If requested, clean it here
     if ts.clean && ts.nfibers>10
-       clean_track = AFQ_removeFiberOutliers(track,maxDist,maxLen,100,'median',1,maxIter);
+       clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
+	   % Add it to fg_clean
+       if roiID==1; fg_clean=clean_tract;
+       else; fg_clean(roiID)=clean_tract; end
 
-       fgWrite(clean_track, tracks_cleaned,'tck');
-       fileattrib(tracks_cleaned, '+w +x') % make it readable and writeable
+       AFQ_fgWrite(clean_tract, ts.cfpath,'tck');
+       fileattrib(ts.cfpath, '+w +x') % make it readable and writeable
         % Update the value of the number of fibers
-        ts.nfibers = size(track.fibers,1);    
+        ts.cnfibers = size(clean_tract.fibers,1);    
     end
     
     
@@ -209,40 +228,9 @@ for roiID=1:height(tracts)
     
     % Update the table, maybe we updated some of the fields (e.g. nfibers)
     tracts(roiID,:) = ts;
-    
+    fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
 end
-
-
-
-fg_clean = fg2Array(fg_classified);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+end
 
 
 
@@ -261,12 +249,17 @@ fg_clean = fg2Array(fg_classified);
 
 % Cut the fibers below the acpc plane, to disentangle CST & ATL crossing 
 % at the level of the pons
+% TODO: decide if we want to keep this
+%{
 if useInterhemisphericSplit
     fgname  = fg.name;
     fg      = dtiSplitInterhemisphericFibers(fg, dt, -10);
     fg.name = fgname;
 end
+%}
 % Throw out fibers that are too short to span between two ROIs
+% TODO: Remove this, we can control this when we do the whole brain tractogram, select the min number there 
+%{
 if sum(cellfun(@length, fg.fibers)<5)~=0
     if isfield(fg, 'subgroup')&&~isempty(fg.subgroup)
         fg.subgroup(cellfun(@length, fg.fibers)<5)=[];
@@ -276,43 +269,43 @@ if sum(cellfun(@length, fg.fibers)<5)~=0
     end
     fg.fibers(cellfun(@length, fg.fibers)<5)=[];
 end
-
+%}
 %{
-% Warp the fibers to the MNI standard space so they can be compared to the
-% template
-fg_sn = dtiXformFiberCoords(fg, invDef);
-
-% moriTracts.data is a an XxYxZx20 array contianing the 20 Mori probability
-% atlases (range is 0-100 where 100 represents p(1)).
-sz = size(moriTracts.data);
-% fg_sn fiber coords are in MNI space- now convert them to atlas space by
-% applying the affine xform from the atlas NIFTI header. Since the atlas is
-% already in MNI space, this transform will just account for any
-% translation and scale differences between the atlas maps and the MNI
-% template used to compute our sn.
-fgCoords = mrAnatXformCoords(moriTracts.qto_ijk, horzcat(fg_sn.fibers{:}));
-clear fg_sn;   % what we need from fg_sn is now stored in fgCoords
-fgLen = cellfun('size',fg.fibers,2);
-
-% Now loop over the 20 atlases and get the atlas probability score for each
-% fiber point. We collapse the scores across all points in a fiber by taking
-% the mean. Below, we will use these 20 mean scores to categorize the fibers.
-% TO DO: consider doing something more sophisticated than taking the mean.
-fp = zeros(sz(4),numel(fg.fibers));
-for(ii=1:sz(4))
-    % Get the Mori atlas score for each point in the fibers using
-    % trilinear interpolation.
-    p = myCinterp3(double(moriTracts.data(:,:,:,ii))/100, sz([1,2]), sz(3), fgCoords(:,[2,1,3]));
-    % The previous line interpolated one giant array with all fiber points
-    % concatenated. The next loop will separate the coordinates back into
-    % fibers and take the mean score for the points within each fiber.
-    fiberCoord = 1;
-    for(jj=1:numel(fg.fibers))
-        fp(ii,jj) = nanmean(p([fiberCoord:fiberCoord+fgLen(jj)-1]));
-        fiberCoord = fiberCoord+fgLen(jj);
-    end
-end
-clear p fgCoords;
+  % Warp the fibers to the MNI standard space so they can be compared to the
+  % template
+  fg_sn = dtiXformFiberCoords(fg, invDef);
+  
+  % moriTracts.data is a an XxYxZx20 array contianing the 20 Mori probability
+  % atlases (range is 0-100 where 100 represents p(1)).
+  sz = size(moriTracts.data);
+  % fg_sn fiber coords are in MNI space- now convert them to atlas space by
+  % applying the affine xform from the atlas NIFTI header. Since the atlas is
+  % already in MNI space, this transform will just account for any
+  % translation and scale differences between the atlas maps and the MNI
+  % template used to compute our sn.
+  fgCoords = mrAnatXformCoords(moriTracts.qto_ijk, horzcat(fg_sn.fibers{:}));
+  clear fg_sn;   % what we need from fg_sn is now stored in fgCoords
+  fgLen = cellfun('size',fg.fibers,2);
+  
+  % Now loop over the 20 atlases and get the atlas probability score for each
+  % fiber point. We collapse the scores across all points in a fiber by taking
+  % the mean. Below, we will use these 20 mean scores to categorize the fibers.
+  % TO DO: consider doing something more sophisticated than taking the mean.
+  fp = zeros(sz(4),numel(fg.fibers));
+  for(ii=1:sz(4))
+      % Get the Mori atlas score for each point in the fibers using
+      % trilinear interpolation.
+      p = myCinterp3(double(moriTracts.data(:,:,:,ii))/100, sz([1,2]), sz(3), fgCoords(:,[2,1,3]));
+      % The previous line interpolated one giant array with all fiber points
+      % concatenated. The next loop will separate the coordinates back into
+      % fibers and take the mean score for the points within each fiber.
+      fiberCoord = 1;
+      for(jj=1:numel(fg.fibers))
+          fp(ii,jj) = nanmean(p([fiberCoord:fiberCoord+fgLen(jj)-1]));
+          fiberCoord = fiberCoord+fgLen(jj);
+      end
+  end
+  clear p fgCoords;
 %}
 
 
@@ -330,7 +323,11 @@ clear p fgCoords;
 %highly consistently across human raters), many SLFt fibers were not
 %correctly labeled as they extend laterally into temporal lobe just above
 %the aforementioned ROI plane.
-if useRoiBasedApproach 
+
+
+% Remove below too, we have done the tracking above. We can use the atlas above to clean the outlier fibers better than with the current method.
+
+if false % useRoiBasedApproach 
     % A 20x2 cell array containing the names of both waypoint ROIs for each
     % of 20 fiber groups
 
@@ -417,6 +414,12 @@ if useRoiBasedApproach
     fp(20, (keep1(:, 20)'&keep2(:, 20)'&~keep3(:, 20)'))=max(fp(:));
     
 end
+
+
+
+% TODO: don't know who did this, remove it
+
+%{
 % temporarily
 sz(4)=20;
 %% Eliminate fibers that don't match any of the atlases very well
@@ -455,7 +458,13 @@ fg_classified.fibers = fg.fibers([curAtlasFibers{:}]);
 if ~isempty(fg.seeds)
     fg_classified.seeds = fg.seeds([curAtlasFibers{:}],:);
 end
+%}
 
+% TODO: check if this is necessary or not
+% fg_classified.subgroup = zeros(1,numel(fg_classified.fibers));
+% fg_clean.subgroup = zeros(1,numel(fg_clean.fibers));
+
+%{
 % We changed the size of fg_classified.fibers by discarding the
 % uncategorized fibers, so we need to create a new array to categorize the
 % fibers. This time we make an array with one entry corresponding to each
@@ -497,6 +506,12 @@ fg_classified = fg2Array(fg_classified);
 for ii = 1:size(moriRois, 1)
     fg_classified(ii) = AFQ_ReorientFibers(fg_classified(ii),roi1(ii),roi2(ii));
 end
+%}
+
+
+
+
+
 
 return;
 

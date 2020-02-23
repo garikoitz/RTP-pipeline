@@ -132,7 +132,13 @@ for ii = runsubs
     % Load Dt6 File
     dtFile = fullfile(sub_dirs{ii},'dt6.mat');
     dt     = dtiLoadDt6(dtFile);
-    
+   
+	baseDir = sub_dirs{ii};
+    fibDir  = fullfile(baseDir,'fibers');
+    mrtrixDir = fullfile(baseDir,'mrtrix');
+
+
+ 
     % If ANTS was used to compute a spatial normalization then load it for
     % this subject
     % EDIT GLU: no, delete this line
@@ -172,7 +178,7 @@ for ii = runsubs
     %% Segment 20 Fiber Groups
     
     % Check if fiber group segmentation was already done
-    if AFQ_get(afq, 'do segmentation',ii) == 1
+    % if AFQ_get(afq, 'do segmentation',ii) == 1
         % Load the wholebrain fiber group if necessary
         % if loadWholebrain == 1
         %     fg = AFQ_get(afq,'wholebrain fiber group',ii);
@@ -219,7 +225,7 @@ for ii = runsubs
                   "Left Arcuate","Right Arcuate"]'; 
         slabels = ["LTR","RTR", "LCST","RCST", ...
                   "LCC", "RCC", "LCH","RCH", ...
-                  "CFM", "CFMr", "LIFOF","RIFO", ...
+                  "CFMaj", "CFMin", "LIFOF","RIFO", ...
                   "LILF","RILF", "LSLF","RSLF", ...
                   "LUF","RUF", "LAF","RAF"]'; 
         nhlabels = ["TR","TR", "CST","CST", ...
@@ -247,13 +253,18 @@ for ii = runsubs
         % Codify all options in the tract name? Or in a folder?
         tracts.fname     = strcat(tracts.slabel,".tck");
         tracts.cfname    = strcat(tracts.slabel,"_clean.tck");
-        tracts.fdir      = repmat("/Volumes/group/users/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output/AFQ/dticsd/mrtrix",[length(labels),1]);
+        tracts.fdir      = repmat(mrtrixDir,[length(labels),1]);
         tracts.fpath     = strcat(tracts.fdir,filesep,tracts.fname);
+        % Cleaning options
         tracts.cfpath    = strcat(tracts.fdir,filesep,tracts.cfname);
         tracts.clean     = repmat(true,[length(labels),1]);
         tracts.nfibers   = zeros(size(labels));
         tracts.cnfibers  = zeros(size(labels));
-
+        tracts.maxDist   = 3*ones(size(labels));
+        tracts.maxLen    = 3*ones(size(labels));
+        tracts.numNodes  = 100*ones(size(labels));
+        tracts.meanmed   = repmat("median",[length(labels),1]);
+        tracts.maxIter   = 3*ones(size(labels));
         
         % Obtain the segmented tracts. 
         % In the new version:
@@ -263,7 +274,7 @@ for ii = runsubs
         %     end if required. 
         %   - It will save clip to roi == 1 and 0 files to disk, but 
         
-        fg_classified = RTP_TractsGet(dtFile, afq, tracts);
+        [fg_classified, fg_clean, fg] = RTP_TractsGet(dtFile, afq, tracts);
         
         
         
@@ -281,7 +292,8 @@ for ii = runsubs
         
         
         
-        
+	% TODO: delete all this unused code now
+	%{       
         % Save segmented fiber group
         dtiWriteFiberGroup(fg_classified, fullfile(fibDir,segName));
         % If the full trajectory of each fiber group will be analyzed (eg.
@@ -305,7 +317,7 @@ for ii = runsubs
         loadSegmentation = 1;
     end
     clear dtFile fgFile
-    
+    %}
     %% Remove fiber outliers from each fiber tract so it is a compact bundle    
     % Now this is done in RTP_TractsGet
     
@@ -366,9 +378,12 @@ for ii = runsubs
         fg_classified = dtiFgArrayToFiberGroup(fg_classified, AFQ_get(afq,'cleanfgname',ii));  
     end
     %}
+
+
+
     %% Compute Tract Profiles
     
-    if AFQ_get(afq,'compute profiles',ii)
+    if false % AFQ_get(afq,'compute profiles',ii)
         fprintf('\nComputing Tract Profiles for subject %s',sub_dirs{ii});
         % Determine how much to weight each fiber's contribution to the
         % measurement at the tract core. Higher values mean steaper falloff
@@ -440,7 +455,7 @@ for ii = runsubs
 end  % Ends runsubs
 
 %% Compute Control Group Norms
-
+%{
 % Check if norms should be computed
 if AFQ_get(afq,'computenorms')
     % If no control group was entered then norms will only contain nans.
@@ -498,3 +513,4 @@ if sum(sub_group == 1) > 2 && sum(sub_group == 0) > 2 && AFQ_get(afq,'showfigs')
 elseif sum(sub_group == 1) <= 2 && sum(sub_group == 0) <= 2
     fprintf('\nNot enough subjects for a group comparison\n')
 end
+%}

@@ -1,4 +1,4 @@
-function tck = AFQ_dtiExportFibersMrtrix(fg, tck_filename)
+function tck = dtiExportFibersMrtrix(fg, tck_filename)
 %
 %   tck = dtiExportFibersMrtrix(fg, tck_filename) 
 %
@@ -76,52 +76,60 @@ end
 clear ii
 
 % save the file w/ mrtrix fxn
-write_mrtrix_tracks(tck, tck_filename);
+write_mrtrix_fibers(tck, tck_filename);
 
 return
 end
-%{
+
 %%%%%%%%%%%%%%%%%%%%%%
 % AUXILIARY FUNCTION %
 %%%%%%%%%%%%%%%%%%%%%%
-function write_mrtrix_tracks (tracks, filename)
-
-% function: write_mrtrix_tracks (tracks, filename)
+function write_mrtrix_fibers (fibers, filename)
+%
+% function: write_mrtrix_fibers (fibers, filename)
 %
 % writes the track data stored as a cell array in the 'data' field of the
-% tracks variable to the MRtrix format track file 'filename'. All other fields
-% of the tracks variable will be written as text entries in the header, and are
+% fibers variable to the MRtrix format track file 'filename'. All other fields
+% of the fibers variable will be written as text entries in the header, and are
 % expected to supplied as character arrays.
+%
+% 
+% This function was originally distributed with mrtrix 0.2/0.3
 
-assert(isfield(tracks, 'data'), ...
-  'input tracks variable does not contain required ''data'' field');
+if ~isfield (fibers, 'data')
+  disp ('ERROR: input fibers variable does not contain required ''data'' field');
+  return;
+end
 
-assert(iscell(tracks.data), ...
-  'input tracks.data variable should be a cell array');
+if ~iscell (fibers.data)
+  disp ('ERROR: input fibers.data variable should be a cell array');
+  return;
+end
 
 f = fopen (filename, 'w', 'ieee-le');
-assert(f ~= -1, 'error opening %s', filename);
+if (f < 1) 
+  disp (['error opening ' filename ]);
+  return;
+end
 
-fprintf (f, 'mrtrix tracks\ndatatype: Float32LE\ncount: %d\n', prod(size(tracks.data)));
-names = fieldnames(tracks);
+fprintf (f, 'mrtrix fibers\ndatatype: Float32LE\ncount: %d\n', prod(size(fibers.data)));
+names = fieldnames(fibers);
 for i=1:size(names)
   if strcmpi (names{i}, 'data'), continue; end
   if strcmpi (names{i}, 'count'), continue; end
   if strcmpi (names{i}, 'datatype'), continue; end
-  fprintf (f, '%s: %s\n', names{i}, getfield(tracks, names{i}));
+  fprintf (f, '%s: %s\n', names{i}, getfield(fibers, names{i}));
 end
 data_offset = ftell (f) + 20;
 fprintf (f, 'file: . %d\nEND\n', data_offset);
 
 fwrite (f, zeros(data_offset-ftell(f),1), 'uint8');
-for i = 1:prod(size(tracks.data))
-  fwrite (f, tracks.data{i}', 'float32');
+for i = 1:prod(size(fibers.data))
+  fwrite (f, fibers.data{i}', 'float32');
   fwrite (f, [ nan nan nan ], 'float32');
 end
 
 fwrite (f, [ inf inf inf ], 'float32');
 fclose (f);
+
 end
-%}
-
-
