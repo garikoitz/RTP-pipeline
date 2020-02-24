@@ -200,13 +200,12 @@ for roiID=1:height(tracts)
 	   else; fg_classified(roiID)=tract; end
        
     else
-		% DO AD-HOC TRACKING HERE
-        % 
-        %         cmd       = join([ "tckgen", ts.quiet, ts.force, ...
-        %                     "-include",roi1, "-include",roi2, roi3, ...
-        %                     ts.cmaxlen, ts.cminlen, ...
-        %                     tracks_in, ts.fpath]);
-        %        spres     = AFQ_matrix_cmd(cmd);
+        cmd       = join([ "tckgen", ts.quiet, ts.force, "-algorithm", ts.algorithm ...
+                            "-select 5000", "-seed_image", ts.roi2, ...
+                            "-angle", ts.angle, "-cutoff", ts.cutoff ...
+                            "-minlength", ts.minlen, "-maxlength", ts.maxlen,
+                            "-stop", afq.files.mrtrix.csd{1}, ts.fpath]);
+        spres     = AFQ_mrtrix_cmd(cmd);
     end
     % Update the value of the number of fibers
     ts.nfibers = size(tract.fibers,1);
@@ -347,7 +346,7 @@ if false % useRoiBasedApproach
        RoiPara = load(dt6File);
        fs_dir = RoiPara.params.fs_dir;
        moridir = fullfile(fs_dir, 'MORI');
-       ROI_img_file=fullfile(moridir, ['MORI_' moriRois{roiID, 1}]);
+       ROI_img_file=fullfile(moridir, moriRois{roiID, 1});
         % Transform ROI-1 to an individuals native space
 %         if recomputeROIs
 %             % Default is to use the spm normalization unless a superior
