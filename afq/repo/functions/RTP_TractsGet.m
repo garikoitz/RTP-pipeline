@@ -175,17 +175,37 @@ for roiID=1:height(tracts)
 	% Add the path
     RoiPara = load(dt6File);
     fs_dir  = RoiPara.params.fs_dir;
-    moridir = fullfile(fs_dir, 'MORI');
-    roi1    = fullfile(moridir, strcat("MORI_",ts.roi1));
-    roi2    = fullfile(moridir, strcat("MORI_",ts.roi2));
+    moridir = fullfile(fs_dir, 'ROIs');
+    roi1    = fullfile(moridir, strcat(ts.roi1,ts.dilroi1,ts.extroi1));
+    roi2    = fullfile(moridir, strcat(ts.roi2,ts.dilroi2,ts.extroi2));
     roi3    = "";
-    if ~strcmp(ts.roi3,"");join("-include", fullfile(moridir, strcat("MORI_",ts.roi3)));end
+    if ~strcmp(ts.roi3,"");join("-include", fullfile(moridir, strcat(ts.roi3,ts.dilroi3,ts.extroi3)));end
     
     
     % The most important is wbt (whole brain tractography), whether we want to
     % use it or track the tract ourselves (ex OR)
     if ts.wbt
-        % Select the tracts that go in to tckedit
+    % TODO: This code is still working, make two wbt, one with interhemispheric fibers and one without 
+    % Make an ROI for the mid saggital plane
+	% midSaggitalRoi= dtiRoiMakePlane([0, dt.bb(1, 2), dt.bb(1, 3); 0 , dt.bb(2, 2) , dt.bb(2, 3)], 'midsaggital', 'g');
+	% keep1=zeros(length(fg.fibers), size(moriRois, 1));
+	% keep2=zeros(length(fg.fibers), size(moriRois, 1));
+	% Find fibers that cross mid saggital plane
+	% [fgOut, contentiousFibers, InterHemisphericFibers] = dtiIntersectFibersWithRoi([], 'not', [], midSaggitalRoi, fg);
+	%NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
+	%midSaggitalRoi.
+	% keep3=repmat(InterHemisphericFibers, [1 size(moriRois, 1)]);
+
+
+
+
+
+
+
+
+
+
+       % Select the tracts that go in to tckedit
        tracks_in = fullfile(char(ts.fdir),[fg.name '.tck']);
        cmd       = join([ "tckedit", ts.quiet, ts.force, ...
                     "-include",roi1, "-include",roi2, roi3, ...
@@ -194,21 +214,29 @@ for roiID=1:height(tracts)
        spres     = AFQ_mrtrix_cmd(cmd);
        % Make it readable and writeable
        fileattrib(ts.fpath, '+w +x') 
-       % Read the tract, we want to have the same fg struct as before
-       tract = fgRead(ts.fpath);
-       if roiID==1; fg_classified=tract;
-	   else; fg_classified(roiID)=tract; end
        
     else
-        cmd       = join([ "tckgen", ts.quiet, ts.force, "-algorithm", ts.algorithm ...
-                            "-select 5000", "-seed_image", ts.roi2, ...
-                            "-angle", ts.angle, "-cutoff", ts.cutoff ...
-                            "-minlength", ts.minlen, "-maxlength", ts.maxlen,
+		% TODO: add the logic roi1, roi2, roi3, what is seed, what it is waypoint
+        cmd       = join([ "tckgen", ts.quiet, ts.force, "-algorithm", ts.algorithm, ...
+                            "-select 5000", ...
+                            "-seed_image", roi1, ...
+                            "-include", roi2, ...
+                            "-seed_image", roi2, ...
+                            "-include", roi1, ...
+                            "-angle", ts.angle, "-cutoff", ts.cutoff, ...
+                            "-minlength", ts.minlen, "-maxlength", ts.maxlen, ...
                             "-stop", afq.files.mrtrix.csd{1}, ts.fpath]);
         spres     = AFQ_mrtrix_cmd(cmd);
     end
+
+    % Read the tract, we want to have the same fg struct as before
+    tract = fgRead(ts.fpath);
+    if roiID==1; fg_classified=tract;
+	else; fg_classified(roiID)=tract; end
+
     % Update the value of the number of fibers
     ts.nfibers = size(tract.fibers,1);
+
     % If requested, clean it here
     if ts.clean && ts.nfibers>10
        clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
@@ -220,6 +248,11 @@ for roiID=1:height(tracts)
        fileattrib(ts.cfpath, '+w +x') % make it readable and writeable
         % Update the value of the number of fibers
         ts.cnfibers = size(clean_tract.fibers,1);    
+	else
+	   clean_tract = tract;
+	   % Add it to fg_clean
+       if roiID==1; fg_clean=clean_tract;
+       else; fg_clean(roiID)=clean_tract; end
     end
     
     
@@ -487,7 +520,7 @@ end
 fiberIndex = zeros(length(fg.fibers),1);
 
 % Populate the structure denoting the fiber group number that each fiber in
-% the origional wholebrain group was assigned to
+% the original wholebrain group was assigned to
 for ii = 1 : length(curAtlasFibers)
     fiberIndex(curAtlasFibers{ii}) = ii;
     names{ii} = fg_classified.subgroupNames(ii).subgroupName;

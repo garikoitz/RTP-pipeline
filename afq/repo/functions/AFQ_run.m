@@ -193,30 +193,30 @@ for ii = runsubs
         % We need to obtain the information to populate this table from a json
         % file or somewhere. It will have defaults. Right now leave it hardcoded
         % for tests. 
-        moriRois=["ATR_roi1_L.nii.gz", "ATR_roi2_L.nii.gz", ""; ...
-                  "ATR_roi1_R.nii.gz", "ATR_roi2_R.nii.gz", ""; ...
-                  "CST_roi1_L.nii.gz", "CST_roi2_L.nii.gz", ""; ...
-                  "CST_roi1_R.nii.gz", "CST_roi2_R.nii.gz", ""; ...
-                  "CGC_roi1_L.nii.gz", "CGC_roi2_L.nii.gz", ""; ...
-                  "CGC_roi1_R.nii.gz", "CGC_roi2_R.nii.gz", ""; ...
-                  "HCC_roi1_L.nii.gz", "HCC_roi2_L.nii.gz", ""; ...
-                  "HCC_roi1_R.nii.gz", "HCC_roi2_R.nii.gz", ""; ...
-                  "FP_R.nii.gz"      , "FP_L.nii.gz"      , ""; ...
-                  "FA_L.nii.gz"      , "FA_R.nii.gz"      , ""; ...
-                  "IFO_roi1_L.nii.gz", "IFO_roi2_L.nii.gz", ""; ...
-                  "IFO_roi1_R.nii.gz", "IFO_roi2_R.nii.gz", ""; ...
-                  "ILF_roi1_L.nii.gz", "ILF_roi2_L.nii.gz", ""; ...
-                  "ILF_roi1_R.nii.gz", "ILF_roi2_R.nii.gz", ""; ...
-                  "SLF_roi1_L.nii.gz", "SLF_roi2_L.nii.gz", ""; ...
-                  "SLF_roi1_R.nii.gz", "SLF_roi2_R.nii.gz", ""; ...
-                  "UNC_roi1_L.nii.gz", "UNC_roi2_L.nii.gz", ""; ...
-                  "UNC_roi1_R.nii.gz", "UNC_roi2_R.nii.gz", ""; ...
-                  "SLF_roi1_L.nii.gz", "SLFt_roi2_L.nii.gz", ""; ...
-                  "SLF_roi1_R.nii.gz", "SLFt_roi2_R.nii.gz", ""; ...
-                  "ORV1_roi1_L.nii.gz" , "ORV1_roi2_L.nii.gz"  , ""; ...
-                  "ORV1_roi1_R.nii.gz" , "ORV1_roi2_R.nii.gz"  , ""; ...
-                  "ORV1V2_roi1_L.nii.gz", "ORV1V2_roi2_L.nii.gz", ""; ...
-                  "ORV1V2_roi1_R.nii.gz", "ORV1V2_roi2_R.nii.gz", ""] ;
+        moriRois=["ATR_roi1_L", "ATR_roi2_L", ""; ...
+                  "ATR_roi1_R", "ATR_roi2_R", ""; ...
+                  "CST_roi1_L", "CST_roi2_L", ""; ...
+                  "CST_roi1_R", "CST_roi2_R", ""; ...
+                  "CGC_roi1_L", "CGC_roi2_L", ""; ...
+                  "CGC_roi1_R", "CGC_roi2_R", ""; ...
+                  "HCC_roi1_L", "HCC_roi2_L", ""; ...
+                  "HCC_roi1_R", "HCC_roi2_R", ""; ...
+                  "FP_R"      , "FP_L"      , ""; ...
+                  "FA_L"      , "FA_R"      , ""; ...
+                  "IFO_roi1_L", "IFO_roi2_L", ""; ...
+                  "IFO_roi1_R", "IFO_roi2_R", ""; ...
+                  "ILF_roi1_L", "ILF_roi2_L", ""; ...
+                  "ILF_roi1_R", "ILF_roi2_R", ""; ...
+                  "SLF_roi1_L", "SLF_roi2_L", ""; ...
+                  "SLF_roi1_R", "SLF_roi2_R", ""; ...
+                  "UNC_roi1_L", "UNC_roi2_L", ""; ...
+                  "UNC_roi1_R", "UNC_roi2_R", ""; ...
+                  "SLF_roi1_L", "SLFt_roi2_L", ""; ...
+                  "SLF_roi1_R", "SLFt_roi2_R", ""; ...
+                  "ORV1_roi1_L" , "ORV1_roi2_L"  , ""; ...
+                  "ORV1_roi1_R" , "ORV1_roi2_R"  , ""; ...
+                  "LGN_L", "ORV1V2_roi2_L", ""; ...
+                  "LGN_R", "ORV1V2_roi2_R", ""] ;
         labels = ["Left Thalamic Radiation","Right Thalamic Radiation", ...
                   "Left Corticospinal","Right Corticospinal", ...
                   "Left Cingulum Cingulate", "Right Cingulum Cingulate", ...
@@ -227,8 +227,8 @@ for ii = runsubs
                   "Left SLF","Right SLF", ...
                   "Left Uncinate","Right Uncinate", ...
                   "Left Arcuate","Right Arcuate", ...
-                  "Left ORV1", "Right ORV1", ...
-                  "Left ORV1V2", "Right ORV1V2"]'; 
+                  "Left Optic Radiation V1", "Right Optic Radiation V1", ...
+                  "Left Optic Radiation V1V2", "Right Optic Radiation V1V2"]'; 
         slabels = ["LTR","RTR", "LCST","RCST", ...
                   "LCC", "RCC", "LCH","RCH", ...
                   "CFMaj", "CFMin", "LIFOF","RIFO", ...
@@ -243,9 +243,16 @@ for ii = runsubs
                     "ORV1", "ORV1", "ORV1V2", "ORV1V2"]'; 
         tracts           = table();
         tracts.roi1      = moriRois(:,1);
+        tracts.extroi1   = [repmat(".nii.gz",[length(labels),1])];
         tracts.roi2      = moriRois(:,2);
+        tracts.extroi2   = [repmat(".nii.gz",[length(labels),1])];
         tracts.roi3      = moriRois(:,3);
+        tracts.extroi3   = [repmat(".nii.gz",[length(labels),1])];
+		tracts.dilroi1   = [repmat("",[length(labels)-2,1]);"dil2";"dil2"];
+		tracts.dilroi2   = [repmat("",[length(labels)-2,1]);"";""];
+		tracts.dilroi3   = [repmat("",[length(labels)-2,1]);"";""];
         tracts.label     = labels;
+        tracts.fgnum     = string([1:height(tracts)]');
         tracts.hemi      = repmat(["Left","Right"]',[length(labels)/2,1]);
         tracts.slabel    = slabels;
         tracts.shemi     = repmat(["L","R"]',[length(labels)/2,1]);
@@ -265,18 +272,19 @@ for ii = runsubs
         tracts.fpath     = strcat(tracts.fdir,filesep,tracts.fname);
         % Cleaning options
         tracts.cfpath    = strcat(tracts.fdir,filesep,tracts.cfname);
-        tracts.clean     = repmat(true,[length(labels),1]);
+        tracts.clean     = repmat(true,[length(labels),1]); % [repmat(true,[length(labels)-2,1]);false;false];
         tracts.nfibers   = zeros(size(labels));
         tracts.cnfibers  = zeros(size(labels));
         tracts.maxDist   = 3*ones(size(labels));
         tracts.maxLen    = 3*ones(size(labels));
         tracts.numNodes  = 100*ones(size(labels));
         tracts.meanmed   = repmat("median",[length(labels),1]);
-        tracts.maxIter   = 3*ones(size(labels));
+        tracts.maxIter   = [3*ones(size(labels,1)-2,1);1;1];
         % added my lmx
-        tracts.angle     = repmat(30,[length(labels),1]);
+        tracts.angle     = repmat(45,[length(labels),1]);
         tracts.algorithm = repmat('iFoD2',[length(labels),1]); 
         tracts.cutoff    = repmat(0.1, [length(labels),1]);
+
         
         % Obtain the segmented tracts. 
         % In the new version:
@@ -288,114 +296,10 @@ for ii = runsubs
         
         [fg_classified, fg_clean, fg] = RTP_TractsGet(dtFile, afq, tracts);
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-	% TODO: delete all this unused code now
-	%{       
-        % Save segmented fiber group
-        dtiWriteFiberGroup(fg_classified, fullfile(fibDir,segName));
-        % If the full trajectory of each fiber group will be analyzed (eg.
-        % from cortical start to endpoint) then all fibers that terminate
-        % before cortex will be removed and each fiber within a group will
-        % be flipped so that startpoints and endpoints are consistent
-        % within the group
-        if AFQ_get(afq,'clip2rois') == 0
-            fg_classified = AFQ_DefineFgEndpoints(fg_classified, [], [], dt);
-            dtiWriteFiberGroup(fg_classified, fullfile(fibDir,segName));
-        end
-        % Set the path to the fibers in the afq structure
-        afq = AFQ_set(afq, 'segmented fg path', 'subnum', ii, fullfile(fibDir,segName));
-        % Segemented fiber group is already in memory and does not need to
-        % be loaded
-        loadSegmentation = 0;
-        clear fg
-    else
-        fprintf('\nFiber tract segmentation was already done for subject %s',sub_dirs{ii});
-        % Segmentation needs to be loaded
-        loadSegmentation = 1;
-    end
-    clear dtFile fgFile
-    %}
-    %% Remove fiber outliers from each fiber tract so it is a compact bundle    
-    % Now this is done in RTP_TractsGet
-    
-    %{
-    % Run AFQ cleaning proceedure if it is called for in
-    % afq.params.cleanFibers and if has not yet been done
-    if afq.params.cleanFibers == 1 && AFQ_get(afq, 'do cleaning', ii) == 1
-        % Load segmented fiber group if necessary
-        if loadSegmentation == 1
-            fg_classified = dtiLoadFiberGroup(fullfile(fibDir, segName));
-        end
-        % Convert fiber groups into an array if they are not already 
-        fg_clean = fg2Array(fg_classified); 
-        fg_clip  = fg_clean;
-        % Remove all fibers that are too long and too far from the core of
-        % the group.  This algorithm will constrain the fiber group to
-        % something that can be reasonable represented as a 3d gaussian
-        for jj = 1:20
-            % only clean if there are enough fibers for it to be worthwhile
-            if  length(fg_clean(jj).fibers) > 20
-                % clean clipped fiber group if computations are to be done
-                % on clipped group
-                if afq.params.cleanClippedFibers == 1;
-                    % load ROIs
-                    [roi1 roi2] = AFQ_LoadROIs(jj,sub_dirs{ii});
-                    % clip fiber group
-                    fg_clip(jj) = dtiClipFiberGroupToROIs(fg_clean(jj),roi1,roi2);
-                    if length(fg_clip(jj).fibers) > 20
-                        % clean clipped fiber group
-                        [fg_clip(jj), keep]   = AFQ_removeFiberOutliers(fg_clip(jj),afq.params.maxDist,afq.params.maxLen,afq.params.numberOfNodes,'mean',0);
-                        fg_clip(jj).name      = fg_clean(jj).name;
-                        % remove fibers from unclipped group that do no
-                        % survive the clipping
-                        fg_clean(jj).fibers =fg_clean(jj).fibers(keep);
-                    end
-                else
-                    % clean un-clipped fiber group
-                    fg_clean(jj) = AFQ_removeFiberOutliers(fg_clean(jj),afq.params.maxDist,afq.params.maxLen,afq.params.numberOfNodes,'mean',0,afq.params.cleanIter);
-                end
-            end
-        end
-        % Save cleaned fibers
-        cleanFgName = fullfile(fibDir,[prefix(segName) '_clean_D' num2str(afq.params.maxDist) '_L'  num2str(afq.params.maxLen) '.mat']);
-        dtiWriteFiberGroup(fg_clean, cleanFgName);
-        % Save the clipped ones as well for QA
-        clippedFgName = fullfile(fibDir,[prefix(segName) '_clean_D' num2str(afq.params.maxDist) '_L'  num2str(afq.params.maxLen) '_CLIPPED.mat']);
-        dtiWriteFiberGroup(fg_clip, clippedFgName);
-        % Set the path to the fibers in the afq structure
-        afq = AFQ_set(afq, 'clean fg path', 'subnum', ii, cleanFgName);
-        % Convert fiber group back to a 1 cell structure for future
-        % computations
-        fg_classified = dtiFgArrayToFiberGroup(fg_clean, segName);
-        
-    elseif afq.params.cleanFibers == 1
-        % If cleaning was already done then load the cleaned fiber group
-        fprintf('\nFiber tract cleaning was already done for subject %s',sub_dirs{ii});
-        fg_classified = AFQ_get(afq, 'cleaned fibers',ii);
-        fg_classified = dtiFgArrayToFiberGroup(fg_classified, AFQ_get(afq,'cleanfgname',ii));  
-    end
-    %}
-
-
 
     %% Compute Tract Profiles
     
-    if false % AFQ_get(afq,'compute profiles',ii)
+    if true % AFQ_get(afq,'compute profiles',ii)
         fprintf('\nComputing Tract Profiles for subject %s',sub_dirs{ii});
         % Determine how much to weight each fiber's contribution to the
         % measurement at the tract core. Higher values mean steaper falloff
@@ -403,17 +307,18 @@ for ii = runsubs
         % By default Tract Profiles of diffusion properties will always be
         % calculated
         [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
-                                                fg_classified, ...
+                                                fg_clean, ...
                                                 dt, ...
                                                 afq.params.numberOfNodes, ...
                                                 afq.params.clip2rois, ...
                                                 sub_dirs{ii}, ...
                                                 fWeight, ...
-                                                afq);
-
+                                                afq, ...
+												tracts);
+	
+	
         % Parameterize the shape of each fiber group with calculations of
-        % curvature and torsion at each point and add it to the tract
-        % profile
+        % curvature and torsion at each point and add it to the tract profile
         [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_classified, TractProfile);
         
         % Calculate the volume of each Tract Profile
@@ -466,63 +371,3 @@ for ii = runsubs
     clear fg fg_classified TractProfile
 end  % Ends runsubs
 
-%% Compute Control Group Norms
-%{
-% Check if norms should be computed
-if AFQ_get(afq,'computenorms')
-    % If no control group was entered then norms will only contain nans.
-    [norms, patient_data, control_data, afq] = AFQ_ComputeNorms(afq);
-end
-
-%% Identify Patients With Abnormal Diffusion Measurements
-
-property = 'FA';
-% Only run AFQ_ComparePatientsToNorms if norms were computed for the
-% property of interest for each tract
-if AFQ_get(afq,'computenorms') == 0 || sum(isnan(eval(['norms.mean' property '(1,:)']))) == 20
-    fprintf('\nnorms are empty. skipping AFQ_ComparePatientsToNorms\n')
-    % If there are no norms than we can not identify which subjects are
-    % abnormal.  Hence these variables will be set to nan.
-    abn       = nan(length(sub_dirs),1);
-    abnTracts = nan(length(sub_dirs),20);
-elseif AFQ_get(afq,'number of patients') >=1
-    [abn, abnTracts] = AFQ_ComparePatientsToNorms(patient_data, norms, afq.params.cutoff, property);
-else
-    abn = nan;
-    abnTracts = nan;
-end
-%% Plot Abnormal Patients Against Control Population
-
-% Only plot if norms were computed for each tract
-if AFQ_get(afq,'computenorms') == 0 || sum(isnan(eval(['norms.mean' property '(1,:)']))) == 20
-    fprintf('\nnorms are empty. Skipping AFQ_plot\n')
-elseif ~exist('abn','var') || sum(isnan(abn))==1
-    fprintf('\nNo patients. Skipping AFQ_plot\n')
-elseif AFQ_get(afq,'showfigs');
-    % percentiles to define normal range
-    ci = afq.params.cutoff;
-    % loop over tracts and plot abnormal subjects
-    for jj = 1:20
-        % Find subjects that show an abnormality on tract jj
-        sub_nums = find(abnTracts(:,jj));
-        % Generate a structure for a legend
-        L = {};
-        for ii = 1:length(sub_nums)
-            L{ii} = num2str(sub_nums(ii));
-        end
-        if ~isempty(sub_nums)
-            AFQ_plot(norms, patient_data,'individual','ci',ci,'subjects',sub_nums,'tracts',jj,'legend',L);
-        end
-        % AFQ_PlotResults(patient_data, norms, abn, afq.params.cutoff,property, afq.params.numberOfNodes, afq.params.outdir, afq.params.savefigs);
-    end
-end
-
-%% Plot group means for the patients and the controls
-
-% Only plot if there is data for patients and controls
-if sum(sub_group == 1) > 2 && sum(sub_group == 0) > 2 && AFQ_get(afq,'showfigs')
-    AFQ_plot('Patients', patient_data, 'Controls', control_data, 'group');
-elseif sum(sub_group == 1) <= 2 && sum(sub_group == 0) <= 2
-    fprintf('\nNot enough subjects for a group comparison\n')
-end
-%}

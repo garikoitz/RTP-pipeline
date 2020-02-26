@@ -5,7 +5,8 @@ function [fa, md, rd, ad, cl, volume, TractProfile] = ...
                                                            clip2rois, ...
                                                            subDir, ...
                                                            weighting, ...
-                                                           afq)
+                                                           afq, ...
+                                                           tracts)
 % Compute diffusion properties along the trajectory of the fiber groups.
 % The function returns vectors of diffusion properties and TractProfile
 % structure for each fiber group
@@ -136,7 +137,7 @@ for jj=1:numfg
     %  fgtmp.fibers=fg_classified.fibers(fg_classified.subgroup==jj);
     
     % Figure out the fiber group number if an afq structure was passed in
-    if exist('afq','var') && ~isempty(afq)
+    if false % exist('afq','var') && ~isempty(afq)
         fgnames = AFQ_get(afq,'fgnames');
         fgnum = find(strcmpi(fgtmp.name, fgnames));
         if isempty(fgnum)
@@ -146,13 +147,16 @@ for jj=1:numfg
         end
     else
         fgnum = jj;
+        ts    = tracts(fgnum,:);
     end
+    
     % clip the fiber group to the portion spanning between the two ROIs if
     % desired
-    if clip2rois==1 && exist('afq','var') && ~isempty(afq)
-        [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir,afq);
-    elseif clip2rois==1
-        [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir);
+    % if clip2rois==1 && exist('afq','var') && ~isempty(afq)
+    %     [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir,tracts);
+    % else
+    if clip2rois==1
+        [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir,ts);
     else
         roi1=[]; roi2=[];
     end

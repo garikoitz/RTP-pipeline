@@ -1,6 +1,8 @@
-function [roi1, roi2] = AFQ_LoadROIs(fgNumber,sub_dir, afq)
+function [roi1, roi2] = AFQ_LoadROIs(fgNumber, subDir, ts)
 % Load the two ROIs used to define a fiber group
-%
+% EDITED BY GLU: now it reads the ROIs from the tracts table, it is more flexible
+% TODO: delete all the old code, first make it work with tables.
+% 
 % [roi1 roi2] = AFQ_LoadROIs(fgNumber,sub_dir. [afq])
 %
 % Inputs:
@@ -17,7 +19,7 @@ function [roi1, roi2] = AFQ_LoadROIs(fgNumber,sub_dir, afq)
 % Written by Jason D. Yeatman 1/31/2012
 
 % If no afq structure was passed in it is fine for known ROIs
-if ~exist('afq','var') || isempty(afq) && fgNumber <=20
+if false % ~exist('afq','var') || isempty(afq) && fgNumber <=20
     roi1Names={'ATR_roi1_L', 'ATR_roi1_R','CST_roi1_L','CST_roi1_R','CGC_roi1_L','CGC_roi1_R'...
         'HCC_roi1_L','HCC_roi1_R','FP_L','FA_L','IFO_roi1_L','IFO_roi1_R','ILF_roi1_L','ILF_roi1_R'...
         'SLF_roi1_L','SLF_roi1_R','UNC_roi1_L','UNC_roi1_R','SLF_roi1_L','SLF_roi1_R'};
@@ -36,14 +38,22 @@ if ~exist('afq','var') || isempty(afq) && fgNumber <=20
 else
     % It doesn't matter which subject number because all we need is the roi
     % name
-    [~,roi1Name] = fileparts(AFQ_get(afq,'roi1',fgNumber,1));
-    [~,roi2Name] = fileparts(AFQ_get(afq,'roi2',fgNumber,1));
-    roiDir=fullfile(sub_dir,'ROIs');
-    roi1path = fullfile(roiDir,[roi1Name '.mat']);
-    roi2path = fullfile(roiDir,[roi2Name '.mat']);
-    if exist(roi1path,'file') && exist(roi2path,'file')
-        roi1=dtiReadRoi(roi1path);
-        roi2=dtiReadRoi(roi2path);
+    RoiPara  = load(fullfile(subDir,'dt6.mat'));
+    fs_dir   = RoiPara.params.fs_dir;
+    roi_dir  = fullfile(fs_dir, 'ROIs');i
+    roi1Name = char(fullfile(roi_dir, strcat(ts.roi1,ts.dilroi1,ts.extroi1)));
+    roi2Name = char(fullfile(roi_dir, strcat(ts.roi2,ts.dilroi2,ts.extroi2)));
+
+
+
+
+
+    if exist(roi1Name,'file') && exist(roi2Name,'file')
+        % roi1=dtiReadRoi(roi1path);
+        % roi2=dtiReadRoi(roi2path);
+        roi1=dtiImportRoiFromNifti(roi1Name);
+        roi2=dtiImportRoiFromNifti(roi2Name);
+
     else
         error('ROI does not exist for %s',sub_dir)
     end
