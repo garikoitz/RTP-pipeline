@@ -575,7 +575,7 @@ end
 
 
 %% Export the data to csv files (don't use AFQ_exportData)
-%{
+% {
 disp('Exporting data to csv files...');
 
 % We will add the diffusion parameters and the series number to the name
@@ -650,9 +650,11 @@ copyfile([predti '/*.nii*'], output_dir);
 % Obtain the files
 %if isdeployed
     % Convert the ROIs from mat to .nii.gz
+    % Not now, now the ROIs come from FS, there is no .mat ROIs anymore
     % Read the b0
-    img  = niftiRead(fullfile(input_dir, 'bin', 'b0.nii.gz'));
-    % Obtain the ROIs in nifti to check if they look ok or not
+    % img  = niftiRead(fullfile(input_dir, 'bin', 'b0.nii.gz'));
+    %{
+	% Obtain the ROIs in nifti to check if they look ok or not
     rois = dir(fullfile(input_dir, 'ROIs', '*.mat'));
     for df=1:length(rois)
         roiFullPath = fullfile(input_dir, 'ROIs',rois(df).name);
@@ -674,6 +676,7 @@ copyfile([predti '/*.nii*'], output_dir);
         img.fname = fullfile(fileparts(roiFullPath), [roiNameWoExt,'.nii.gz']); 
         writeFileNifti(img);     
     end
+	%}
     % Convert the segmented fg-s to tck so that we can see them in mrview
     % In the future we will make them obj so that they can be visualized in FW
     % First create another two MoriSuperFibers out of the clipped and not
