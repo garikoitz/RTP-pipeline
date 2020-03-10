@@ -1,4 +1,4 @@
-function fg = AFQ_WholebrainTractography(dt, run_mode, params)
+function fg = AFQ_WholebrainTractography(dt, run_mode, afq))
 % Perform whole brain deterministic tractography within a white matter mask
 %
 %      fg = AFQ_WholebrainTractography(dt, [run_mode], params)
@@ -20,9 +20,14 @@ function fg = AFQ_WholebrainTractography(dt, run_mode, params)
 % fg = AFQ_WholebrainTractography(dt);
 %
 % (c) Jason Yeatman, VISTA Lab, Stanford University, 2011
+% (c) Garikoitz Lerma-Usabiaga, VISTA Lab, Stanford University, 2020
 
 %% Initialize parameters
+% If the whole afq struct is not passed, just fail. This is designed to be used in a docker container. We dont want to use reasonable results. We want to use the values specified by the user,  and if they are not passed, then the system should fail.
 
+
+% TODO delete the whole code below
+%{
 % We set some reasonable defaults if a parameters structure was not passed
 % into the fuction
 if ~exist('params','var') || isempty(params)
@@ -89,12 +94,13 @@ else
         error('You did not define all the parameters! Try running with dafaults')
     end
 end
+%}
+
+
 
 %% Track with mrtrix if the right files are there
 if exist('mrtrix','var') && mrtrix == 1
     mrtrixpaths = AFQ_get(params,'mrtrix paths',params.currentsub);
-    % TODO: make using LiFE an option. Right now, the received fg will
-    % have LiFE run on it and the fibers with weight = 0 will be removed.
     [status, results, fg, pathstr] = AFQ_mrtrix_track(mrtrixpaths, ... 
                                                       mrtrixpaths.wm, ... % roi, (wm = wmMask)
                                                       mrtrixpaths.wm_dilated,...  % mask, (wm = wmMask)
@@ -107,28 +113,6 @@ if exist('mrtrix','var') && mrtrix == 1
                                                        opts);
 else
     error('[AFQ_WholebrainTractography] mrTrix could not be used to create Whole Brain Tractography')  
-    %% Otherwise track with mrdiffusion
-    % Compute FA at every voxel
-%     fa = dtiComputeFA(dt.dt6);
-    % Sometimes noise can cause impossible FA values so we clip them
-%     fa(fa>1) = 1; fa(fa<0) = 0;
-    
-    %% Create an ROI for wholebrain tractography
-%     roiAll = dtiNewRoi('all');
-    % Make a mask of voxels with FA>faMaskThresh
-%     mask = fa >= opts.faMaskThresh;
-    % Convert mask image to a list of coordinates
-%     [x,y,z] = ind2sub(size(mask), find(mask));
-%     clear mask fa;
-    % Transofrm mask coordinates to subjects ACPC space
-%     roiAll.coords = mrAnatXformCoords(dt.xformToAcpc, [x,y,z]);
-%     clear x y z;
-    % Smooth the ROI and fill holes
-%     roiAll = dtiRoiClean(roiAll,3,{'fillHoles'});
-    
-    %% Perform wholebrain tractography
-%     fg = dtiFiberTrack(dt.dt6, roiAll.coords, dt.mmPerVoxel, dt.xformToAcpc, 'wholeBrain', opts);
-    
 end
 
 return

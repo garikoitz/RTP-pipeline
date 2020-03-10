@@ -51,43 +51,13 @@ if notDefined('tool'), tool = 'freesurfer'; end
 if notDefined('multishell'), multishell = false; end
 if notDefined('mrtrixVersion'), mrtrixVersion = 3; end
 if notDefined('faMaskThresh'), faMaskThresh = 0.3; end
+if notDefined('force'), force = true; end
 
 % Loading the dt file containing all the paths to the fiels we need.
 dt_info = load(dt6);
 disp('Just load dt6, and the dt6 = dt_info.files is:')
 dt_info.files
 %
-%{
-Check if this is correct, dt_info.files has some relative and absolute
-paths, it doesn't make sense. 
-I cannot recover the position of my original t1 from this information, so I
-copied it to the 'session' folder, in SubName/dmri 
-                b0: 'dti90trilin/bin/b0.nii.gz'
-         brainMask: 'dti90trilin/bin/brainMask.nii.gz'
-            wmMask: 'dti90trilin/bin/wmMask.nii.gz'
-           tensors: 'dti90trilin/bin/tensors.nii.gz'
-               gof: 'dti90trilin/bin/gof.nii.gz'
-          outliers: 'dti90trilin/bin/outliers.nii.gz'
-                t1: 't1_std_acpc.nii.gz'
-      alignedDwRaw: '/bcbl/home/public/Gari/MINI/ANALYSIS/DWI/S002/dmri/data_aligned_...'
-    alignedDwBvecs: '/bcbl/home/public/Gari/MINI/ANALYSIS/DWI/S002/dmri/data_aligned_...'
-    alignedDwBvals: '/bcbl/home/public/Gari/MINI/ANALYSIS/DWI/S002/dmri/data_aligned_...'
-
-
-Note GLU: this code is assuming there is a 'raw' folder. In my case there
-is, but only with the original .nii-s converted from dicoms and the bvecs
-and bvals. The t1-s are in other path with the rest of the anat files.
-Furthermore, the assumption that the 'raw' file is above the dt6 filename
-breaks the code as it is duplicating the whole pathnames. 
-Example: mrtrix_dir = /bcbl/home/public/Gari/MINI/ANALYSIS/DWI/S002//bcbl/home/public/Gari/MINI/ANALYSIS/DWI/S002/dmri/dti90trilin/mrtrix/
-I fixed this (anf the initial part of the name issue as well)
-I still don't understand the use case. I understand that the mrtrix
-folder should be at the same level as the dt6.mat file, which defines
-every subject analysis, so using the bde_ code, it should be below the
-dti90trilin folder. I understand that the piece of filename that wants to
-be saved is the 'data_aligned_trilin_noMEC' part.
-%}
-
 
 % Check if the dt6 coming from the dtiinit GEAR and the afq GEAR are
 % running in the same space. Otherwise fix the paths
@@ -142,26 +112,22 @@ end
 % Build the mrtrix file names.
 files = AFQ_mrtrix_build_files(fname_trunk, lmax, multishell);
 
-% Check wich processes were already computed and which ons need to be doen.
+% Check wich processes were already computed and which ones need to be done.
 computed = mrtrix_check_processes(files);
 
 % Convert the raw dwi data to the mrtrix format: 
-if (~computed.('dwi'))
-    AFQ_mrtrix_mrconvert(dwRawFile, ...
-                         files.dwi, ...
-                         0, ...
-                         0, ...
-                         mrtrixVersion); 
-end
-
-% This file contains both bvecs and bvals, as per convention of mrtrix
-if (~computed.('b'))
-    [bvecPath bvecName bvecExt] = fileparts(dt_info.files.alignedDwBvecs);
+if (~computed.('dwi')) || (~computed.('b')) 
+    % dwRawFile
+    % files.dwi
+	[bvecPath bvecName bvecExt] = fileparts(dt_info.files.alignedDwBvecs);
     [bvalPath bvalName bvalExt] = fileparts(dt_info.files.alignedDwBvals);
     bvecs = fullfile(session, [bvecName bvecExt]);
     bvals = fullfile(session, [bvalName bvalExt]);
-    mrtrix_bfileFromBvecs(bvecs, bvals, files.b);
+    cmd   = sprintf('mrconvert -force -fslgrad %s %s -stride 1,2,3,4  -export_grad_mrtrix %s %s %s', ...
+					 bvecs, bvals, files.b, dwRawFile, files.dwi);
+    [status,results] = AFQ_mrtrix_cmd(cmd, 0,0,3);
 end
+
 
 % Create the b0: do it always, so pass multishell variable as false
 if (~computed.('b0'))

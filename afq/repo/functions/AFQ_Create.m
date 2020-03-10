@@ -105,9 +105,9 @@ afq.TractProfiles = AFQ_CreateTractProfile;
 % end
 
 %% Attatch a field for spatial normalization
-afq.xform.sn = [];
-afq.xform.invDef = [];
-afq.xform.ants = [];
+afq.xform.sn      = [];
+afq.xform.invDef  = [];
+afq.xform.ants    = [];
 afq.xform.antsinv = [];
 
 %% Check which software packages are installed
@@ -117,16 +117,7 @@ afq.software.mrtrixVersion = check_mrTrix_Version;
 if check_mrTrix_Version ~= 0
     afq.software.mrtrix = check_mrTrix(afq.software.mrtrixVersion);
 else
-    afq.software.mrtrix = 0;
-end
-if afq.software.mrtrix == 1
-   fprintf('\nmrTrix is installed. To perform tracking based on CSD with mrTrix:')
-   fprintf('\nAFQ_Create(...,''computeCSD'',1)\n');
-end
-afq.software.ants = check_ants;
-if check_ants == 1
-   fprintf('\nANTs is installed. To perform alignment with ANTs:')
-   fprintf('\nAFQ_Create(...,''normalization'',''ants'')\n');
+    error('mrTrix not installed or not properly set up')
 end
 
 %% Set the afq.params structure with default parameters

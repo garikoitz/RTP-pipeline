@@ -1,24 +1,17 @@
 function RTP(jsonargs)
 %
-% AFQ_StandAlone_QMR(jsonargs)
+% RTP_StandAlone_QMR(jsonargs)
 %
 % INPUT ARGUMENTS: Note: must be a json string.
 %
 %       input_dir:  Directory containing dt6.mat
 %       out_name:   Name for the resulting afq file
 %       output_dir: Location to save the results
-%       params:     Key-Value pair of params for AFQ_Create
-%       metadata:   Key_Value pairs for analysis.
-%                   Defaults are:
-%                           age = '';
-%                           sex = '';
-%                           ndirs = 30;
-%                           bvalue = 1000;
-%                           age_comp = false;
+%       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-jsonargs = "/Volumes/group/users/glerma/TESTDATA/FS/paramsMBP.json";
 jsonargs = "/black/localhome/glerma/TESTDATA/FS/paramsBLACK.json";
+jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
 RTP(jsonargs);
 %}
 %
@@ -46,16 +39,6 @@ if exist('jsonargs', 'var') && ~isempty(jsonargs)
     P = jsondecode(fileread(jsonargs));
 end
 
-%% Parse the params and setup the AFQ structure
-%{
-if ~isempty(params)
-    if ischar(params)
-        P = loadjson(params);
-    else
-        P = params;
-    end
-end
-%}
 P
 %% Configure inputs and defaults
 input_dir  = P.input_dir;
@@ -76,10 +59,12 @@ if notDefined('output_dir')
         error('An output directory was not specified.');
     end
 end
-output_dir = fullfile(output_dir, 'AFQ');
+output_dir = fullfile(output_dir, 'RTP');
 if ~exist(output_dir, 'dir'); mkdir(output_dir); end
 % update ROI directory
-P.params.fs_dir = P.fs_dir;
+P.params.fs_dir     = P.fs_dir;
+P.params.input_dir  = input_dir;
+P.params.output_dir = output_dir;
 
 % Just one group here
 sub_group = ones(numel(sub_dirs),1);
@@ -88,76 +73,30 @@ sub_group = ones(numel(sub_dirs),1);
 
 
 
-%% See if I can read the templates
-%{
-disp('_____ CHECK IF IT CAN READ TEMPLATES  _______')
-% Get the AFQ base directory
-AFQbase = AFQ_directories
-% Template directory
-tdir = fullfile(AFQbase,'templates','labelMaps')
-% Path to the template
-Tpath = fullfile(tdir,'MNI_AAL_AndMore.nii.gz')
-% Load the template
-if exist(Tpath,'file')
-    Timg = readFileNifti(Tpath)
-else
-    error('Cannot read %s', Tpath)
-end
-%}
-
-
 %% CHECK INPUTS AND OPTIONALS
-% LMX: until now I think it should have worked. Here we need to be sure first
-%      that we can read the input files correctly. 
-% The path and the variable names below might seems arbitrtraty, but we need to
-% try to maintain them the same names because we don't know where they might
-% fail down the line. There are old functions that still rely on the dt6.mat
-% thing to know where the files are. If we decide to change it (what we snould
-% do maybe in a later version) we should do it very throughly. 
-
-% The next section is new, the RAS conversion, but you'll see that I am
-% maintaining the ugly paths and old system. There is no J.files structure at
-% this point, so we can create it here. 
-
-
-
-% I AM GOING TO COPY HERE THE RELEVANT CODE COMING FROM DTI INIT
 
 % File and folder checks
-% LMX: not going to copy here, bad code. Check the files exist and the folder exist
-% otherwise create them. You can check the code, but it basically assummes that
-% the filenames are the same otherwise it breaks, etc. I prefer to be explicit.
-% Give the actual correct names or break, I don't want to work but with the
-% wrong files and not knowing. You can check dtiInitStandAloneWrapper line 180,
-% but I would just ignore it.
+%% Copy input files to output/RTP/
+if(~exist(fullfile(P.output_dir,'RTP'),'dir'));mkdir(fullfile(P.output_dir,'RTP'));end
+if(~exist(fullfile(P.output_dir,'RTP/t1.nii.gz')));copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'RTP/t1.nii.gz'));end
+if(~exist(fullfile(P.output_dir,'RTP/dwi.bvecs')));copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'RTP/'));end
+if(~exist(fullfile(P.output_dir,'RTP/dwi.bvals')));copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'RTP/'));end
+if(~exist(fullfile(P.output_dir,'RTP/dwi.nii.gz')));copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'RTP/'));end
+if(~exist(fullfile(P.output_dir,'RTP/aparc+aseg.nii.gz')));copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'RTP/'));end
 
-
-% Templates: 
-% This is the default template is using right now, it is very bad... add it for
-% now but we will substitute it
-% Variable names might need adjusting
-
-%% Copy input files to output/AFQ/
-if(~exist(fullfile(P.output_dir,'AFQ'),'dir'));mkdir(fullfile(P.output_dir,'AFQ'));end
-if(~exist(fullfile(P.output_dir,'AFQ/t1.nii.gz')));copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'AFQ/t1.nii.gz'));end
-if(~exist(fullfile(P.output_dir,'AFQ/dwi.bvecs')));copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'AFQ/'));end
-if(~exist(fullfile(P.output_dir,'AFQ/dwi.bvals')));copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'AFQ/'));end
-if(~exist(fullfile(P.output_dir,'AFQ/dwi.nii.gz')));copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'AFQ/'));end
-if(~exist(fullfile(P.output_dir,'AFQ/aparc+aseg.nii.gz')));copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'AFQ/'));end
-
-J.aparcaseg_file = fullfile(P.output_dir,'AFQ','aparc+aseg.nii.gz');
-J.t1_file = fullfile(P.output_dir,'AFQ', 't1.nii.gz');
-J.bvec_file = fullfile(P.output_dir,'AFQ', 'dwi.bvecs');
-J.bval_file = fullfile(P.output_dir,'AFQ', 'dwi.bvals');
-J.dwi_file = fullfile(P.output_dir,'AFQ', 'dwi.nii.gz');
-
-J.input_dir = fullfile(P.output_dir,'AFQ');
+J.aparcaseg_file = fullfile(P.output_dir,'RTP','aparc+aseg.nii.gz');
+J.t1_file = fullfile(P.output_dir,'RTP', 't1.nii.gz');
+J.bvec_file = fullfile(P.output_dir,'RTP', 'dwi.bvecs');
+J.bval_file = fullfile(P.output_dir,'RTP', 'dwi.bvals');
+J.dwi_file = fullfile(P.output_dir,'RTP', 'dwi.nii.gz');
+J.input_dir = fullfile(P.output_dir,'RTP');
 J.output_dir = P.output_dir;
 sub_dirs{1} = J.input_dir;
 if ~isfield(J, 't1_file') || ~exist(J.t1_file, 'file')
     template_t1 = '/templates/MNI_EPI.nii.gz'; 
     J.t1_file = template_t1;
 end
+
 
 %% Initialize diffusion parameters
 % LMX: maintain this structure for now, we'll see if we need it later
@@ -167,30 +106,7 @@ dwParams.bvecsFile  = J.bvec_file;
 dwParams.bvalsFile  = J.bval_file;
 %dwParams.bvalue     = dw.bvalue;
 
-%% Update the diffusion params from the JSON object
-% LMX: ths was reading the dtiinit params, that we are not reading now but that
-% they are in manifest.json. I think we don't need them, maintain this commented
-% here and we will decide what to delete and what to add to the afq json params.
-% 
-% if isfield(J, 'params')
-%     param_names = fieldnames(J.params);
-%     for f = 1:numel(param_names)
-%         if isfield(dwParams,param_names{f}) && ~isempty(J.params.(param_names{f}))
-%             dwParams.(param_names{f}) = J.params.(param_names{f});
-%         end
-%     end
-% else
-%     disp('Using default dtiInit params')
-% end
-% % Print what is being passed to do sanity check when running in Docker mode
-% disp(J)
-% disp(J.params)
-% disp(dwParams)
-
 %% Validate that the bval values are normalized
-% LMX II added this because downstream it was required to be normaliized. Maybe
-% we can make it optional later. 
-% If not, write again the file normalized so that it can be read downstream
 % Determine shell
 bvals = dlmread(J.bval_file);
 roundedBval  = 100 * round(bvals/100);
@@ -377,20 +293,11 @@ copyfile(dt6FileName, J.input_dir);
 
 % XX. Save out parameters, svn revision info, etc. for future reference
 
-dtiInitLog(dwParams,dwDir);
+% dtiInitLog(dwParams,dwDir);
 
 
 
-% Exit operations (lmx: check what is necessary here, probably nothing, as we don't need to pass files between conotainers now)
-disp('***************** IMPORTANT *****************')
-disp(sprintf('Copying the following files from dtiInit to AFQ: %s and %s',J.t1_file,J.aparcaseg_file))
-disp('***************** IMPORTANT *****************')
-copyfile(J.t1_file, J.output_dir);
-copyfile(J.aparcaseg_file, J.output_dir);
-
-% (HERE  IT ENDS WHAT IT WAS IN DTI INIT)
-
-%% CHECK IF INPUT IS RAS  (THIS WAS IN AFQ CONTAINER)
+%% CHECK IF INPUT IS RAS  (THIS WAS IN RTP CONTAINER)
 % New in 3.1.2: check the file is RAS If not, convert to RAS Be careful, bvecs
 % needs to be changed as well accordingly Instead of changing bvecs manually, we
 % will let mrtrix take care of it Convert files to mif, add the bvecs and bvals
@@ -399,14 +306,6 @@ copyfile(J.aparcaseg_file, J.output_dir);
 % there is a - in the strides or the order is not 123, we need to convert (with
 % freesurfer it is easier because it gives you RAS or PIR or LAS or whatever but
 % it is not installed in the Docker container)
-% This was originially done in the dtiinit wrapper but mrtrix did not work
-% there... It was anoother step in removing the whoole dtiinit thing
-
-
-% (lmx: now you can adapt this, you already now what are the files and where they are)
-% First thing we do once we now where we are and we have the dt6.mat file, is
-% checking that the files are RAS. If they are coming from rtp-preproc they will
-% be, but it is not always the case. So we need to check. 
 
 % Read the input file names and convert them
 input_dir = J.input_dir;
@@ -521,17 +420,7 @@ files    = J.files;
 save(fullfile(input_dir,'dt6.mat'),'adcUnits','params','files');
 
 
-
-
-
-
-
-
-
-
-
 %% Create afq structure
-
 if notDefined('out_name')
     out_name = ['afq_', getDateAndTime];
 end
@@ -541,9 +430,67 @@ fprintf('sub_dirs: %s', sub_dirs{1})
 fprintf('output_dir: %s', output_dir)
 fprintf('out_name: %s', out_name)
 mkdir(input_dir, 'bin')
+% Add deleted variables to afq, the ones we want fixed
+J.params.clip2rois=true;
+J.params.maxDist=true;
+J.params.maxLen=false;
+J.params.track.multishell=false;
+if length(paramsShells) > 1;J.params.track.multishell=true;end
+J.params.track.tool='freesurfer';
+J.params.track.algorithm='mrtrix';
+J.params.computeCSD=true;
 afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
                  'outdir', output_dir, 'outname', out_name, ...
                  'params', J.params);  
+% Add the tracts table to the afq struct so that we keep it all together. 
+% Not the most elegant solution, fix it in future releases
+% - Load the tract
+csv = dir(fullfile(P.tractparams_dir,'*.csv'));
+if length(csv) > 1; 
+    error('There are more than one csv files for tract params');
+else
+    if isfile(fullfile(csv.folder, csv.name));
+        A = readtable(fullfile(csv.folder, csv.name));
+    else
+        error('Cannot read %s or is not a file',fullfile(csv.folder, csv.name))
+    end
+end
+% Convert all values to strings, we don't want cell arrays
+for ns=1:width(A)
+    vn = A.Properties.VariableNames(ns);
+    if iscell(A.(vn{:}))
+        A.(vn{:})  = string(A.(vn{:}));
+    end
+end
+% Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
+roi3names=[];
+for nr=1:length(A.roi3)
+	if ismissing(A.roi3(nr))
+		roi3names = [roi3names;""];
+	else
+		roi3names = [roi3names;strcat(A.roi3(nr),A.extroi3(nr))];
+	end
+end
+checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);roi3names];
+for nc=1:length(checkTheseRois)
+	rname = checkTheseRois(nc);
+	if strcmp(rname,"")
+		continue
+	else	
+		rpath  = fullfile(P.fs_dir,'ROIs',rname);
+		if ~isfile(rpath)
+			error('ROI %s is required and it is not in the ROIs folder',rpath)
+		end
+	end
+end
+afq.tracts = A;
+% Update afq values with the ones coming from the tract. 
+% TODO: do this inside AFQ_Create
+afq.fgnames = cellstr(afq.tracts.label');
+afq.roi1names = cellstr(strcat(afq.tracts.roi1,afq.tracts.extroi1)');
+afq.roi2names = cellstr(strcat(afq.tracts.roi2,afq.tracts.extroi2)');
+
+
 disp('... end running AFQ_Create')
 % disp(afq.params);
 
@@ -556,11 +503,12 @@ disp('... end running AFQ_Create')
 
 
 
-%% RUN AFQ
+%% RUN RTP
 
-disp('Running AFQ_run with the following options...');
+disp('[RTP] Running AFQ_run with the following options...');
 fprintf('sub_dirs: %s', sub_dirs{1})
-disp('This is the afq struct');
+disp('[RTP] This is the afq struct going to AFQ_run');
+afq.force = false;
 afq
 afq = AFQ_run(sub_dirs, sub_group, afq);
 disp('... end running AFQ_run');
@@ -603,7 +551,7 @@ for ii = 1:numel(properties)
         end
 
         % Write out the table to a csv file
-        writetable(T,fullfile(csv_dir,['AFQ_' lower(properties{ii}) '.csv']));
+        writetable(T,fullfile(csv_dir,['RTP_' lower(properties{ii}) '.csv']));
     end
 end
 %}
@@ -641,11 +589,11 @@ mkdir(vis_dir);
 
 % First of all we will copy all the files present in the dtiInit root to afq so
 % that everything is in the same zip
-inputParts  = split(input_dir, filesep);
-predti = strjoin(inputParts(1:(length(inputParts)-1)), filesep);
-copyfile([predti '/*.mat'], output_dir);
-copyfile([predti '/*.bv*'], output_dir);
-copyfile([predti '/*.nii*'], output_dir);
+% inputParts  = split(input_dir, filesep);
+% predti = strjoin(inputParts(1:(length(inputParts)-1)), filesep);
+% copyfile([predti '/*.mat'], output_dir);
+% copyfile([predti '/*.bv*'], output_dir);
+% copyfile([predti '/*.nii*'], output_dir);
 
 % Obtain the files
 %if isdeployed
@@ -681,32 +629,32 @@ copyfile([predti '/*.nii*'], output_dir);
     % In the future we will make them obj so that they can be visualized in FW
     % First create another two MoriSuperFibers out of the clipped and not
     % clipped ones. 
-    FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
-    for nf = 1:length(FGs)
-        fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
-        fg                 = fgRead(fgname);
-        fgSF               = fg;
-        % Change the fiber by the superfiber
-        for nsf=1:length(fg)
-            if ~isempty(fg(nsf).fibers)
-                [SuperFiber] = dtiComputeSuperFiberRepresentation(fg(nsf),[],100);
-                fgSF(nsf).fibers= SuperFiber.fibers;
-            end
-        end
-        % Save the clipped ones as well for QA
-        [path, fname, fext] = fileparts(fgname);
-        sfFgName = fullfile(path,[fname '_SF' fext]);
-        dtiWriteFiberGroup(fgSF, sfFgName);
-    end
-    % Now we will have the same and the newly created ones, that we will
-    % create the superFibers.
-    FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
-    for nf = 1:length(FGs)
-        fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
-        fg                 = fgRead(fgname);
-        saveToMrtrixFolder = true; createObjFiles     = true; 
-        AFQ_FgToTck(fg, fgname, saveToMrtrixFolder, createObjFiles)
-    end
+    %FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
+    %for nf = 1:length(FGs)
+    %    fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
+    %    fg                 = fgRead(fgname);
+    %    fgSF               = fg;
+    %    % Change the fiber by the superfiber
+    %    for nsf=1:length(fg)
+    %        if ~isempty(fg(nsf).fibers)
+    %            [SuperFiber] = dtiComputeSuperFiberRepresentation(fg(nsf),[],100);
+    %            fgSF(nsf).fibers= SuperFiber.fibers;
+    %        end
+    %    end
+    %    % Save the clipped ones as well for QA
+    %    [path, fname, fext] = fileparts(fgname);
+    %    sfFgName = fullfile(path,[fname '_SF' fext]);
+    %    dtiWriteFiberGroup(fgSF, sfFgName);
+    %end
+    %% Now we will have the same and the newly created ones, that we will
+    %% create the superFibers.
+    %FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
+    %for nf = 1:length(FGs)
+    %    fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
+    %    fg                 = fgRead(fgname);
+    %    saveToMrtrixFolder = true; createObjFiles     = true; 
+    %    AFQ_FgToTck(fg, fgname, saveToMrtrixFolder, createObjFiles)
+    %end
     % Now we can copy the output to the vis_files, and decide later if copying
     % it to results so that it can be visualized in FW
 %{    

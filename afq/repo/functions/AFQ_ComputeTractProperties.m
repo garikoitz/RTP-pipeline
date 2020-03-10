@@ -5,8 +5,7 @@ function [fa, md, rd, ad, cl, volume, TractProfile] = ...
                                                            clip2rois, ...
                                                            subDir, ...
                                                            weighting, ...
-                                                           afq, ...
-                                                           tracts)
+                                                           afq)
 % Compute diffusion properties along the trajectory of the fiber groups.
 % The function returns vectors of diffusion properties and TractProfile
 % structure for each fiber group
@@ -135,7 +134,7 @@ for jj=1:numfg
     % This is what we would do with the old fiber group structure
     % fgtmp=dtiNewFiberGroup(fg_classified.subgroupNames(jj).subgroupName);
     %  fgtmp.fibers=fg_classified.fibers(fg_classified.subgroup==jj);
-    
+   tracts = afq.tracts; 
     % Figure out the fiber group number if an afq structure was passed in
     if false % exist('afq','var') && ~isempty(afq)
         fgnames = AFQ_get(afq,'fgnames');

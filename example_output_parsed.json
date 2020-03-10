@@ -1,0 +1,59 @@
+{
+    "anat_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical",
+    "bval_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bval",
+    "bvec_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bvec",
+    "fs_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs",
+    "input_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input",
+    "nifti_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi",
+    "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
+    "params": {
+        "bsplineInterpFlag": 0,
+        "fiberWeighting": 1,
+        "imresample": 1,
+        "input_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input",
+        "mrTrixAlgo": "iFOD2",
+        "numberOfNodes": 100,
+        "outdir": [],
+        "outname": "rtp_output",
+        "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
+        "phaseEncodeDir": 2,
+        "run_mode": [
+            []
+        ],
+        "track": {
+            "ET_angleValues": [
+                45.0,
+                45.0,
+                25.0,
+                25.0,
+                25.0,
+                5.0,
+                5.0
+            ],
+            "ET_maxlength": [
+                100.0,
+                150.0,
+                100.0,
+                150.0,
+                200.0,
+                150.0,
+                200.0
+            ],
+            "ET_minlength": 20,
+            "ET_numberFibers": 1000000,
+            "ET_stepSizeMm": 999,
+            "faFodThresh": 0.05,
+            "faMaskThresh": 0.2,
+            "life_discretization": 360,
+            "life_num_iterations": 10,
+            "life_runLife": true,
+            "life_saveOutput": false,
+            "life_test": false,
+            "life_writePDB": false,
+            "mrtrix_autolmax": false,
+            "mrtrix_lmax": 6,
+            "mrtrix_useACT": false
+        }
+    },
+    "tractparams_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams"
+}

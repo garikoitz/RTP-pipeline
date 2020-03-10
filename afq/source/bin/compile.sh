@@ -2,9 +2,11 @@
 
 cat > build.m <<END
 
-addpath(genpath('/data/localhome/lmx/TESTDATA/RTP-pipeline'));
-%addpath(genpath('/data/localhome/glerma/soft/rtppipelinemlx/RTP-pipeline'));
-addpath(genpath('/data/localhome/lmx/TESTDATA/vistasoft'));
+% addpath(genpath('/data/localhome/lmx/TESTDATA/RTP-pipeline'));
+addpath(genpath('/data/localhome/glerma/soft/RTP-pipeline'));
+rmpath(genpath('/data/localhome/glerma/soft/RTP-pipeline/local'));
+addpath(genpath('/data/localhome/glerma/soft/vistasoft'));
+rmpath(genpath('/data/localhome/glerma/soft/vistasoft/local'));
 addpath(genpath('/data/localhome/glerma/soft/jsonlab'));
 addpath(genpath('/data/localhome/glerma/soft/encode'));
 addpath(genpath('/data/localhome/glerma/soft/JSONio'));

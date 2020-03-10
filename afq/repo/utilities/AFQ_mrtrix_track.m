@@ -8,26 +8,23 @@ function [status, results, fg, pathstr] = AFQ_mrtrix_track( files, ...
                                                             clobber, ...
                                                             mrtrixVersion, ...
                                                             opts)
- % Fix this                                                           
-
-multishell          = opts.multishell;
-useACT              = opts.mrtrix_useACT;
-faThresh            = opts.faThresh;
+multishell          = opts.track.multishell;
+useACT              = opts.track.mrtrix_useACT;
+faFodThresh         = opts.track.faFodThresh;
 % Life
-life_runLife        = opts.life_runLife  ; 
-life_discretization = opts.life_discretization;
-life_num_iterations = opts.life_num_iterations;
-life_test           = opts.life_test;
-life_saveOutput     = opts.life_saveOutput;
-life_writePDB       = opts.life_writePDB;
+life_runLife        = opts.track.life_runLife  ; 
+life_discretization = opts.track.life_discretization;
+life_num_iterations = opts.track.life_num_iterations;
+life_test           = opts.track.life_test;
+life_saveOutput     = opts.track.life_saveOutput;
+life_writePDB       = opts.track.life_writePDB;
 % ET
-ET_runET            = opts.ET_runET;
-ET_numberFibers     = opts.ET_numberFibers;
-ET_angleValues      = opts.ET_angleValues;
-ET_minlength        = opts.ET_minlength;
-ET_maxlength        = opts.ET_maxlength;
+ET_angleValues      = opts.track.ET_angleValues;
+ET_maxlength        = opts.track.ET_maxlength;
+ET_minlength        = opts.track.ET_minlength;
+ET_numberFibers     = opts.track.ET_numberFibers;
+ET_stepSizeMm       = opts.track.ET_stepSizeMm;
 
-                                                        
                                                        
 %
 % function [status, results, fg, pathstr] = mrtrix_track(files, roi, mask, algo, nSeeds, bkgrnd, verbose)
@@ -59,7 +56,8 @@ ET_maxlength        = opts.ET_maxlength;
 % the fiber cleaning is done in origin. Then it is the cleaned WholeBrain
 % converted to pdb and continues the normal afq pipeline.
 % Edit GLU 08.2018: added Ensemble Tractography
-
+% Edit GLU 03.2020: Now ET is always run, if we add just a pair of options, it will be equivalent of doing it only once. Big difference is that now we are combining angle and length in the tractotrams. 
+% TODO: clean the helop above to reflect the new function.
 status = 0; results = [];
 if notDefined('verbose'),  verbose = false;end
 if notDefined('bkgrnd'),    bkgrnd = false;end
@@ -76,11 +74,11 @@ if notDefined('life_test'), life_test = false; end
 if notDefined('life_saveOutput'), life_saveOutput = false; end
 if notDefined('life_writePDB'), life_writePDB = false; end
 % Ensemble Tractography
-if notDefined('ET_runET'), ET_runET = true; end
-if notDefined('ET_numberFibers'), ET_numberFibers = 200000; end
-if notDefined('ET_angleValues'), ET_angleValues = [47.2, 23.1, 11.5, 5.7, 2.9]; end
+if notDefined('ET_stepSizeMm'), ET_stepSizeMm = 999; end
+if notDefined('ET_numberFibers'), ET_numberFibers = 400000; end
+if notDefined('ET_angleValues'), ET_angleValues = [45, 25, 5]; end
+if notDefined('ET_maxlength'), ET_maxlength = [100, 150, 200]; end
 if notDefined('ET_minlength'), ET_minlength = 20; end
-if notDefined('ET_maxlength'), ET_maxlength = 250; end
 
 
 if mrtrixVersion ~= 3
@@ -93,10 +91,6 @@ end
 % --- multishell or not: it seems that at this point it doesn't matter, it
 %     was important for the FoD calculation. Now we can use ACT or not. 
 
-% This is 2x2 options
-% --- ET or not: this generates 2 options per each case
-% --- ACT or not: this generates 2 options per each case
-
 % This is yes/no options afterwards
 % --- LiFE or not: do it or not over the previous output
 % --- Save pdb or not: do it or not over the previous output
@@ -104,10 +98,10 @@ end
 % Generate the optionals here
 % They will be empty strings if nothing is going to be added and mrtrix
 % results will be used. 
-if faThresh == 999
-    faThreshStr = '';
+if faFodThresh == 999
+    faFodThreshStr = '';
 else
-    faThreshStr = [' -cutoff ' num2str(faThresh) ' '];
+    faFodThreshStr = [' -cutoff ' num2str(faFodThresh) ' '];
 end
 
 if ET_minlength == 999
@@ -116,103 +110,70 @@ else
     ET_minlengthStr = [' -minlength ' num2str(ET_minlength) ' '];
 end
 
-if ET_maxlength == 999
-    ET_maxlengthStr = '';
-else
-    %ET_maxlengthStr = [' -maxlength ' num2str(ET_maxlength) ' '];
+if ET_stepSizeMm == 999
+    ET_stepSizeMmStr = '';
+ else
+    ET_stepSizeMmStr = [' -step ' num2str(ET_stepSizeMm) ' '];
 end
 
-%optionalStr = [faThreshStr ET_minlengthStr ET_maxlengthStr];
-optionalStr = [faThreshStr ET_minlengthStr];
+% Create the optional str that will be added to the tckgen call
+optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
 
 % Generate the appropriate UNIX command string.
 [~, pathstr] = strip_ext(files.csd);
-if ET_runET
-    if useACT
-        disp('Running Ensemble Tractography with mrTrix3 and ACT.');
-        tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                          '-',num2str(nSeeds),'_ET_ACT.tck'));
-        numconcatenate = [];
-        for na=1:length(ET_angleValues)
-            fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) '_angle' strrep(num2str(ET_angleValues(na)),'.','p') '_ACT.tck'];
-            fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
-            cmd_str = ['tckgen -force ' ...
-                          '-algo ' algo optionalStr ' ' ...
-                          '-backtrack -crop_at_gmwmi -info ' ...
-                          '-seed_gmwmi ' files.gmwmi ' ' ...
-                          '-act ' files.tt5 ' ' ...
-                          '-angle ' num2str(ET_angleValues(na)) ' ' ...
-                          '-select ' num2str(ET_numberFibers) ' ' ...
-                          '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                          files.csd ' ' ...
-                          fgFileNameWithDir{na}];
-            % Run it, if the file is not there (this is for debugging)
-            if ~exist(fgFileNameWithDir{na},'file')
-                [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
-            end
-            numconcatenate = [numconcatenate, ET_numberFibers];
+if useACT
+    disp('Running Ensemble Tractography with mrTrix3 and ACT.');
+    tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
+                                      '-',num2str(nSeeds),'_ET_ACT.tck'));
+    numconcatenate = [];
+    for na=1:length(ET_angleValues)
+        fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) '_angle' strrep(num2str(ET_angleValues(na)),'.','p') '_ACT.tck'];
+        fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
+        cmd_str = ['tckgen -force ' ...
+                      '-algo ' algo optionalStr ' ' ...
+                      '-backtrack -crop_at_gmwmi -info ' ...
+                      '-seed_gmwmi ' files.gmwmi ' ' ...
+                      '-act ' files.tt5 ' ' ...
+                      '-angle ' num2str(ET_angleValues(na)) ' ' ...
+                      '-select ' num2str(ET_numberFibers) ' ' ...
+                      '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
+                      files.csd ' ' ...
+                      fgFileNameWithDir{na}];
+        % Run it, if the file is not there (this is for debugging)
+        if ~exist(fgFileNameWithDir{na},'file')
+            [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
         end
-        fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
-    else
-        disp('Running Ensemble Tractography with mrTrix3 and no ACT.');
-        tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                          '-',num2str(nSeeds),'_ET.tck'));
-        numconcatenate = [];
-        for na=1:length(ET_angleValues)
-            fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) '_angle' strrep(num2str(ET_angleValues(na)),'.','p') '.tck'];
-            fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
-            cmd_str = ['tckgen -force ' ...
-                        '-algo ' algo optionalStr ' ' ...
-                        '-seed_image ' roi ' ' ...
-                        '-mask ' mask ' ' ...
-                        '-angle ' num2str(ET_angleValues(na)) ' ' ...
-                        '-select ' num2str(ET_numberFibers) ' ' ...
-                        '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                        files.csd ' ' ...
-                        fgFileNameWithDir{na}];
-            % Run it, if the file is not there (this is for debugging)
-            if ~exist(fgFileNameWithDir{na},'file')
-                [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
-            end
-            numconcatenate = [numconcatenate, ET_numberFibers];
-        end
-        fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
-
+        numconcatenate = [numconcatenate, ET_numberFibers];
     end
+    fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
 else
-    if useACT
-        disp('Running tractography with no ET, with mrTrix3 and with ACT.');
-        tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                          '-',num2str(nSeeds),'_ACT.tck'));
+    disp('Running Ensemble Tractography with mrTrix3 and no ACT.');
+    tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
+                                      '-',num2str(nSeeds),'_ET.tck'));
+    numconcatenate = [];
+    for na=1:length(ET_angleValues)
+        fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) ...
+                                '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
+                                '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
+                                '.tck'];
+        fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
         cmd_str = ['tckgen -force ' ...
-                          '-algo ' algo ' ' ...
-                          '-backtrack -crop_at_gmwmi -info ' ...
-                          '-seed_gmwmi ' files.gmwmi ' ' ...
-                          '-act ' files.tt5 ' ' ...
-                          '-select ' num2str(nSeeds) ' ' ...
-                          files.csd ' ' ...
-                          tck_file];
-    else
-        disp('Running tractography with no ET, with mrTrix3 and with no ACT.');
-        tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                          '-',num2str(nSeeds),'.tck'));
-        cmd_str = ['tckgen -force ' ...
-                          '-algo ' algo optionalStr ' ' ...
-                          '-seed_image ' roi ' ' ...
-                          '-mask ' mask ' ' ...
-                          '-select ' num2str(nSeeds) ' ' ...
-                          files.csd ' ' ...
-                          tck_file];
+                    '-algo ' algo ...
+                    optionalStr ...
+                    '-seed_image ' roi ' ' ...
+                    '-mask ' mask ' ' ...
+                    '-angle ' num2str(ET_angleValues(na)) ' ' ...
+                    '-select ' num2str(ET_numberFibers) ' ' ...
+                    '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
+                    files.csd ' ' ...
+                    fgFileNameWithDir{na}];
+        % Run it, if the file is not there (this is for debugging)
+        if ~exist(fgFileNameWithDir{na},'file')
+            [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
+        end
+        numconcatenate = [numconcatenate, ET_numberFibers];
     end
-    % Launch the resulting command 
-    if ~(exist(tck_file,'file') ==2)  || clobber == 1
-        [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose, mrtrixVersion);
-    else
-        fprintf('\nFound fiber tract file: %s.\n Loading it rather than retracking', tck_file)
-    end
-    % Read the tck to the fg variable. 
-    % If it is not changed below, it will be passed to next steps
-    fg = fgRead(tck_file);
+    fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
 end
 
 if life_runLife
@@ -266,6 +227,7 @@ if life_runLife
     % Write file
     [PATHSTR,NAME,EXT] = fileparts(tck_file);
     tck_file =fullfile(PATHSTR, [NAME '_LiFE' EXT]);
+    fg.name = [NAME '_LiFE'];
     AFQ_fgWrite(fg, tck_file, 'tck');
 end
 

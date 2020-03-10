@@ -192,7 +192,9 @@ for ii = runsubs
         % NEW: 
         % We need to obtain the information to populate this table from a json
         % file or somewhere. It will have defaults. Right now leave it hardcoded
-        % for tests. 
+        % for tests.
+        % NOW READING FROM FILE
+        %{ 
         moriRois=["ATR_roi1_L", "ATR_roi2_L", ""; ...
                   "ATR_roi1_R", "ATR_roi2_R", ""; ...
                   "CST_roi1_L", "CST_roi2_L", ""; ...
@@ -216,7 +218,7 @@ for ii = runsubs
                   "Left-LGN", "Left-V1", ""; ...
                   "Right-LGN", "Right-V1", ""; ...
                   "Left-LGN", "Left-V2", ""; ...
-                  "Right-LGN", "Right-R", ""; ...
+                  "Right-LGN", "Right-V2", ""; ...
                   "Left-LGN", "Left-V1V2", ""; ...
                   "Right-LGN", "Right-V1V2", ""; ...
                   "Left-MGN", "ctx_lh_G_temp_sup-Plan_tempo", ""; ...
@@ -224,7 +226,7 @@ for ii = runsubs
                   "Left-MGN", "ctx_lh_G_temp_sup-G_T_transv", ""; ...
                   "Right-MGN", "ctx_rh_G_temp_sup-G_T_transv", ""; ... 
                   "Left-MGN", "ctx_lh_G_temp_sup-Plan+transv", ""; ...
-                  "Right-MGN", "ctx_rh_G_temp_sup-Plan+transv", "";]; 
+                  "Right-MGN", "ctx_rh_G_temp_sup-Plan+transv", ""]; 
         labels = ["Left Thalamic Radiation","Right Thalamic Radiation", ...
                   "Left Corticospinal","Right Corticospinal", ...
                   "Left Cingulum Cingulate", "Right Cingulum Cingulate", ...
@@ -301,7 +303,7 @@ for ii = runsubs
         tracts.angle     = repmat(45,[length(labels),1]);
         tracts.algorithm = repmat('iFoD2',[length(labels),1]); 
         tracts.cutoff    = repmat(0.1, [length(labels),1]);
-
+%}
         
         % Obtain the segmented tracts. 
         % In the new version:
@@ -311,68 +313,63 @@ for ii = runsubs
         %     end if required. 
         %   - It will save clip to roi == 1 and 0 files to disk, but 
         
-        [fg_classified, fg_clean, fg] = RTP_TractsGet(dtFile, afq, tracts);
+        [fg_classified, fg_clean, fg] = RTP_TractsGet(dtFile, afq);
         
 
     %% Compute Tract Profiles
     
-    if true % AFQ_get(afq,'compute profiles',ii)
-        fprintf('\nComputing Tract Profiles for subject %s',sub_dirs{ii});
-        % Determine how much to weight each fiber's contribution to the
-        % measurement at the tract core. Higher values mean steaper falloff
-        fWeight = AFQ_get(afq,'fiber weighting');
-        % By default Tract Profiles of diffusion properties will always be
-        % calculated
-        [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
-                                                fg_clean, ...
-                                                dt, ...
-                                                afq.params.numberOfNodes, ...
-                                                afq.params.clip2rois, ...
-                                                sub_dirs{ii}, ...
-                                                fWeight, ...
-                                                afq, ...
-												tracts);
-	
-	
-        % Parameterize the shape of each fiber group with calculations of
-        % curvature and torsion at each point and add it to the tract profile
-        [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_classified, TractProfile);
-        
-        % Calculate the volume of each Tract Profile
-        TractProfile = AFQ_TractProfileVolume(TractProfile);
-        
-        % Add values to the afq structure
-        afq = AFQ_set(afq,'vals','subnum',ii,'fa',fa,'md',md,'rd',rd,...
-            'ad',ad,'cl',cl,'curvature',curv,'torsion',tors,'volume',vol);
-        
-        % Add Tract Profiles to the afq structure
-        afq = AFQ_set(afq,'tract profile','subnum',ii,TractProfile);
-        
-        % If any other images were supplied calculate a Tract Profile for that
-        % parameter
-        numimages = AFQ_get(afq, 'numimages');
-        if numimages > 0
-            for jj = 1:numimages
-                % Read the image file
-                image = niftiRead(afq.files.images(jj).path{ii});
-                % Check image header
-                if ~all(image.qto_xyz(:) == image.sto_xyz(:))
-                   image = niftiCheckQto(image);
-                end  
-                % Resample image to match dwi resolution if desired
-                if AFQ_get(afq,'imresample')
-                    image = mrAnatResampleToNifti(image, fullfile(afq.sub_dirs{ii},'bin','b0.nii.gz'),[],[7 7 7 0 0 0]);
-                end
-                % Compute a Tract Profile for that image
-                imagevals = AFQ_ComputeTractProperties(fg_classified, image, afq.params.numberOfNodes, afq.params.clip2rois, sub_dirs{ii}, fWeight, afq);
-                % Add values to the afq structure
-                afq = AFQ_set(afq,'vals','subnum',ii,afq.files.images(jj).name, imagevals);
-                clear imagevals
-            end
-        end
-    else
-        fprintf('\nTract Profiles already computed for subject %s',sub_dirs{ii});
-    end
+   fprintf('\n[AFQ_run] Computing Tract Profiles for subject %s',sub_dirs{ii});
+   % Determine how much to weight each fiber's contribution to the
+   % measurement at the tract core. Higher values mean steaper falloff
+   fWeight = AFQ_get(afq,'fiber weighting');
+   % By default Tract Profiles of diffusion properties will always be
+   % calculated
+   [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
+                                           fg_clean, ...
+                                           dt, ...
+                                           afq.params.numberOfNodes, ...
+                                           afq.params.clip2rois, ...
+                                           sub_dirs{ii}, ...
+                                           fWeight, ...
+                                           afq);
+   
+   
+   % Parameterize the shape of each fiber group with calculations of
+   % curvature and torsion at each point and add it to the tract profile
+   [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_classified, TractProfile);
+   
+   % Calculate the volume of each Tract Profile
+   TractProfile = AFQ_TractProfileVolume(TractProfile);
+   
+   % Add values to the afq structure
+   afq = AFQ_set(afq,'vals','subnum',ii,'fa',fa,'md',md,'rd',rd,...
+       'ad',ad,'cl',cl,'curvature',curv,'torsion',tors,'volume',vol);
+   
+   % Add Tract Profiles to the afq structure
+   afq = AFQ_set(afq,'tract profile','subnum',ii,TractProfile);
+   
+   % If any other images were supplied calculate a Tract Profile for that
+   % parameter
+   numimages = AFQ_get(afq, 'numimages');
+   if numimages > 0
+       for jj = 1:numimages
+           % Read the image file
+           image = niftiRead(afq.files.images(jj).path{ii});
+           % Check image header
+           if ~all(image.qto_xyz(:) == image.sto_xyz(:))
+              image = niftiCheckQto(image);
+           end  
+           % Resample image to match dwi resolution if desired
+           if AFQ_get(afq,'imresample')
+               image = mrAnatResampleToNifti(image, fullfile(afq.sub_dirs{ii},'bin','b0.nii.gz'),[],[7 7 7 0 0 0]);
+           end
+           % Compute a Tract Profile for that image
+           imagevals = AFQ_ComputeTractProperties(fg_classified, image, afq.params.numberOfNodes, afq.params.clip2rois, sub_dirs{ii}, fWeight, afq);
+           % Add values to the afq structure
+           afq = AFQ_set(afq,'vals','subnum',ii,afq.files.images(jj).name, imagevals);
+           clear imagevals
+       end
+   end
     
     % Save each iteration of afq run if an output directory was defined
     if ~isempty(AFQ_get(afq,'outdir')) && exist(AFQ_get(afq,'outdir'),'dir')
