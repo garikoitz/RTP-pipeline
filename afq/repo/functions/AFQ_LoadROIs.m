@@ -26,8 +26,11 @@ function [roi1, roi2] = AFQ_LoadROIs(fgNumber, subDir, ts)
 RoiPara  = load(fullfile(subDir,'dt6.mat'));
 fs_dir   = RoiPara.params.fs_dir;
 roi_dir  = fullfile(fs_dir, 'ROIs');
-roi1Name = char(fullfile(roi_dir, strcat(ts.roi1,ts.dilroi1,ts.extroi1)));
-roi2Name = char(fullfile(roi_dir, strcat(ts.roi2,ts.dilroi2,ts.extroi2)));
+% Solve the dilate text
+if ts.dilroi1>0;dil1=strcat("_dil-",num2str(ts.dilroi1));else;dil1="";end
+if ts.dilroi2>0;dil2=strcat("_dil-",num2str(ts.dilroi2));else;dil2="";end
+roi1Name = char(fullfile(roi_dir, strcat(ts.roi1,dil1,ts.extroi1)));
+roi2Name = char(fullfile(roi_dir, strcat(ts.roi2,dil2,ts.extroi2)));
 
 if exist(roi1Name,'file') 
     roi1=dtiImportRoiFromNifti(roi1Name);

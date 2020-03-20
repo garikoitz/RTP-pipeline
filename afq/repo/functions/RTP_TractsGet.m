@@ -189,11 +189,15 @@ for nt=1:height(tracts)
         RoiPara = load(dt6File);
         fs_dir  = RoiPara.params.fs_dir;
         moridir = fullfile(fs_dir, 'ROIs');
-        roi1    = fullfile(moridir, strcat(ts.roi1,ts.dilroi1,ts.extroi1));
-        roi2    = fullfile(moridir, strcat(ts.roi2,ts.dilroi2,ts.extroi2));
+        % Solve the dilate text
+        if ts.dilroi1>0;dil1=strcat("_dil-",num2str(ts.dilroi1));else;dil1="";end 
+        if ts.dilroi2>0;dil2=strcat("_dil-",num2str(ts.dilroi2));else;dil2="";end 
+        if ts.dilroi3>0;dil3=strcat("_dil-",num2str(ts.dilroi3));else;dil3="";end 
+        roi1    = fullfile(moridir, strcat(ts.roi1,dil1,ts.extroi1));
+        roi2    = fullfile(moridir, strcat(ts.roi2,dil2,ts.extroi2));
         roi3    = "";
-        if ~(strcmp(ts.roi3,"") || isnan(ts.roi3) || ismissing(ts.roi3))
-            join("-include", fullfile(moridir, strcat(ts.roi3,ts.dilroi3,ts.extroi3)));
+        if ~(strcmp(ts.roi3,"NO"))
+            join("-include", fullfile(moridir, strcat(ts.roi3,dil3,ts.extroi3)));
         end
     
     

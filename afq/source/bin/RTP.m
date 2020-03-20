@@ -74,37 +74,36 @@ sub_group = ones(numel(sub_dirs),1);
 
 
 %% CHECK INPUTS AND OPTIONALS
+% J.input_dir will be the RTP dir. It will be zipped at the end, the whole dir
+% J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
 
 % File and folder checks
-%% Copy input files to output/RTP/
-if(~exist(fullfile(P.output_dir,'RTP'),'dir'));mkdir(fullfile(P.output_dir,'RTP'));end
-if(~exist(fullfile(P.output_dir,'RTP/t1.nii.gz')));copyfile(fullfile(P.anat_dir,'t1.nii.gz'), fullfile(P.output_dir,'RTP/t1.nii.gz'));end
-if(~exist(fullfile(P.output_dir,'RTP/dwi.bvecs')));copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), fullfile(P.output_dir,'RTP/'));end
-if(~exist(fullfile(P.output_dir,'RTP/dwi.bvals')));copyfile(fullfile(P.bval_dir,'dwi.bvals'), fullfile(P.output_dir,'RTP/'));end
-if(~exist(fullfile(P.output_dir,'RTP/dwi.nii.gz')));copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), fullfile(P.output_dir,'RTP/'));end
-if(~exist(fullfile(P.output_dir,'RTP/aparc+aseg.nii.gz')));copyfile(fullfile(P.fs_dir, 'aparc+aseg.nii.gz'), fullfile(P.output_dir,'RTP/'));end
-
-J.aparcaseg_file = fullfile(P.output_dir,'RTP','aparc+aseg.nii.gz');
-J.t1_file = fullfile(P.output_dir,'RTP', 't1.nii.gz');
-J.bvec_file = fullfile(P.output_dir,'RTP', 'dwi.bvecs');
-J.bval_file = fullfile(P.output_dir,'RTP', 'dwi.bvals');
-J.dwi_file = fullfile(P.output_dir,'RTP', 'dwi.nii.gz');
-J.input_dir = fullfile(P.output_dir,'RTP');
+J.input_dir  = fullfile(P.output_dir,'RTP');
 J.output_dir = P.output_dir;
-sub_dirs{1} = J.input_dir;
-if ~isfield(J, 't1_file') || ~exist(J.t1_file, 'file')
-    template_t1 = '/templates/MNI_EPI.nii.gz'; 
-    J.t1_file = template_t1;
-end
+sub_dirs{1}  = J.input_dir;
+
+J.t1_file    = fullfile(J.input_dir, 't1.nii.gz');
+J.bvec_file  = fullfile(J.input_dir, 'dwi.bvecs');
+J.bval_file  = fullfile(J.input_dir, 'dwi.bvals');
+J.dwi_file   = fullfile(J.input_dir, 'dwi.nii.gz');
+J.fs_file    = fullfile(J.input_dir, 'fs.zip');
+%% Copy input files to output/RTP/
+if ~exist(J.output_dir,'dir');mkdir(fullfile(P.output_dir,'RTP'));end
+if ~exist(J.t1_file);  copyfile(fullfile(P.anat_dir,'t1.nii.gz'), J.t1_file);end
+if ~exist(J.bvec_file);copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), J.bvec_file);end
+if ~exist(J.bval_file);copyfile(fullfile(P.bval_dir,'dwi.bvals'), J.bval_file);end
+if ~exist(J.dwi_file); copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), J.dwi_file);end
+if ~exist(J.fs_file);  copyfile(fullfile(P.fs_dir,'fs.zip'), J.fs_file);end
+% Unzip the output from FS
+unzip(J.fs_file, J.input_dir)
 
 
 %% Initialize diffusion parameters
-% LMX: maintain this structure for now, we'll see if we need it later
+% We don't require most of them
 dwParams            = dtiInitParams;
 dwParams.outDir     = J.output_dir;
 dwParams.bvecsFile  = J.bvec_file;
 dwParams.bvalsFile  = J.bval_file;
-%dwParams.bvalue     = dw.bvalue;
 
 %% Validate that the bval values are normalized
 % Determine shell
@@ -130,17 +129,13 @@ dlmwrite(J.bval_file, roundedBval, 'delimiter',' ');
 % it is much faster and the rest of the code relies in it anyways. 
 % First iteration, stop dtiInit doing it and later on mrtrixInit will paste
 % the fa to the bin folder. 
-% In 3.1.1 it was doing nothing already
-% In 3.1.2 I am removing the call altogether to make this thing simpler
+% 3.1.1 it was doing nothing already
+% 3.1.2 I am removing the call altogether to make this thing simpler
 %        AFQ_dtiInit(J.dwi_file, J.t1_file, dwParams);
-% Plans for 3.2.0: remove afq-browser and dtiInit altogether
-% We are in 4.0.0 now, that we already removed dtiInit and afq-browser.
-%   As you see, from 3.1.2 I copied all the functionalities into this file, so
-%   everything should be done here. Be careful with filenames and paths and the
-%   like, before this was a different container, now both are ni the same
-%   container, and some of the stuff I was doing was to be sure the right files
-%   were passed from container to container. 
-
+% 3.2.0: remove afq-browser and dtiInit altogether
+% 4.0.0 now, that we already removed dtiInit and afq-browser.
+% 4.2.0 reads csv and creates tracts table, now any tract can be done
+% 4.2.1 ROIs: dilates and concatenates them
 
 % Here dtiInit was called, assign variables
 dwRawFileName = J.dwi_file;
@@ -151,8 +146,7 @@ t1FileName    = J.t1_file;
 disp('Loading preprocessed (use rtp-preproc or already preprocessed) data...');
 dwRaw = niftiRead(dwRawFileName);
 
-% By default all processed nifti's will be at the same resolution as the
-% dwi data
+% By default all processed nifti's will be at the same resolution as the dwi data
 % if notDefined('dwParams'); 
 %   dwParams         = dtiInitParams; 
 % we are going to ignore whatever we pass in the dtinit params. 
@@ -161,140 +155,59 @@ dwRaw = niftiRead(dwRawFileName);
 % end 
 
 % Initialize the structure containing all directory info and file names
-dwDir      = dtiInitDir(dwRawFileName,dwParams);
+% dwDir      = dtiInitDir(dwRawFileName,dwParams);
+dwDir.outSuffix        = ''
+dwDir.mrDiffusionDir   = mrdRootPath();
+dwDir.dataDir          = J.input_dir;
+dwDir.inBaseName       = 'dwi'
+dwDir.subjectDir       = dwDir.dataDir;
+dwDir.mnB0Name         = fullfile(dwDir.dataDir, 'dwi_b0.nii.gz');
+dwDir.outBaseName      = ''
+dwDir.outBaseDir       = dwDir.dataDir
+dwDir.inBaseDir        = fullfile(dwDir.dataDir,'dwi');
+dwDir.bvalsFile        = fullfile(dwDir.dataDir,'dwi.bvals');
+dwDir.bvecsFile        = fullfile(dwDir.dataDir,'dwi.bvecs');
+dwDir.ecFile           = fullfile(dwDir.dataDir,'dwi_ecXform.mat');
+dwDir.acpcFile         = fullfile(dwDir.dataDir,'dwi_acpcXform.mat');
+dwDir.alignedBvecsFile = dwDir.bvalsFile;
+dwDir.alignedBvalsFile = dwDir.bvalsFile;
+dwDir.dwAlignedRawFile = J.dwi_file;
+
 outBaseDir = dwDir.outBaseDir;
 fprintf('Dims = [%d %d %d %d] \nData Dir = %s \n', size(dwRaw.data), dwDir.dataDir);
 fprintf('Output Dir = %s \n', dwDir.subjectDir);
 
-
-% II. Select the anatomy file
-
-% Check for the case that the user wants to align to MNI instead of T1.
-% LMX: WE SHOULD NEVER DO THIS! but, once I had a subjet without T1 so I used
-% it so...
-if exist('t1FileName','var') && strcmpi(t1FileName,'MNI')
-    t1FileName = fullfile(mrDiffusionDir,'templates','MNI_EPI.nii.gz');
-    disp('The MNI EPI template will be used for alignment.');
-end
-
-if notDefined('t1FileName') || ~exist(t1FileName,'file')
-    t1FileName = mrvSelectFile('r',{'*.nii.gz';'*.*'},'Select T1 nifti file');
-    if isempty(t1FileName); disp('dtiInit canceled by user.'); return; end
-end
-fprintf('t1FileName = %s;\n', t1FileName);
-
-
-% (lmx: see that I am moving the old code with notes and everything, once we
-% make it work, we'll clearn everything, but just in case it helps us debugging
-% I am going to maintain it for now)
-
-% XV. Name the folder that will contain the dt6.mat file
-% If the user passed in a full path to dt6BaseName and outDir ... if
-% they're different the dt6.mat file will be saved to dt6BaseName while the
-% other data will be saved to outDir. See dtiInitDir for the fix.
-% I removed the nUniqueDirs thing as well, why should it be in the folder name
-if isempty(dwParams.dt6BaseName) 
-    % nUniqueDirs from dtiBootGetPermMatrix
-    % dwParams.dt6BaseName = fullfile(dwDir.subjectDir,sprintf('dti%02d',nUniqueDirs));
-    dwParams.dt6BaseName = fullfile(dwDir.dataDir,'dticsd');
-    %if ~dwParams.bsplineInterpFlag 
-        % Using trilinear interpolation 
-     %   dwParams.dt6BaseName = [dwParams.dt6BaseName 'trilin'];
-    %end
-else
-    if isempty(fileparts(dwParams.dt6BaseName)) 
-        dwParams.dt6BaseName = fullfile(dwDir.subjectDir,dwParams.dt6BaseName);
-    end
-end
-
-
-
-% XVII. Build the dt6.files field and append it to dt6.mat
-% GLU: This was the old version before I commented XVI
-% Need to handle the case where there is more than one dt6 file. 
-% for dd = 1:numel(dt6FileName)
-%     dtiInitDt6Files(dt6FileName{dd},dwDir,t1FileName);
-% end
-
-% GLU: the new one
-outBaseName = dwParams.dt6BaseName;
-dt6FileName = fullfile(outBaseName, 'dt6.mat');
-binDirName  = fullfile(outBaseName, 'bin');
-if(~exist(outBaseName,'dir'));mkdir(outBaseName);end
+dwParams.dt6BaseName = fullfile(J.input_dir);
+dt6FileName          = fullfile(J.input_dir, 'dt6.mat');
+binDirName           = fullfile(J.input_dir, 'bin');
 if(~exist(binDirName,'dir')) ;mkdir(binDirName);end
 if(~exist('adcUnits','var')); adcUnits = ''; end
 
-J.params = P.params;
-J.params.input_dir = J.input_dir;
-J.params.output_dir = J.output_dir;
-params = J.params;
-params.buildDate = datestr(now,'yyyy-mm-dd HH:MM');
+
+params              = P.params;
+params.input_dir    = J.input_dir;
+params.output_dir   = J.output_dir;
+params.buildDate    = datestr(now,'yyyy-mm-dd HH:MM');
 l = license('inuse');
-params.buildId = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
+params.buildId      = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
 if(ischar(dwRawFileName)); [dataDir,rawDataFileName] = fileparts(dwRawFileName);  % dwRawAligned);
-else                      [dataDir,rawDataFileName] = fileparts(dwRawFileName.fname);end  % dwRawAligned.fname); end
-endparams.rawDataDir = dataDir;
-params.rawDataFile   = rawDataFileName;
-% We assume that the raw data file is a directory inside the 'subject' directory.
-%params.subDir = fileparts(dataDir);
-params.subDir = dataDir;
+else                       [dataDir,rawDataFileName] = fileparts(dwRawFileName.fname);end  % dwRawAligned.fname); end
+params.rawDataDir   = dataDir;
+params.rawDataFile  = rawDataFileName;
+params.subDir       = dataDir;
+params.fs_dir       = fullfile(params.input_dir,'fs');
+params.roi_dir      = fullfile(params.fs_dir,'ROIs');
 
+J.params            = params;
 
-% Some day I will try to understand why they are doing this...
-[fullParentDir, binDir] = fileparts(binDirName);
-[ppBinDir, pBinDir] = fileparts(fullParentDir);
-pBinDir = fullfile(pBinDir,binDir);
+files.b0            = fullfile('RTP','bin','b0.nii.gz');
+files.brainMask     = fullfile('RTP','bin','brainMask.nii.gz');
+files.wmMask        = fullfile('RTP','bin','wmMask.nii.gz');
+files.tensors       = fullfile('RTP','bin','tensors.nii.gz');
+files.fa            = fullfile('RTP','bin','fa.nii.gz');
 
-
-% Now decide which ones of this files I will create with mrTrix and which
-% ones I will leave uncreated
-
-% LMX: MAINTAIN THIS HERE. Here I just created the path names to the files that
-% were created in dtiinit. So I just created the paths in dtiinit and then ni
-% afq using mrtrix I created the files themselves. Rigth now we should change th
-%e order of things, but it shuoold continue working
-
-files.b0        = fullfile(pBinDir,'b0.nii.gz');
-files.brainMask = fullfile(pBinDir,'brainMask.nii.gz');
-files.wmMask    = fullfile(pBinDir,'wmMask.nii.gz');
-% files.wmProb    = fullfile(pBinDir,'wmProb.nii.gz');
-files.tensors   = fullfile(pBinDir,'tensors.nii.gz');
-files.fa        = fullfile(pBinDir,'fa.nii.gz');
-% files.vecRgb    = fullfile(pBinDir,'vectorRGB.nii.gz');
-% files.faStd     = fullfile(pBinDir,'faStd.nii.gz');
-% files.mdStd     = fullfile(pBinDir,'mdStd.nii.gz');
-% files.pddDisp   = fullfile(pBinDir,'pddDispersion.nii.gz');
-
-% This is new, we are going to copy the input data as output data and call it alligned in dt6
-
-% LMX: Check this one, if we have been leaving the files in the correct place,
-% this should not be necessary, check. 
-
-copyfile(dwRawFileName, dwParams.outDir);
-[~,fname,ext] = fileparts(dwRawFileName);
-files.alignedDwRaw   = fullfile(dwParams.outDir, [fname ext]);
-dwDir.dwAlignedRawFile = files.alignedDwRaw;
-
-copyfile(dwParams.bvecsFile, dwParams.outDir);
-[~,fname,ext] = fileparts(dwParams.bvecsFile);
-files.alignedDwBvecs = fullfile(dwParams.outDir,[fname ext]); 
-dwDir.alignedBvecsFile = files.alignedDwBvecs;
-
-copyfile(dwParams.bvalsFile, dwParams.outDir);
-[~,fname,ext] = fileparts(dwParams.bvalsFile);
-files.alignedDwBvals = fullfile(dwParams.outDir,[fname ext]);
-dwDir.alignedBvalsFile = files.alignedDwBvals;
-
-% LMX: this is required. we are saving the dt6.mat file with all the required
-% variables and file names, required for the rest of the thing
 save(dt6FileName,'adcUnits','params','files');
 dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
-copyfile(dt6FileName, J.input_dir);
-
-% XX. Save out parameters, svn revision info, etc. for future reference
-
-% dtiInitLog(dwParams,dwDir);
-
 
 
 %% CHECK IF INPUT IS RAS  (THIS WAS IN RTP CONTAINER)
@@ -308,15 +221,11 @@ copyfile(dt6FileName, J.input_dir);
 % it is not installed in the Docker container)
 
 % Read the input file names and convert them
-input_dir = J.input_dir;
-basedir = split(input_dir,filesep);
-basedir = strcat(basedir(1:end-1));
-basedir = fullfile('/',basedir{:});
+basedir = J.input_dir;
 
-fprintf('This is input_dir: %s\n', input_dir)
-fprintf('This is basedir: %s\n',   basedir)
+fprintf('This is basedir for RAS checks: %s\n',   basedir)
 
-J       = load(fullfile(input_dir,'dt6.mat'));
+J       = load(fullfile(J.input_dir,'dt6.mat'));
 disp('This are the contents of dt6.mat')
 J
 
@@ -333,36 +242,16 @@ if ~strcmp(p,basedir); J.files.alignedDwBvecs = fullfile(basedir,[f e]); end
 if ~strcmp(p,basedir); J.files.alignedDwBvals = fullfile(basedir,[f e]); end
 
 
-J.files.t1path    = fullfile(basedir,J.files.t1);
+J.files.t1path    = fullfile(J.params.output_dir,J.files.t1);
 fprintf('This is the absolute path to the t1: %s\n', J.files.t1path)
 if exist(J.files.t1path,'file')
     fprintf('T1 file %s Exists. \n', J.files.t1path)
 else
     error('Cannot find %s', J.files.t1path)
 end
-J.files.aparcaseg = fullfile(basedir,J.files.t1);
-% Solve the aparc+aseg case
-asegFiles = dir(fullfile(basedir,'*aseg*'));
-for ii = 1:length(asegFiles)
-    if length(strfind(asegFiles(ii).name, 'aseg')) > 0
-        J.files.aparcaseg = fullfile(basedir, asegFiles(ii).name);
-    end
-    if length(strfind(asegFiles(ii).name, 'aparc')) > 0
-        J.files.aparcaseg = fullfile(basedir, asegFiles(ii).name);
-    end
-end
-if ~(exist(J.files.aparcaseg, 'file') == 2)
-    disp(['inputFile = ' J.files.aparcaseg]);
-    warning(['Cannot find aseg file, please copy it to ' basedir]);
-    
-    J.files.aparcaseg = J.files.t1path;
-    if ~(exist(J.files.aparcaseg, 'file') == 2)
-        error(['Cannot find T1, please copy it to ' basedir]);
-    end
-end
 
 % Check it in these files
-checkfiles = {'alignedDwRaw','t1path','aparcaseg'};
+checkfiles = {'alignedDwRaw','t1path'}; %,'aparcaseg'};
 for nc=1:length(checkfiles)
     fname = J.files.(checkfiles{nc});
     [c2r,orientation] = rtp_convert2RAScheck(fname);
@@ -395,9 +284,6 @@ for nc=1:length(checkfiles)
                 J.files.alignedDwBvecs = fslRASbvec;
                 J.files.alignedDwBvals = fslRASbval;
                 J.files.alignedDwRaw   = fslRASname;
-                % dwRawFileName      = J.(checkfiles{nc});
-                % dwParams.bvecsFile = J.bvec_file;
-                % dwParams.bvalsFile = J.bval_file;
             otherwise
                 % 1: Do the strides to RAS conversion
                 fRASname = fullfile(p,[f 'ras.nii.gz']);
@@ -406,10 +292,10 @@ for nc=1:length(checkfiles)
                 s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
                 % 2: change filenames to continue with processing normally
                 J.files.(checkfiles{nc}) = fRASname;
-                
         end
     end
 end
+%{
 % Change t1 back
 [p,f,e] = fileparts(J.files.t1path);
 J.files.t1 = [f,e];
@@ -418,11 +304,11 @@ adcUnits = '';
 params   = J.params;
 files    = J.files;
 save(fullfile(input_dir,'dt6.mat'),'adcUnits','params','files');
-
+%}
 
 %% Create afq structure
 if notDefined('out_name')
-    out_name = ['afq_', getDateAndTime];
+    out_name = ['rtp_', getDateAndTime];
 end
 
 disp('Running AFQ_create with the following options...');
@@ -432,8 +318,8 @@ fprintf('out_name: %s', out_name)
 mkdir(input_dir, 'bin')
 % Add deleted variables to afq, the ones we want fixed
 J.params.clip2rois=true;
-J.params.maxDist=true;
-J.params.maxLen=false;
+% J.params.maxDist=true;
+% J.params.maxLen=false;
 J.params.track.multishell=false;
 if length(paramsShells) > 1;J.params.track.multishell=true;end
 J.params.track.tool='freesurfer';
@@ -442,6 +328,10 @@ J.params.computeCSD=true;
 afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
                  'outdir', output_dir, 'outname', out_name, ...
                  'params', J.params);  
+
+
+
+
 % Add the tracts table to the afq struct so that we keep it all together. 
 % Not the most elegant solution, fix it in future releases
 % - Load the tract
@@ -463,6 +353,7 @@ for ns=1:width(A)
     end
 end
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
+% Create list of all ROIs
 roi3names=[];
 for nr=1:length(A.roi3)
 	if ismissing(A.roi3(nr))
@@ -471,18 +362,91 @@ for nr=1:length(A.roi3)
 		roi3names = [roi3names;strcat(A.roi3(nr),A.extroi3(nr))];
 	end
 end
+
 checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);roi3names];
+% If there is an AND, this means that there are two ROIs 
+% Create a new list with the individual ROIs to create, after checking the individuals are there
+createROInew = [];
+createROI1   = [];
+createROI2   = [];
 for nc=1:length(checkTheseRois)
 	rname = checkTheseRois(nc);
-	if strcmp(rname,"")
-		continue
-	else	
-		rpath  = fullfile(P.fs_dir,'ROIs',rname);
-		if ~isfile(rpath)
-			error('ROI %s is required and it is not in the ROIs folder',rpath)
+	if strcmp(rname,"NO.nii.gz")
+		% do nothing
+	elseif contains(rname,'_AND_')
+		% Add the ROI to be created
+		createROInew = [createROInew; rname];	
+		% Check if the individuals exist
+		rois12 = strsplit(rname,'_AND_');
+
+		% ROI1				
+		rpath  = fullfile(J.params.roi_dir,strcat(rois12{1},".nii.gz"));
+		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
+		createROI1 = [createROI1; strcat(rois12{1},".nii.gz")];	
+	
+		% ROI2
+		rpath  = fullfile(J.params.roi_dir,rois12{2});
+		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
+		createROI2 = [createROI2; string(rois12{2})];	
+	else
+		rpath  = fullfile(J.params.roi_dir,rname);
+		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
+	end
+end
+% Create the ROIs by concatenating. Use Matlab for now
+for nt=1:length(createROInew)
+	nroi = fullfile(J.params.roi_dir,createROInew(nt));
+	roi1 = fullfile(J.params.roi_dir,createROI1(nt));
+	roi2 = fullfile(J.params.roi_dir,createROI2(nt));
+	% Read the existing ROIs
+	R1   = niftiRead(char(roi1));
+	R2   = niftiRead(char(roi2));
+	% Create the new file and concatenate the data
+	nR   = R1;
+	nR.fname = char(nroi);
+	nR.data  = uint8(R1.data | R2.data);
+	niftiWrite(nR);  
+end
+
+% Dilate those ROIs that require it using mrtrix's tool maskfilter
+% maskfilter input filter(dilate) output 
+for nl=1:height(A)	
+	% Check line by line and create the dilated ROIs.  
+	ts = A(nl,:);
+	if ts.dilroi1>0
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'.nii.gz')));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'_dil-',num2str(ts.dilroi1),'.nii.gz')));
+		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi1)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmdr   = AFQ_mrtrix_cmd(cmd);
+		if cmdr ~= 0
+			error('[RTP] ROI could not be created, this was the command: %s', cmd)
+		end
+	end
+	if ts.dilroi2>0
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'.nii.gz')));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'_dil-',num2str(ts.dilroi2),'.nii.gz')));
+		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi2)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmdr   = AFQ_mrtrix_cmd(cmd);
+		if cmdr ~= 0
+			error('[RTP] ROI could not be created, this was the command: %s', cmd)
+		end
+	end
+	if ts.dilroi3>0 && ~strcmp(ts.roi3,"NO")
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'.nii.gz')));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'_dil-',num2str(ts.dilroi3),'.nii.gz')));
+		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi3)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmdr   = AFQ_mrtrix_cmd(cmd);
+		if cmdr ~= 0
+			error('[RTP] ROI could not be created, this was the command: %s', cmd)
 		end
 	end
 end
+
+
+
 afq.tracts = A;
 % Update afq values with the ones coming from the tract. 
 % TODO: do this inside AFQ_Create
@@ -491,17 +455,7 @@ afq.roi1names = cellstr(strcat(afq.tracts.roi1,afq.tracts.extroi1)');
 afq.roi2names = cellstr(strcat(afq.tracts.roi2,afq.tracts.extroi2)');
 
 
-disp('... end running AFQ_Create')
-% disp(afq.params);
-
-% Run control comparison by default
-% if ~isfield(params, 'runcontrolcomp');a
-%     afq.params.runcontrolcomp = false;
-% end
-
-
-
-
+disp('[RTP] ... end running AFQ_Create')
 
 %% RUN RTP
 

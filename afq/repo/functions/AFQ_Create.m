@@ -301,17 +301,17 @@ end
 for ii = 1:AFQ_get(afq,'num subs')
     fibDir = fullfile(afq.sub_dirs{ii},'fibers');
     wholebrainFG = fullfile(fibDir,'WholeBrainFG.mat');
-    segmentedFG = fullfile(fibDir,segName);
-    cleanFG = fullfile(fibDir,[prefix(segName) '_clean_D' num2str(afq.params.maxDist) '_L'  num2str(afq.params.maxLen) '.mat']);
+    % segmentedFG = fullfile(fibDir,segName);
+    % cleanFG = fullfile(fibDir,[prefix(segName) '_clean_D' num2str(afq.params.maxDist) '_L'  num2str(afq.params.maxLen) '.mat']);
     if exist(wholebrainFG,'file')
         afq.files.fibers.wholebrain{ii} = wholebrainFG;
     end
-    if exist(segmentedFG,'file')
-        afq.files.fibers.segmented{ii} = segmentedFG;
-    end
-    if exist(cleanFG,'file')
-        afq.files.fibers.clean{ii} = cleanFG;
-    end
+    % if exist(segmentedFG,'file')
+    %     afq.files.fibers.segmented{ii} = segmentedFG;
+    % end
+    % if exist(cleanFG,'file')
+    %     afq.files.fibers.clean{ii} = cleanFG;
+    % end
 end
 % Save the name  of the segmented fiber group
 afq.files.fibers.segName = segName;
