@@ -186,7 +186,7 @@ if life_runLife
     % been edited. 
     mrtrixDir  = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-1)), filesep);
     dtiDir     = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep);
-    sessionDir = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-3)), filesep);
+    sessionDir = dtiDir;
     lifedir    = fullfile(dtiDir, 'LiFE');
 
     config.dtiinit             = dtiDir;
