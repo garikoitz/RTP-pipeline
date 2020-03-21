@@ -100,8 +100,8 @@ unzip(J.fs_file, J.input_dir)
 % Check if the expected folders are here, and the minumun files so that the rest does not fail
 if ~exist(fullfile(J.input_dir,'fs'),'dir');error('fs folder does not exist, check the fs.zip file');end
 if ~exist(fullfile(J.input_dir,'fs','ROIs'),'dir');error('fs/ROIs folder does not exist, check the fs.zip file');end
-if ~exist(fullfile(J.input_dir,'fs','ROIs','aparc+aseg.nii.gz'),'file');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
-if ~exist(fullfile(J.input_dir,'fs','ROIs','brainmask.nii.gz'),'file');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(J.input_dir,'fs','aparc+aseg.nii.gz'),'file');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(J.input_dir,'fs','brainmask.nii.gz'),'file');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
 
 %% Initialize diffusion parameters
 % We don't require most of them
