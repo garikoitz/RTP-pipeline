@@ -74,7 +74,7 @@ sub_group = ones(numel(sub_dirs),1);
 
 
 %% CHECK INPUTS AND OPTIONALS
-% J.input_dir will be the RTP dir. It will be zipped at the end, the whole dir
+% J.input_dir will be the RTP dir. It will be zipped at the end, the whole dir, work_dir is less confusing
 % J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
 
 % File and folder checks
@@ -97,7 +97,11 @@ if ~exist(J.dwi_file); copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), J.dwi_file);
 if ~exist(J.fs_file);  copyfile(fullfile(P.fs_dir,'fs.zip'), J.fs_file);end
 % Unzip the output from FS
 unzip(J.fs_file, J.input_dir)
-
+% Check if the expected folders are here, and the minumun files so that the rest does not fail
+if ~exist(fullfile(J.input_dir,'fs'),'d');error('fs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(J.input_dir,'fs','ROIs'),'d');error('fs/ROIs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(J.input_dir,'fs','ROIs','aparc+aseg.nii.gz'),'f');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(J.input_dir,'fs','ROIs','brainmask.nii.gz'),'f');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
 
 %% Initialize diffusion parameters
 % We don't require most of them

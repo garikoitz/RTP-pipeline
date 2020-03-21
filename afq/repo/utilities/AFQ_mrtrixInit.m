@@ -197,13 +197,13 @@ if (~computed.('tt5')) || (~computed.('gmwmi'))
             % It can take mgz or nii or mif
         case {'freesurfer'}
             % Add it to the dt_info for future versions
-            asegFiles = dir(fullfile(session,'*aseg*'));
+            asegFiles = dir(fullfile(session,'fs','*aseg*'));
             for ii = 1:length(asegFiles)
                if length(strfind(asegFiles(ii).name, 'aseg')) > 0
-                   inputFile = fullfile(session, asegFiles(ii).name);
+                   inputFile = fullfile(session,'fs', asegFiles(ii).name);
                end
                if length(strfind(asegFiles(ii).name, 'aparc')) > 0
-                   inputFile = fullfile(session, asegFiles(ii).name);
+                   inputFile = fullfile(session, 'fs', asegFiles(ii).name);
                end
             end
             if ~(exist(inputFile, 'file') == 2)
