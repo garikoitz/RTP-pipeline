@@ -170,7 +170,7 @@ dwDir.bvalsFile        = fullfile(dwDir.dataDir,'dwi.bvals');
 dwDir.bvecsFile        = fullfile(dwDir.dataDir,'dwi.bvecs');
 dwDir.ecFile           = fullfile(dwDir.dataDir,'dwi_ecXform.mat');
 dwDir.acpcFile         = fullfile(dwDir.dataDir,'dwi_acpcXform.mat');
-dwDir.alignedBvecsFile = dwDir.bvalsFile;
+dwDir.alignedBvecsFile = dwDir.bvecsFile;
 dwDir.alignedBvalsFile = dwDir.bvalsFile;
 dwDir.dwAlignedRawFile = J.dwi_file;
 
