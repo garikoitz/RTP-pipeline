@@ -329,113 +329,108 @@ afq.overwrite.vals = zeros(AFQ_get(afq,'num subs'),1);
 
 % For some reason it is not going inside this loop, at least when testing in black the docker container
 %if AFQ_get(afq,'use mrtrix')
-if true
-    disp('use mrtrix is true')
-    for ii = 1:AFQ_get(afq,'num subs')
-        mrtrixdir = fullfile(afq.sub_dirs{ii},'mrtrix');
-        if ~exist(mrtrixdir,'dir'),mkdir(mrtrixdir);end
-        % Get the lmax from the afq structure
-        % lmax = AFQ_get(afq,'lmax');
-        % Obtain the lmax from the bvalues, no need to set up, calculate
-        if afq.params.track.mrtrix_autolmax
-            lmax = AFQ_calculateLmaxFrombvals(AFQ_get(afq, 'dt6path',ii));
-        else
-            lmax = afq.params.track.mrtrix_lmax;
-        end
-        % Beware, in the latest versions of mrtrix we are not using lmax,
-        % their scripts take care of it. 
-        % So, there is manual, there is autoMax (calculated above) and
-        % automrtrix, calculated by them Right now, the code will just do
-        % automrtrix... Change it and leave it explained. 
-        dt6path =AFQ_get(afq, 'dt6path',ii) ;
-        fprintf('This is the dt6path going to AFQ_mrtrixInit: %s',dt6path);
-        files = AFQ_mrtrixInit(dt6path, ...
-                               lmax,...
-                               mrtrixdir,...
-                               afq.software.mrtrixVersion, ...
-                               afq.params.track.multishell, ... % true/false
-                               afq.params.track.tool, ... % 'fsl', 'freesurfer'
-                               afq.params.track.faMaskThresh, ...
-                               afq.force);
-        % In order to not modify much the previous code, I created new
-        % files types. 
-        % In mrTrix2 and mrTrix3 not-multishell, files.wm was the wm mask,
-        % so I changed the name to files.wmMask.
-        % In multishell, in files.tt5 you have the wm, gm, csf masks in one
-        % file. We create it only if it is multishell, but wmMask is always
-        % created because we will need it downstream in tractography.
-        % files.csd is created  only in  ~multishell and passed here to
-        % tractography, but in the case of msmt 3 different files are
-        % created, one for each tissue type. We only pass the csd of the 
-        % wm = wmMask for tractography, wmMask as seed_image
-        % and tt5 for -act (instead of -mask)
-        afq.files.mrtrix.wm{ii}         = files.wmMask;
-        afq.files.mrtrix.wm_dilated{ii} = files.wmMask_dilated;
-        afq.files.mrtrix.tt5{ii}        = files.tt5;
-        afq.files.mrtrix.gmwmi{ii}      = files.gmwmi;
-        % Now we are always providing the wmCsd to the tractography
-        afq.files.mrtrix.csd{ii}        = files.wmCsd;
-        % if afq.params.track.multishell; afq.files.mrtrix.csd{ii} = files.wmCsd;
-        % else; afq.files.mrtrix.csd{ii}   = files.csd;
-        % end
-        
-        % This is new, here now we will create the files for the /bin
-        % folder that we did not create in AFQ_dtiInit.m
-        bindir = fullfile(afq.sub_dirs{ii},'bin');
-        % These are the files to be created:
-        binfiles.b0        = fullfile(bindir,'b0.nii.gz');
-        binfiles.brainmask = fullfile(bindir,'brainMask.nii.gz');
-        binfiles.wmMask    = fullfile(bindir,'wmMask.nii.gz');
-        binfiles.tensors   = fullfile(bindir,'tensors.nii.gz');
-        binfiles.fa        = fullfile(bindir,'fa.nii.gz');
-        
-        % use a series of AFQ_mrtrix_convert-s for this
-        if exist(binfiles.b0,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
-        else; AFQ_mrtrix_mrconvert(files.b0, binfiles.b0,0,0,afq.software.mrtrixVersion);end
-        % The b0 coming from mrtrix has multiple volumes, and I think
-        % mrDiffusion is expecting a single volume, obtain the mean here
-        A       = niftiRead(binfiles.b0); % Reading nifti created by mrtrix
-        A.data  = mean(A.data,4);
-        A.dim   = size(A.data);
-        A.ndim  = length(A.dim);
-        A.pixdim= A.pixdim(1:3);
-        niftiWrite(A);
-        % Continue with the rest of conversions
-        % disp('Here the conversion of mif files to /bin/*.nii.gz-s is done');
-        if exist(binfiles.brainmask,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.b0);
-        else; AFQ_mrtrix_mrconvert(files.brainmask, binfiles.brainmask,0,0,afq.software.mrtrixVersion); end
-        
-        if exist(binfiles.wmMask,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.wmMask);
-        else; AFQ_mrtrix_mrconvert(files.wmMask, binfiles.wmMask,0,0,afq.software.mrtrixVersion); end
-        
-        if exist(binfiles.tensors,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.tensors);
-        else; AFQ_mrtrix_mrconvert(files.dt, binfiles.tensors,0,0,afq.software.mrtrixVersion); end
-        
-        if exist(binfiles.fa,'file') && afq.force == false
-            fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.fa);
-        else; AFQ_mrtrix_mrconvert(files.fa, binfiles.fa,0,0,afq.software.mrtrixVersion);  end
-        
-        % In order to make the rest of the flow work well, we will modify the
-        % tensor file to be the same mrDiffusion is expecting
-        B       = niftiRead(binfiles.tensors); % Reading nifti created by mrtrix
-        sz      = size(B.data);
-        if sz(4)~=1
-            B.data  = reshape(B.data,[sz(1:3),1,sz(4)]);
-            % This is horrible. Mrtrix and mrDiffusion use the same format dxx,dyy,dzz...
-            % in order to make the workflow work I need to convert it when
-            % writing and when reading in order to maintain existing functions
-            B.data = B.data(:,:,:,1,[1 4 2 5 6 3]);
-            B.dim   = size(B.data);
-            B.ndim  = length(B.dim);
-            B.pixdim= [B.pixdim, 1];
-            niftiWrite(B);
-        end
-        
-    end
+ii = 1;
+mrtrixdir = fullfile(afq.sub_dirs{ii},'mrtrix');
+if ~exist(mrtrixdir,'dir'),mkdir(mrtrixdir);end
+% Get the lmax from the afq structure
+% lmax = AFQ_get(afq,'lmax');
+% Obtain the lmax from the bvalues, no need to set up, calculate
+if afq.params.track.mrtrix_autolmax
+    lmax = AFQ_calculateLmaxFrombvals(AFQ_get(afq, 'dt6path',ii));
+else
+    lmax = afq.params.track.mrtrix_lmax;
+end
+% Beware, in the latest versions of mrtrix we are not using lmax,
+% their scripts take care of it. 
+% So, there is manual, there is autoMax (calculated above) and
+% automrtrix, calculated by them Right now, the code will just do
+% automrtrix... Change it and leave it explained. 
+dt6path =AFQ_get(afq, 'dt6path',ii) ;
+fprintf('This is the dt6path going to AFQ_mrtrixInit: %s',dt6path);
+files = AFQ_mrtrixInit(dt6path, ...
+                       lmax,...
+                       mrtrixdir,...
+                       afq.software.mrtrixVersion, ...
+                       afq.params.track.multishell, ... % true/false
+                       afq.params.track.tool, ... % 'fsl', 'freesurfer'
+                       afq.params.track.faMaskThresh, ...
+                       afq.force);
+% In order to not modify much the previous code, I created new
+% files types. 
+% In mrTrix2 and mrTrix3 not-multishell, files.wm was the wm mask,
+% so I changed the name to files.wmMask.
+% In multishell, in files.tt5 you have the wm, gm, csf masks in one
+% file. We create it only if it is multishell, but wmMask is always
+% created because we will need it downstream in tractography.
+% files.csd is created  only in  ~multishell and passed here to
+% tractography, but in the case of msmt 3 different files are
+% created, one for each tissue type. We only pass the csd of the 
+% wm = wmMask for tractography, wmMask as seed_image
+% and tt5 for -act (instead of -mask)
+afq.files.mrtrix.wm{ii}         = files.wmMask;
+afq.files.mrtrix.wm_dilated{ii} = files.wmMask_dilated;
+afq.files.mrtrix.tt5{ii}        = files.tt5;
+afq.files.mrtrix.gmwmi{ii}      = files.gmwmi;
+% Now we are always providing the wmCsd to the tractography
+afq.files.mrtrix.csd{ii}        = files.wmCsd;
+% if afq.params.track.multishell; afq.files.mrtrix.csd{ii} = files.wmCsd;
+% else; afq.files.mrtrix.csd{ii}   = files.csd;
+% end
+
+% This is new, here now we will create the files for the /bin
+% folder that we did not create in AFQ_dtiInit.m
+bindir = fullfile(afq.sub_dirs{ii},'bin');
+% These are the files to be created:
+binfiles.b0        = fullfile(bindir,'b0.nii.gz');
+binfiles.brainmask = fullfile(bindir,'brainMask.nii.gz');
+binfiles.wmMask    = fullfile(bindir,'wmMask.nii.gz');
+binfiles.tensors   = fullfile(bindir,'tensors.nii.gz');
+binfiles.fa        = fullfile(bindir,'fa.nii.gz');
+
+% use a series of AFQ_mrtrix_convert-s for this
+if exist(binfiles.b0,'file') && afq.force == false
+    fprintf('[AFQ_Create] %s exists and will not overwritten\n',binfiles.b0);
+else; AFQ_mrtrix_mrconvert(files.b0, binfiles.b0,0,0,afq.software.mrtrixVersion);end
+% The b0 coming from mrtrix has multiple volumes, and I think
+% mrDiffusion is expecting a single volume, obtain the mean here
+A       = niftiRead(binfiles.b0); % Reading nifti created by mrtrix
+A.data  = mean(A.data,4);
+A.dim   = size(A.data);
+A.ndim  = length(A.dim);
+A.pixdim= A.pixdim(1:3);
+niftiWrite(A);
+% Continue with the rest of conversions
+% disp('Here the conversion of mif files to /bin/*.nii.gz-s is done');
+if exist(binfiles.brainmask,'file') && afq.force == false
+    fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.b0);
+else; AFQ_mrtrix_mrconvert(files.brainmask, binfiles.brainmask,0,0,afq.software.mrtrixVersion); end
+
+if exist(binfiles.wmMask,'file') && afq.force == false
+    fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.wmMask);
+else; AFQ_mrtrix_mrconvert(files.wmMask, binfiles.wmMask,0,0,afq.software.mrtrixVersion); end
+
+if exist(binfiles.tensors,'file') && afq.force == false
+    fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.tensors);
+else; AFQ_mrtrix_mrconvert(files.dt, binfiles.tensors,0,0,afq.software.mrtrixVersion); end
+
+if exist(binfiles.fa,'file') && afq.force == false
+    fprintf('[AFQ_Create] %s exists and will not be overwritten\n',binfiles.fa);
+else; AFQ_mrtrix_mrconvert(files.fa, binfiles.fa,0,0,afq.software.mrtrixVersion);  end
+
+% In order to make the rest of the flow work well, we will modify the
+% tensor file to be the same mrDiffusion is expecting
+B       = niftiRead(binfiles.tensors); % Reading nifti created by mrtrix
+sz      = size(B.data);
+if sz(4)~=1
+    B.data  = reshape(B.data,[sz(1:3),1,sz(4)]);
+    % This is horrible. Mrtrix and mrDiffusion use the same format dxx,dyy,dzz...
+    % in order to make the workflow work I need to convert it when
+    % writing and when reading in order to maintain existing functions
+    B.data = B.data(:,:,:,1,[1 4 2 5 6 3]);
+    B.dim   = size(B.data);
+    B.ndim  = length(B.dim);
+    B.pixdim= [B.pixdim, 1];
+    niftiWrite(B);
 end
          
 

@@ -72,17 +72,12 @@ end
 
 % Obtain the session name. This is usually the zip name if it has not
 % been edited. 
-SessionDir = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep)
+% SessionDir = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep)
 % This is where the dt6 is located
 AnalysisDir = fileparts(dt6);
-AnalysisDir2 = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-1)), filesep);
-% Not very useful sanity check:
-if ~strcmp(AnalysisDir, AnalysisDir2); error('Check all the path mess for mrtrix files...'); end
+SessionDir = AnalysisDir;
 
 % Strip the file names out of the dt6 strings. 
-% dwRawFile = dt_info.files.alignedDwRaw;
-% dwRawFile = fullfile(dt_info.params.rawDataDir, strcat(dt_info.params.rawDataFile,'.gz'));
-% dwRawFile = fullfile(SessionDir, strcat(dt_info.params.rawDataFile,'.gz'));
 % The first option is the good one, but if I did this change I want to maintain it. Nevertheless, it cannot come from dt_info.params
 [p,f,e] = fileparts(dt_info.files.alignedDwRaw);
 dwRawFile = fullfile(SessionDir,[f e]); 

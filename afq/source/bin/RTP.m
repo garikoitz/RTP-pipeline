@@ -79,6 +79,7 @@ sub_group = ones(numel(sub_dirs),1);
 
 % File and folder checks
 J.input_dir  = fullfile(P.output_dir,'RTP');
+cd(J.input_dir);
 J.output_dir = P.output_dir;
 sub_dirs{1}  = J.input_dir;
 
@@ -462,7 +463,7 @@ disp('[RTP] ... end running AFQ_Create')
 disp('[RTP] Running AFQ_run with the following options...');
 fprintf('sub_dirs: %s', sub_dirs{1})
 disp('[RTP] This is the afq struct going to AFQ_run');
-afq.force = false;
+afq.force = true;
 afq
 afq = AFQ_run(sub_dirs, sub_group, afq);
 disp('... end running AFQ_run');
