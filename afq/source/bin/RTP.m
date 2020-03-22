@@ -447,7 +447,6 @@ disp('[RTP] ... end running AFQ_Create')
 disp('[RTP] Running AFQ_run with the following options...');
 fprintf('sub_dirs: %s', sub_dirs{1})
 disp('[RTP] This is the afq struct going to AFQ_run');
-afq.force = true;
 afq
 afq = AFQ_run(sub_dirs, 1, afq);
 disp('... end running AFQ_run');

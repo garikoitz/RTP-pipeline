@@ -172,8 +172,8 @@ for nt=1:height(tracts)
     % Mount all the components of the call based on the options in tracts table
     ts     = tracts(nt,:);
     fprintf('[RTP_TractsGet] Getting %s ...\n', ts.label)
-    if exist(ts.fpath,'file') && (strcmp(ts.force,"") || isnan(ts.force) || ismissing(ts.force))
-        fprintf('[RTP_TractsGet] Using exisging one because force=false\n')
+    if exist(ts.fpath,'file')
+       fprintf('[RTP_TractsGet] Using exisging one because force=false\n')
     	% Read the tract, we want to have the same fg struct as before
         tract = fgRead(ts.fpath);
         if nt==1;fg_classified=tract;

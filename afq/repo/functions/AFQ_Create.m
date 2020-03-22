@@ -36,6 +36,10 @@ p.parse(sub_dirs,params,tractparams,varargin{:});
 %% Define the type of structure
 afq.type = 'afq version 1';
 
+
+% Add this for debugging. It won't affect on normal Docker usage because the files won't exist. 
+afq.force = false;
+
 % Add the main components. The rest maintain them empty from now. Deleted default parameters below
 afq.params = params;
 afq.tracts = tractparams;
@@ -196,7 +200,6 @@ end
 % automrtrix... Change it and leave it explained. 
 dt6path =AFQ_get(afq, 'dt6path',ii) ;
 fprintf('This is the dt6path going to AFQ_mrtrixInit: %s',dt6path);
-afq.force = 1;
 files = AFQ_mrtrixInit(dt6path, ...
                        lmax,...
                        mrtrixdir,...
