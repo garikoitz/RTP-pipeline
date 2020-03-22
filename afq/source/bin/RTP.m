@@ -66,13 +66,6 @@ P.params.fs_dir     = P.fs_dir;
 P.params.input_dir  = input_dir;
 P.params.output_dir = output_dir;
 
-% Just one group here
-sub_group = ones(numel(sub_dirs),1);
-
-
-
-
-
 %% CHECK INPUTS AND OPTIONALS
 % J.input_dir will be the RTP dir. It will be zipped at the end, the whole dir, work_dir is less confusing
 % J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
@@ -300,61 +293,23 @@ for nc=1:length(checkfiles)
         end
     end
 end
-%{
-% Change t1 back
-[p,f,e] = fileparts(J.files.t1path);
-J.files.t1 = [f,e];
-% Save the new dt6 file 
-adcUnits = '';
-params   = J.params;
-files    = J.files;
-save(fullfile(input_dir,'dt6.mat'),'adcUnits','params','files');
-%}
-
-%% Create afq structure
-if notDefined('out_name')
-    out_name = ['rtp_', getDateAndTime];
-end
-
-disp('Running AFQ_create with the following options...');
-fprintf('sub_dirs: %s', sub_dirs{1})
-fprintf('output_dir: %s', output_dir)
-fprintf('out_name: %s', out_name)
-mkdir(input_dir, 'bin')
-% Add deleted variables to afq, the ones we want fixed
-J.params.clip2rois=true;
-% J.params.maxDist=true;
-% J.params.maxLen=false;
-J.params.track.multishell=false;
-if length(paramsShells) > 1;J.params.track.multishell=true;end
-J.params.track.tool='freesurfer';
-J.params.track.algorithm='mrtrix';
-J.params.computeCSD=true;
-afq = AFQ_Create('sub_dirs', sub_dirs, 'sub_group', sub_group, ...
-                 'outdir', output_dir, 'outname', out_name, ...
-                 'params', J.params);  
 
 
+% Read the csv with the tract, so that we can pass it to AFQ_Create
+% TODO: shorten this script creating independent functions, for example, RAS check, or ROIs check
 
-
-% Add the tracts table to the afq struct so that we keep it all together. 
-% Not the most elegant solution, fix it in future releases
-% - Load the tract
 csv = dir(fullfile(P.tractparams_dir,'*.csv'));
 if length(csv) > 1; 
     error('There are more than one csv files for tract params');
 else
     if isfile(fullfile(csv.folder, csv.name));
-        A = readtable(fullfile(csv.folder, csv.name));
+        A = readtable(fullfile(csv.folder, csv.name), ...
+					 'FileType', 'text', ...
+					 'Delimiter','comma', ...
+					 'ReadVariableNames',true,...
+					 'TextType', 'string');
     else
         error('Cannot read %s or is not a file',fullfile(csv.folder, csv.name))
-    end
-end
-% Convert all values to strings, we don't want cell arrays
-for ns=1:width(A)
-    vn = A.Properties.VariableNames(ns);
-    if iscell(A.(vn{:}))
-        A.(vn{:})  = string(A.(vn{:}));
     end
 end
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
@@ -449,16 +404,41 @@ for nl=1:height(A)
 		end
 	end
 end
+% FINISHED ROI CHECK AND CREATION
 
 
 
+
+
+%% Create afq structure
+if notDefined('out_name')
+    out_name = ['rtp_', getDateAndTime];
+end
+
+disp('Running AFQ_create with the following options...');
+fprintf('sub_dirs: %s', sub_dirs{1})
+fprintf('output_dir: %s', output_dir)
+fprintf('out_name: %s', out_name)
+if ~exist(fullfile(input_dir,'bin'));mkdir(input_dir, 'bin');end
+% Add deleted variables to afq, the ones we want fixed
+J.params.clip2rois       = true;
+J.params.track.multishell= false;
+if length(paramsShells) > 1;J.params.track.multishell=true;end
+J.params.track.tool      = 'freesurfer';
+J.params.track.algorithm = 'mrtrix';
+J.params.computeCSD      = true;
+afq = AFQ_Create(sub_dirs{1}, J.params, A);  
+
+
+
+%{
 afq.tracts = A;
 % Update afq values with the ones coming from the tract. 
 % TODO: do this inside AFQ_Create
 afq.fgnames = cellstr(afq.tracts.label');
 afq.roi1names = cellstr(strcat(afq.tracts.roi1,afq.tracts.extroi1)');
 afq.roi2names = cellstr(strcat(afq.tracts.roi2,afq.tracts.extroi2)');
-
+%}
 
 disp('[RTP] ... end running AFQ_Create')
 
@@ -469,7 +449,7 @@ fprintf('sub_dirs: %s', sub_dirs{1})
 disp('[RTP] This is the afq struct going to AFQ_run');
 afq.force = true;
 afq
-afq = AFQ_run(sub_dirs, sub_group, afq);
+afq = AFQ_run(sub_dirs, 1, afq);
 disp('... end running AFQ_run');
 
 %% Check for empty fiber groups
@@ -541,49 +521,17 @@ Visualize final results (first check if the values make sense)
         
 %}
 
-disp('Creating the tck files for visualization and QA...');
-% We will add the diffusion parameters and the series number to the name
-vis_dir = fullfile(output_dir,'vis_files');
-mkdir(vis_dir);
-
-% First of all we will copy all the files present in the dtiInit root to afq so
-% that everything is in the same zip
-% inputParts  = split(input_dir, filesep);
-% predti = strjoin(inputParts(1:(length(inputParts)-1)), filesep);
-% copyfile([predti '/*.mat'], output_dir);
-% copyfile([predti '/*.bv*'], output_dir);
-% copyfile([predti '/*.nii*'], output_dir);
 
 % Obtain the files
 %if isdeployed
+	% disp('Creating the obj files for visualization and QA in FW...');
+	% % We will add the diffusion parameters and the series number to the name
+	% vis_dir = fullfile(output_dir,'vis_files');
+	% mkdir(vis_dir);
     % Convert the ROIs from mat to .nii.gz
     % Not now, now the ROIs come from FS, there is no .mat ROIs anymore
     % Read the b0
     % img  = niftiRead(fullfile(input_dir, 'bin', 'b0.nii.gz'));
-    %{
-	% Obtain the ROIs in nifti to check if they look ok or not
-    rois = dir(fullfile(input_dir, 'ROIs', '*.mat'));
-    for df=1:length(rois)
-        roiFullPath = fullfile(input_dir, 'ROIs',rois(df).name);
-        roi         = dtiReadRoi(roiFullPath);
-        coords      = roi.coords;
-        % Convert vertex acpc coords to img coords
-        imgCoords  = mrAnatXformCoords(img.qto_ijk, coords);
-        % Get coords for the unique voxels
-        imgCoords = unique(ceil(imgCoords),'rows');
-        % Make a 3D image
-        roiData = zeros(img.dim);
-        roiData(sub2ind(img.dim, imgCoords(:,1), imgCoords(:,2), imgCoords(:,3))) = 1;
-        % Change img data
-        img.data = roiData;
-        img.cal_min = min(roiData(:));
-        img.cal_max = max(roiData(:));
-        % Write the nifti file
-        [~,roiNameWoExt] = fileparts(roiFullPath);
-        img.fname = fullfile(fileparts(roiFullPath), [roiNameWoExt,'.nii.gz']); 
-        writeFileNifti(img);     
-    end
-	%}
     % Convert the segmented fg-s to tck so that we can see them in mrview
     % In the future we will make them obj so that they can be visualized in FW
     % First create another two MoriSuperFibers out of the clipped and not
@@ -705,70 +653,6 @@ else
     end
 end
 %}
-%% Create Plots and save out the images
-%{
-if afq.params.runcontrolcomp
-
-    disp('Running comparison to control population!')
-
-    % Setup the valnames.
-    valnames = fieldnames(afq.vals);
-
-    % Remove those values we're not interested in currently
-    %TODO: Remove this - generate them all.
-    remlist = {'cl','curvature','torsion','volume','WF_map_2DTI','cT1SIR_map_2DTI'};
-    for r = 1:numel(remlist)
-        ind = cellfind(valnames,remlist{r});
-        if ~isempty(ind)
-            valnames(ind) = [];
-        end
-    end
-
-    % Load up saved controls data based on the parameters for the data.
-    % Handle the case where ndirs is not 96 or 30.
-    a = abs(metadata.ndirs - 96);
-    b = abs(metadata.ndirs - 30);
-
-    % If the diffusion values are not exact then we have to warn that there was
-    % no exact match! || OR do we just not perform the plotting aginst the
-    % control data.
-    if metadata.ndirs ~= 96 && metadata.ndirs ~= 30
-        warning('Number of diffusion directions does not match control data!');
-    end
-
-    if metadata.bvalue ~= 2000 && metadata.bvalue ~= 1000
-        warning('B-VALUE does not match control data!');
-    end
-
-    if metadata.ndirs == 96 || a < b
-        disp('Loading 96-direction control data');
-        afq_controls = control_data.afq96;
-
-    elseif metadata.ndirs == 30 || b < a
-        disp('Loading 30-direction control data');
-        afq_controls = control_data.afq30;
-    end
-
-    % This might be where we write out the figures in two seperate directories.
-    fig_out_dir = fullfile(output_dir, 'figures');
-    if ~exist(fig_out_dir,'dir'); mkdir(fig_out_dir); end
-
-    disp('Running AFQ Plot: Generating figures...');
-    try
-        if metadata.age_comp && isnumeric(metadata.age)
-            disp('Constraining norms based on age!');
-
-            AFQ_PlotPatientMeans(afq, afq_controls, valnames, 21:80, fig_out_dir,'Age', metadata.age_range);
-        else
-            AFQ_PlotPatientMeans(afq, afq_controls, valnames, 21:80, fig_out_dir);
-        end
-    catch ME
-        disp(ME.message);
-    end
-end
-%}
-
-%% Reproducibility
 
 R = {};
 R.date = getDateAndTime;

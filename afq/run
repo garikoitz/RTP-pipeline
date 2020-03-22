@@ -58,12 +58,12 @@ fi
 # unzip $ZIP_FILE -d $WORK_DIR
 
 
-# Find the dt6.mat file and use that as the input to AFQ
+# Find the dt6.mat file and use that as the input to RTP
 # This will be done now inside matlab file
 # DT6_FILE=$(find ${WORK_DIR} -type f -name "dt6.mat" | head -1)
-# AFQ_INPUT_DIR=$(dirname $DT6_FILE)
+# RTP_INPUT_DIR=$(dirname $DT6_FILE)
 
-# Convert the config json to a AFQ_params json file
+# Convert the config json to a RTP_params json file
 $FLYWHEEL_BASE/parse_config.py \
 		--input_file ${CONFIG_FILE} \
 		--output_file ${PARAMS_FILE} \
@@ -79,17 +79,17 @@ $FLYWHEEL_BASE/parse_config.py \
 # Make sure the params file is saved with the output
 cp ${PARAMS_FILE} ${OUTPUT_DIR}
 
-# Start Xvfb and pass the input arguments to AFQ execute the algorithm
+# Start Xvfb and pass the input arguments to RTP execute the algorithm
 start_xvfb && time /usr/local/bin/RTP "$PARAMS_FILE" 
 
 # Xvfb occasionally hangs -- make sure that Xvfb dies
 kill -9 %1
 
 # If sucessful, the main outputs will be here
-AFQ_DIR=$OUTPUT_DIR/AFQ
+RTP_DIR=$OUTPUT_DIR/RTP
 
 # Get a list of the files in the output directory
-outputs=$(find $AFQ_DIR/* -maxdepth 0 -type f)
+outputs=$(find $RTP_DIR/* -maxdepth 0 -type f)
 
 # If outputs exist, generate metadata, and exit
 if [[ -z $outputs ]]
@@ -99,22 +99,19 @@ then
 else
 
   # Copy csv, mat, and json files to output
-  cp $AFQ_DIR/csv_files/*.csv $OUTPUT_DIR
-  cp $AFQ_DIR/*.mat $AFQ_DIR/*.json $OUTPUT_DIR
+  cp $RTP_DIR/csv_files/*.csv $OUTPUT_DIR
+  cp $RTP_DIR/*.mat $RTP_DIR/*.json $OUTPUT_DIR
 
 
-  # Copy DTIINIT input/ouputs to AFQ (lmx: done in matlab)
-  # cp -a $AFQ_INPUT_DIR $AFQ_DIR
+  # Get basename for RTP ouput zip
+  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
 
-  # Get basename for AFQ ouput zip
-  AFQ_NAME=$(basename `find $AFQ_DIR/ -type f -name "afq*.mat"` .mat)
-
-  # Rename and Compress AFQ_DIR
+  # Rename and Compress RTP_DIR
   cd $OUTPUT_DIR
-  mv AFQ $AFQ_NAME
+  mv RTP $RTP_NAME
   chmod -R 777 $OUTPUT_DIR
   echo -e "$CONTAINER  compressing outputs..."
-  zip -r AFQ_Output_$AFQ_NAME.zip $AFQ_NAME && rm -rf $AFQ_NAME
+  zip -r RTP_Output_$RTP_NAME.zip $RTP_NAME && rm -rf $RTP_NAME
 
   # Set permissions for outputs (prevent root only r/w)
   chmod -R 777 $OUTPUT_DIR
