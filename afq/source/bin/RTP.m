@@ -70,23 +70,30 @@ P.params.output_dir = output_dir;
 % J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
 
 % File and folder checks
-J.input_dir  = fullfile(input_dir,'RTP');
+J.input_dir  = fullfile(output_dir,'RTP');
+mkdir(J.input_dir);
 J.output_dir = fullfile(output_dir);
 cd(input_dir);
 sub_dirs{1}  = J.input_dir;
-
+% We need these files in root dir to start working
 J.t1_file    = fullfile(J.input_dir, 't1.nii.gz');
 J.bvec_file  = fullfile(J.input_dir, 'dwi.bvecs');
 J.bval_file  = fullfile(J.input_dir, 'dwi.bvals');
 J.dwi_file   = fullfile(J.input_dir, 'dwi.nii.gz');
 J.fs_file    = fullfile(J.input_dir, 'fs.zip');
 %% Copy input files to output/RTP/
-if ~exist(J.input_dir,'dir');mkdir(J.input_dir);end
-if ~exist(J.t1_file);  copyfile(fullfile(P.anat_dir,'t1.nii.gz'), J.t1_file);end
-if ~exist(J.bvec_file);copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), J.bvec_file);end
-if ~exist(J.bval_file);copyfile(fullfile(P.bval_dir,'dwi.bvals'), J.bval_file);end
-if ~exist(J.dwi_file); copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), J.dwi_file);end
-if ~exist(J.fs_file);  copyfile(fullfile(P.fs_dir,'fs.zip'), J.fs_file);end
+copyfile(fullfile(P.anat_dir ,'t1.nii.gz' ), J.t1_file)  ;
+copyfile(fullfile(P.bvec_dir ,'dwi.bvecs' ), J.bvec_file);
+copyfile(fullfile(P.bval_dir ,'dwi.bvals' ), J.bval_file);
+copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), J.dwi_file) ;
+copyfile(fullfile(P.fs_dir   ,'fs.zip'    ), J.fs_file)  ;
+% Check if copied properly
+if ~exist(J.t1_file);  error('%s file is not there', J.t1_file);end
+if ~exist(J.bvec_file);error('%s file is not there', J.bvec_file);end
+if ~exist(J.bval_file);error('%s file is not there', J.bval_file);end
+if ~exist(J.dwi_file); error('%s file is not there', J.dwi_file);end
+if ~exist(J.fs_file);  error('%s file is not there', J.fs_file);end
+
 % Unzip the output from FS
 unzip(J.fs_file, J.input_dir)
 % Check if the expected folders are here, and the minumun files so that the rest does not fail
@@ -223,8 +230,9 @@ basedir = J.input_dir;
 fprintf('This is basedir for RAS checks: %s\n',   basedir)
 
 J       = load(fullfile(J.input_dir,'dt6.mat'));
-disp('This are the contents of dt6.mat')
-J
+disp('These are the contents of dt6.mat')
+J.params
+J.files
 
 % DWI file
 [p,f,e]= fileparts(J.files.alignedDwRaw);
