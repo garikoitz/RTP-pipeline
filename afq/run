@@ -13,7 +13,6 @@ source /etc/fsl/5.0/fsl.sh
 
 # Configure the ENV
 export FSLOUTPUTTYPE=NIFTI_GZ
-# export LD_LIBRARY_PATH=/opt/mcr/v92/runtime/glnxa64:/opt/mcr/v92/bin/glnxa64:/opt/mcr/v92/sys/os/glnxa64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
 export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
 
@@ -32,12 +31,15 @@ start_xvfb() {
 FLYWHEEL_BASE=/flywheel/v0
 OUTPUT_DIR=$FLYWHEEL_BASE/output
 INPUT_DIR=$FLYWHEEL_BASE/input
-#WORK_DIR=$INPUT_DIR/work
+RTP_DIR=$OUTPUT_DIR/RTP
+
 NIFTI_DIR=$INPUT_DIR/dwi
 ANAT_DIR=$INPUT_DIR/anatomical
 BVEC_DIR=$INPUT_DIR/bvec
 BVAL_DIR=$INPUT_DIR/bval
 FS_DIR=$INPUT_DIR/fs
+TRACTPARAMS_DIR=$INPUT_DIR/tractparams
+
 CONFIG_FILE=${FLYWHEEL_BASE}/config.json
 PARAMS_FILE=${FLYWHEEL_BASE}/params.json
 
@@ -73,8 +75,8 @@ $FLYWHEEL_BASE/parse_config.py \
    	 	--bval_dir ${BVAL_DIR} \
     	--nifti_dir ${NIFTI_DIR} \
     	--anat_dir ${ANAT_DIR} \
-    	--fs_dir ${FS_DIR}
-
+    	--fs_dir ${FS_DIR} \
+        --tractparams_dir ${TRACTPARAMS_DIR}
 
 # Make sure the params file is saved with the output
 cp ${PARAMS_FILE} ${OUTPUT_DIR}
@@ -85,9 +87,6 @@ start_xvfb && time /usr/local/bin/RTP "$PARAMS_FILE"
 # Xvfb occasionally hangs -- make sure that Xvfb dies
 kill -9 %1
 
-# If sucessful, the main outputs will be here
-RTP_DIR=$OUTPUT_DIR/RTP
-
 # Get a list of the files in the output directory
 outputs=$(find $RTP_DIR/* -maxdepth 0 -type f)
 
@@ -97,14 +96,25 @@ then
   echo "$CONTAINER  FAILED: No results found in output directory... Exiting"
   exit 1
 else
-
+  # Create the obj files from the ply files
+  cd $RTP_DIR/tck_files
+  for pl in *.ply
+  do
+      python $FLYWHEEL_BASE/ply2obj.py $pl ${pl/ply/obj} 
+  done
   # Copy csv, mat, and json files to output
   cp $RTP_DIR/csv_files/*.csv $OUTPUT_DIR
-  cp $RTP_DIR/*.mat $RTP_DIR/*.json $OUTPUT_DIR
+  cp $RTP_DIR/tck_files/*.tck $OUTPUT_DIR
+  cp $RTP_DIR/tck_files/*.obj $OUTPUT_DIR
+  cp $RTP_DIR/afq_*.mat $OUTPUT_DIR
+  # Copy some other files interesting for debugging
+  cp $RTP_DIR/bin/*.nii.gz $OUTPUT_DIR
+  cp $RTP_DIR/mrtrix/*wmCsd* $OUTPUT_DIR
 
 
   # Get basename for RTP ouput zip
-  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
+  # RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
+  RTP_NAME=$(basename `find $OUTPUT_DIR/ -type f -name "afq_*.mat"` .mat)
 
   # Rename and Compress RTP_DIR
   cd $OUTPUT_DIR

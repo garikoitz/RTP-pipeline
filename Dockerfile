@@ -145,6 +145,7 @@ WORKDIR ${FLYWHEEL}
 COPY afq/source/bin/compiled/RTP /usr/local/bin/RTP
 COPY afq/run ${FLYWHEEL}/run
 COPY afq/source/parse_config.py ${FLYWHEEL}/parse_config.py
+COPY afq/includeFiles/ply2obj.py ${FLYWHEEL}/ply2obj.py
 RUN chmod +x /usr/local/bin/RTP ${FLYWHEEL}/parse_config.py
 
 # Set the diplay env variable for xvfb
@@ -153,7 +154,6 @@ ENV DISPLAY :1.0
 ############################
 
 # Configure entrypoint
-# COPY run ${FLYWHEEL}/run
 RUN chmod +x ${FLYWHEEL}/*
 ENTRYPOINT ["/flywheel/v0/run"]
 COPY manifest.json ${FLYWHEEL}/manifest.json

@@ -183,15 +183,15 @@ for ii = runsubs
        end
    end
     
-    % Save each iteration of afq run if an output directory was defined
-    if ~isempty(AFQ_get(afq,'outdir')) && exist(AFQ_get(afq,'outdir'),'dir')
-        if ~isempty(AFQ_get(afq,'outname'))
-            outname = fullfile(AFQ_get(afq,'outdir'),AFQ_get(afq,'outname'));
-        else
-            outname = fullfile(AFQ_get(afq,'outdir'),['afq_' date]);
-        end
-        save(outname,'afq');
-    end
+   %  % Save each iteration of afq run if an output directory was defined
+   %  if ~isempty(AFQ_get(afq,'outdir')) && exist(AFQ_get(afq,'outdir'),'dir')
+   %      if ~isempty(AFQ_get(afq,'outname'))
+   %          outname = fullfile(AFQ_get(afq,'outdir'),AFQ_get(afq,'outname'));
+   %      else
+   %          outname = fullfile(AFQ_get(afq,'outdir'),['afq_' date]);
+   %      end
+   %      save(outname,'afq');
+   %  end
     
     % clear the files that were computed for this subject
     clear fg fg_classified TractProfile

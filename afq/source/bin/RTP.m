@@ -59,7 +59,6 @@ if notDefined('output_dir')
         error('An output directory was not specified.');
     end
 end
-output_dir = fullfile(output_dir, 'RTP');
 if ~exist(output_dir, 'dir'); mkdir(output_dir); end
 % update ROI directory
 P.params.fs_dir     = P.fs_dir;
@@ -71,9 +70,9 @@ P.params.output_dir = output_dir;
 % J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
 
 % File and folder checks
-J.input_dir  = fullfile(P.output_dir,'RTP');
-cd(J.input_dir);
-J.output_dir = P.output_dir;
+J.input_dir  = fullfile(input_dir,'RTP');
+J.output_dir = fullfile(output_dir);
+cd(input_dir);
 sub_dirs{1}  = J.input_dir;
 
 J.t1_file    = fullfile(J.input_dir, 't1.nii.gz');
@@ -82,7 +81,7 @@ J.bval_file  = fullfile(J.input_dir, 'dwi.bvals');
 J.dwi_file   = fullfile(J.input_dir, 'dwi.nii.gz');
 J.fs_file    = fullfile(J.input_dir, 'fs.zip');
 %% Copy input files to output/RTP/
-if ~exist(J.output_dir,'dir');mkdir(fullfile(P.output_dir,'RTP'));end
+if ~exist(J.input_dir,'dir');mkdir(J.input_dir);end
 if ~exist(J.t1_file);  copyfile(fullfile(P.anat_dir,'t1.nii.gz'), J.t1_file);end
 if ~exist(J.bvec_file);copyfile(fullfile(P.bvec_dir,'dwi.bvecs'), J.bvec_file);end
 if ~exist(J.bval_file);copyfile(fullfile(P.bval_dir,'dwi.bvals'), J.bval_file);end
@@ -449,24 +448,28 @@ fprintf('sub_dirs: %s', sub_dirs{1})
 disp('[RTP] This is the afq struct going to AFQ_run');
 afq
 afq = AFQ_run(sub_dirs, 1, afq);
-disp('... end running AFQ_run');
+disp('      ... end running AFQ_run');
 
 %% Check for empty fiber groups
-disp('Checking for empty fiber groups...');
+disp('[RTP] Checking for empty fiber groups...');
 for i = 1:numel(afq.TractProfiles)
     if isempty(afq.TractProfiles(i).nfibers)
         disp(fprintf('Fiber group is empty: %s', afq.TractProfiles(i).name));
     end
 end
 
+% Write the afq file 
+% Save each iteration of afq run if an output directory was defined
+datestamp = datetime('2015-05-01T00:00:01Z','TimeZone','local','Format','yyyy-MM-dd''T''HH:mm:ssz');
+outname = fullfile(J.params.subDir,['afq_' strrep(char(datestamp),':','_')]);
+save(outname,'afq');
+
 
 %% Export the data to csv files (don't use AFQ_exportData)
-% {
-disp('Exporting data to csv files...');
-
+disp('[RTP] Exporting data to csv files...');
 % We will add the diffusion parameters and the series number to the name
-csv_dir = fullfile(output_dir,'csv_files');
-mkdir(csv_dir);
+csv_dir = fullfile(J.params.subDir,'csv_files');
+if ~exist(csv_dir,'dir');mkdir(csv_dir);end
 
 % Get the names of each of the datatypes (e.g.,'FA','MD', etc.)
 properties = fieldnames(afq.vals);
@@ -492,12 +495,28 @@ for ii = 1:numel(properties)
         writetable(T,fullfile(csv_dir,['RTP_' lower(properties{ii}) '.csv']));
     end
 end
-%}
 
 
 
+disp('[RTP] Exporting tck files for QA...');
+% We will add the diffusion parameters and the series number to the name
+tck_dir    = fullfile(J.params.subDir,'tck_files');
+if ~exist(tck_dir,'dir');mkdir(tck_dir);end
+% Copy only the tck files we want to visualize, so that we do not need to unzip the big RTP file
+mrtrixdir  = fullfile(J.params.subDir,'mrtrix');
+clean_tcks = dir(fullfile(mrtrixdir,'*clean.tck'));
+for nt=1:length(clean_tcks)
+	srctckname = fullfile(mrtrixdir, clean_tcks(nt).name);
+	dsttckname = fullfile(tck_dir  , clean_tcks(nt).name);
+	dstplyname = fullfile(tck_dir  , strrep(clean_tcks(nt).name,'tck','ply'));
+	copyfile(srctckname,dsttckname)
+	% Use the same step to create the ply file in the vis folder. We wil convert them to obj with python
+	cmd  = sprintf('tckconvert -dec %s %s', dsttckname, dstplyname);
+	rcmd = AFQ_mrtrix_cmd(cmd);
+end
 
-
+%TODO: add a flag, saveIntermediateFilesForQC 
+% It will show the files showns below in the results folder
 
 %% Create the tck files for visualizing the results
 %{
