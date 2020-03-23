@@ -101,6 +101,7 @@ else
   for pl in *.ply
   do
       python $FLYWHEEL_BASE/ply2obj.py $pl ${pl/ply/obj} 
+      rm $pl
   done
   # Copy csv, mat, and json files to output
   cp $RTP_DIR/csv_files/*.csv $OUTPUT_DIR
