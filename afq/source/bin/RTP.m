@@ -20,98 +20,97 @@ RTP(jsonargs);
 
 %% Begin
 
-disp('Starting RTP...');
+disp('[RTP] Starting RTP...');
+datestamp = strrep(char(datetime(datestr(now),'TimeZone','local','Format','yyyy-MM-dd''T''HH:mm:ssz')),':','_');
+disp(['[RTP] datestampi:', datestamp]);
 
 % Initialize args
 input_dir  = [];
-out_name   = [];
 output_dir = [];
+out_name   = [];
 params     = [];
-% metadata   = [];
+anat_dir   = [];
+bval_dir   = [];
+bvec_dir   = [];
+fs_dir     = [];
+nifti_dir  = [];
+tractparams_dir = [];
 
 %% Handle jsonargs
-disp('This is the json string to be read by loadjson:')
+disp('[RTP] This is the json string to be read by loadjson:')
 disp(jsonargs)
 
 
-
+% Read the file in the variable P
 if exist('jsonargs', 'var') && ~isempty(jsonargs)
     P = jsondecode(fileread(jsonargs));
 end
-
 P
-%% Configure inputs and defaults
+%% Configure inputs and defaults, get rid of P:
 input_dir  = P.input_dir;
 output_dir = P.output_dir;
-if notDefined('input_dir')
-    if exist('/input', 'dir')
-        input_dir = '/input';
-    else
-        error('An input directory was not specified.');
-    end
+params     = P.params;
+out_name   = ['rtp_', datestamp];
+params     = P.params;
+anat_dir   = P.anat_dir;
+bval_dir   = P.bval_dir;
+bvec_dir   = P.bvec_dir;
+fs_dir     = P.fs_dir;
+nifti_dir  = P.nifti_dir;
+tractparams_dir = P.tractparams_dir;
+
+
+
+% Copy files from input dir (probably read only) to the output dir
+rtp_dir    = fullfile(output_dir,'RTP');
+if exist(rtp_dir)
+	error('[RTP] rtp_dir exists in %s', rtp_dir)
+else
+	mkdir(rtp_dir);
 end
-sub_dirs{1} = input_dir;
-
-if notDefined('output_dir')
-    if exist('/output', 'dir')
-        output_dir = '/output';
-    else
-        error('An output directory was not specified.');
-    end
-end
-if ~exist(output_dir, 'dir'); mkdir(output_dir); end
-% update ROI directory
-P.params.fs_dir     = P.fs_dir;
-P.params.input_dir  = input_dir;
-P.params.output_dir = output_dir;
-
-%% CHECK INPUTS AND OPTIONALS
-% J.input_dir will be the RTP dir. It will be zipped at the end, the whole dir, work_dir is less confusing
-% J.output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
-
-% File and folder checks
-J.input_dir  = fullfile(output_dir,'RTP');
-mkdir(J.input_dir);
-J.output_dir = fullfile(output_dir);
-cd(input_dir);
-sub_dirs{1}  = J.input_dir;
-% We need these files in root dir to start working
-J.t1_file    = fullfile(J.input_dir, 't1.nii.gz');
-J.bvec_file  = fullfile(J.input_dir, 'dwi.bvecs');
-J.bval_file  = fullfile(J.input_dir, 'dwi.bvals');
-J.dwi_file   = fullfile(J.input_dir, 'dwi.nii.gz');
-J.fs_file    = fullfile(J.input_dir, 'fs.zip');
+% We need these files in root dir (rtp_dir) to start working
+t1_file    = fullfile(rtp_dir, 't1.nii.gz');
+bvec_file  = fullfile(rtp_dir, 'dwi.bvecs');
+bval_file  = fullfile(rtp_dir, 'dwi.bvals');
+dwi_file   = fullfile(rtp_dir, 'dwi.nii.gz');
+fs_file    = fullfile(rtp_dir, 'fs.zip');
 %% Copy input files to output/RTP/
-copyfile(fullfile(P.anat_dir ,'t1.nii.gz' ), J.t1_file)  ;
-copyfile(fullfile(P.bvec_dir ,'dwi.bvecs' ), J.bvec_file);
-copyfile(fullfile(P.bval_dir ,'dwi.bvals' ), J.bval_file);
-copyfile(fullfile(P.nifti_dir,'dwi.nii.gz'), J.dwi_file) ;
-copyfile(fullfile(P.fs_dir   ,'fs.zip'    ), J.fs_file)  ;
+copyfile(fullfile(anat_dir ,'t1.nii.gz' ), t1_file)  ;
+copyfile(fullfile(bvec_dir ,'dwi.bvecs' ), bvec_file);
+copyfile(fullfile(bval_dir ,'dwi.bvals' ), bval_file);
+copyfile(fullfile(nifti_dir,'dwi.nii.gz'), dwi_file) ;
+copyfile(fullfile(fs_dir   ,'fs.zip'    ), fs_file)  ;
 % Check if copied properly
-if ~exist(J.t1_file);  error('%s file is not there', J.t1_file);end
-if ~exist(J.bvec_file);error('%s file is not there', J.bvec_file);end
-if ~exist(J.bval_file);error('%s file is not there', J.bval_file);end
-if ~exist(J.dwi_file); error('%s file is not there', J.dwi_file);end
-if ~exist(J.fs_file);  error('%s file is not there', J.fs_file);end
+if ~exist(t1_file);  error('%s file is not there', t1_file);end
+if ~exist(bvec_file);error('%s file is not there', bvec_file);end
+if ~exist(bval_file);error('%s file is not there', bval_file);end
+if ~exist(dwi_file); error('%s file is not there', dwi_file);end
+if ~exist(fs_file);  error('%s file is not there', fs_file);end
 
 % Unzip the output from FS
-unzip(J.fs_file, J.input_dir)
+unzip(fs_file, rtp_dir)
 % Check if the expected folders are here, and the minumun files so that the rest does not fail
-if ~exist(fullfile(J.input_dir,'fs'),'dir');error('fs folder does not exist, check the fs.zip file');end
-if ~exist(fullfile(J.input_dir,'fs','ROIs'),'dir');error('fs/ROIs folder does not exist, check the fs.zip file');end
-if ~exist(fullfile(J.input_dir,'fs','aparc+aseg.nii.gz'),'file');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
-if ~exist(fullfile(J.input_dir,'fs','brainmask.nii.gz'),'file');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs'),'dir');error('fs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','ROIs'),'dir');error('fs/ROIs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','aparc+aseg.nii.gz'),'file');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','brainmask.nii.gz'),'file');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
 
-%% Initialize diffusion parameters
-% We don't require most of them
+
+% RTP dir will be zipped at the end, the whole dir
+% output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
+% Only one subject, but until changed this is a cell array
+sub_dirs{1} = rtp_dir;
+
+
+%% Initialize diffusion parameters. This was for dtiInit and dt6Creation. Not really required. TODO: remove this
 dwParams            = dtiInitParams;
-dwParams.outDir     = J.output_dir;
-dwParams.bvecsFile  = J.bvec_file;
-dwParams.bvalsFile  = J.bval_file;
+dwParams.outDir     = output_dir;
+dwParams.bvecsFile  = bvec_file;
+dwParams.bvalsFile  = bval_file;
 
 %% Validate that the bval values are normalized
 % Determine shell
-bvals = dlmread(J.bval_file);
+bvals        = dlmread(bval_file);
 roundedBval  = 100 * round(bvals/100);
 paramsShells = unique(roundedBval);
 if 0 == min(paramsShells)
@@ -123,7 +122,7 @@ end
 
 % Write the files back
 warning('The bVals were normalized.')
-dlmwrite(J.bval_file, roundedBval, 'delimiter',' ');
+dlmwrite(bval_file, roundedBval, 'delimiter',' ');
 
 
 
@@ -142,27 +141,20 @@ dlmwrite(J.bval_file, roundedBval, 'delimiter',' ');
 % 4.2.1 ROIs: dilates and concatenates them
 
 % Here dtiInit was called, assign variables
-dwRawFileName = J.dwi_file;
-t1FileName    = J.t1_file;
+dwRawFileName = dwi_file;
+t1FileName    = t1_file;
 
 % I. Load the diffusion data, set up parameters and directories structure
 % Load the difusion data
 disp('Loading preprocessed (use rtp-preproc or already preprocessed) data...');
 dwRaw = niftiRead(dwRawFileName);
-
-% By default all processed nifti's will be at the same resolution as the dwi data
-% if notDefined('dwParams'); 
-%   dwParams         = dtiInitParams; 
-% we are going to ignore whatever we pass in the dtinit params. 
-% remove them from manifest too in next version
-  dwParams.dwOutMm = dwRaw.pixdim(1:3);
-% end 
+dwParams.dwOutMm = dwRaw.pixdim(1:3);
 
 % Initialize the structure containing all directory info and file names
 % dwDir      = dtiInitDir(dwRawFileName,dwParams);
 dwDir.outSuffix        = ''
 dwDir.mrDiffusionDir   = mrdRootPath();
-dwDir.dataDir          = J.input_dir;
+dwDir.dataDir          = rtp_dir;
 dwDir.inBaseName       = 'dwi'
 dwDir.subjectDir       = dwDir.dataDir;
 dwDir.mnB0Name         = fullfile(dwDir.dataDir, 'dwi_b0.nii.gz');
@@ -175,23 +167,22 @@ dwDir.ecFile           = fullfile(dwDir.dataDir,'dwi_ecXform.mat');
 dwDir.acpcFile         = fullfile(dwDir.dataDir,'dwi_acpcXform.mat');
 dwDir.alignedBvecsFile = dwDir.bvecsFile;
 dwDir.alignedBvalsFile = dwDir.bvalsFile;
-dwDir.dwAlignedRawFile = J.dwi_file;
+dwDir.dwAlignedRawFile = dwi_file;
 
 outBaseDir = dwDir.outBaseDir;
 fprintf('Dims = [%d %d %d %d] \nData Dir = %s \n', size(dwRaw.data), dwDir.dataDir);
 fprintf('Output Dir = %s \n', dwDir.subjectDir);
 
-dwParams.dt6BaseName = fullfile(J.input_dir);
-dt6FileName          = fullfile(J.input_dir, 'dt6.mat');
-binDirName           = fullfile(J.input_dir, 'bin');
+dwParams.dt6BaseName = fullfile(rtp_dir);
+dt6FileName          = fullfile(rtp_dir, 'dt6.mat');
+binDirName           = fullfile(rtp_dir, 'bin');
 if(~exist(binDirName,'dir')) ;mkdir(binDirName);end
 if(~exist('adcUnits','var')); adcUnits = ''; end
 
 
-params              = P.params;
-params.input_dir    = J.input_dir;
-params.output_dir   = J.output_dir;
-params.buildDate    = datestr(now,'yyyy-mm-dd HH:MM');
+params.input_dir    = rtp_dir;
+params.output_dir   = output_dir;
+params.buildDate    = datestamp; 
 l = license('inuse');
 params.buildId      = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
 if(ischar(dwRawFileName)); [dataDir,rawDataFileName] = fileparts(dwRawFileName);  % dwRawAligned);
@@ -199,11 +190,9 @@ else                       [dataDir,rawDataFileName] = fileparts(dwRawFileName.f
 params.rawDataDir   = dataDir;
 params.rawDataFile  = rawDataFileName;
 params.subDir       = dataDir;
-params.fs_dir       = fullfile(params.input_dir,'fs');
-params.roi_dir      = fullfile(params.fs_dir,'ROIs');
-
-J.params            = params;
-
+params.fs_dir       = fullfile(rtp_dir,'fs');
+params.roi_dir      = fullfile(rtp_dir,'ROIs');
+% These need to be relative to output_dir...
 files.b0            = fullfile('RTP','bin','b0.nii.gz');
 files.brainMask     = fullfile('RTP','bin','brainMask.nii.gz');
 files.wmMask        = fullfile('RTP','bin','wmMask.nii.gz');
@@ -225,11 +214,11 @@ dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
 % it is not installed in the Docker container)
 
 % Read the input file names and convert them
-basedir = J.input_dir;
+basedir = rtp_dir;
 
 fprintf('This is basedir for RAS checks: %s\n',   basedir)
 
-J       = load(fullfile(J.input_dir,'dt6.mat'));
+J       = load(fullfile(rtp_dir,'dt6.mat'));
 disp('These are the contents of dt6.mat')
 J.params
 J.files
@@ -305,7 +294,7 @@ end
 % Read the csv with the tract, so that we can pass it to AFQ_Create
 % TODO: shorten this script creating independent functions, for example, RAS check, or ROIs check
 
-csv = dir(fullfile(P.tractparams_dir,'*.csv'));
+csv = dir(fullfile(tractparams_dir,'*.csv'));
 if length(csv) > 1; 
     error('There are more than one csv files for tract params');
 else
@@ -418,9 +407,6 @@ end
 
 
 %% Create afq structure
-if notDefined('out_name')
-    out_name = ['rtp_', getDateAndTime];
-end
 
 disp('Running AFQ_create with the following options...');
 fprintf('sub_dirs: %s', sub_dirs{1})
@@ -468,8 +454,7 @@ end
 
 % Write the afq file 
 % Save each iteration of afq run if an output directory was defined
-datestamp = datetime('2015-05-01T00:00:01Z','TimeZone','local','Format','yyyy-MM-dd''T''HH:mm:ssz');
-outname = fullfile(J.params.subDir,['afq_' strrep(char(datestamp),':','_')]);
+outname = fullfile(J.params.subDir,['afq_' datestamp]);
 save(outname,'afq');
 
 
