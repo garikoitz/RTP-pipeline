@@ -110,12 +110,12 @@ else
   cp $RTP_DIR/afq_*.mat $OUTPUT_DIR
   # Copy some other files interesting for debugging
   cp $RTP_DIR/bin/*.nii.gz $OUTPUT_DIR
-  cp $RTP_DIR/mrtrix/*wmCsd* $OUTPUT_DIR
+  cp $RTP_DIR/mrtrix/*wmCsd*mif $OUTPUT_DIR
+  cp $RTP_DIR/afq*.mat $OUTPUT_DIR
 
 
   # Get basename for RTP ouput zip
-  # RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
-  RTP_NAME=$(basename `find $OUTPUT_DIR/ -type f -name "afq_*.mat"` .mat)
+  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
 
   # Rename and Compress RTP_DIR
   cd $OUTPUT_DIR

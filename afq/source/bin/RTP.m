@@ -22,7 +22,7 @@ RTP(jsonargs);
 
 disp('[RTP] Starting RTP...');
 datestamp = strrep(char(datetime(datestr(now),'TimeZone','local','Format','yyyy-MM-dd''T''HH:mm:ssz')),':','_');
-disp(['[RTP] datestampi:', datestamp]);
+disp(['[RTP] datestamp:', datestamp]);
 
 % Initialize args
 input_dir  = [];
@@ -220,6 +220,8 @@ fprintf('This is basedir for RAS checks: %s\n',   basedir)
 
 J       = load(fullfile(rtp_dir,'dt6.mat'));
 disp('These are the contents of dt6.mat')
+J.params.fs_dir = fullfile(rtp_dir,'fs');
+J.params.roi_dir = fullfile(rtp_dir,'fs','ROIs');
 J.params
 J.files
 
@@ -454,14 +456,14 @@ end
 
 % Write the afq file 
 % Save each iteration of afq run if an output directory was defined
-outname = fullfile(J.params.subDir,['afq_' datestamp]);
+outname = fullfile(rtp_dir,['afq_' datestamp]);
 save(outname,'afq');
 
 
 %% Export the data to csv files (don't use AFQ_exportData)
 disp('[RTP] Exporting data to csv files...');
 % We will add the diffusion parameters and the series number to the name
-csv_dir = fullfile(J.params.subDir,'csv_files');
+csv_dir = fullfile(rtp_dir,'csv_files');
 if ~exist(csv_dir,'dir');mkdir(csv_dir);end
 
 % Get the names of each of the datatypes (e.g.,'FA','MD', etc.)
@@ -493,7 +495,7 @@ end
 
 disp('[RTP] Exporting tck files for QA...');
 % We will add the diffusion parameters and the series number to the name
-tck_dir    = fullfile(J.params.subDir,'tck_files');
+tck_dir    = fullfile(rtp_dir,'tck_files');
 if ~exist(tck_dir,'dir');mkdir(tck_dir);end
 % Copy only the tck files we want to visualize, so that we do not need to unzip the big RTP file
 mrtrixdir  = fullfile(J.params.subDir,'mrtrix');
@@ -666,7 +668,7 @@ end
 %}
 
 R = {};
-R.date = getDateAndTime;
+R.date = datestamp;
 [~, R.arch] = system('lsb_release -a');
 R.software.version = version;
 R.software.libs = ver;
