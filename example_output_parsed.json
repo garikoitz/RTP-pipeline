@@ -7,14 +7,11 @@
     "nifti_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi",
     "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
     "params": {
-        "bsplineInterpFlag": 0,
         "fiberWeighting": 1,
-        "imresample": 1,
         "input_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input",
-        "mrTrixAlgo": "iFOD2",
         "numberOfNodes": 100,
         "outdir": [],
-        "outname": "rtp_output",
+        "outname": "afq_output",
         "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
         "phaseEncodeDir": 2,
         "run_mode": [
@@ -50,7 +47,8 @@
             "life_saveOutput": false,
             "life_test": false,
             "life_writePDB": false,
-            "mrtrix_autolmax": false,
+            "mrTrixAlgo": "iFOD2",
+            "mrtrix_autolmax": true,
             "mrtrix_lmax": 6,
             "mrtrix_useACT": false
         }

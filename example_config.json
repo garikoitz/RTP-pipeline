@@ -17,7 +17,7 @@
         "life_saveOutput": false,
         "life_test": false,
         "life_writePDB": false,
-        "mrTrixAlgo": "iFOD2",
+        "mrtrix_mrTrixAlgo": "iFOD2",
         "mrtrix_autolmax": true,
         "mrtrix_lmax": 6,
         "mrtrix_useACT": false
