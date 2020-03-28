@@ -138,6 +138,10 @@ if sum(afq.tracts.wbt) > 0
          %% Track with mrtrix if the right files are there
          mrtrixpaths   = AFQ_get(afq,'mrtrix paths',afq.currentsub);
          mrtrixVersion = 3;
+         if ~isfield(afq.params.track, 'mrTrixAlgo') 
+            afq.params.track.mrTrixAlgo = 'iFOD2';
+            warning('[RTP_TractsGet] afq.params.track.mrTrixAlgo does not exist, it was set to iFOD2]');
+         end
          [status, results, fg, pathstr] = AFQ_mrtrix_track(mrtrixpaths, ...
                                                            mrtrixpaths.wm, ... % roi, (wm = wmMask)
                                                            mrtrixpaths.wm_dilated,...  % wmMask
