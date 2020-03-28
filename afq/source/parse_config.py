@@ -51,6 +51,8 @@ def parse_config(input_file,
     config['params']['track']['mrtrix_useACT']       = config['params']['mrtrix_useACT']
     config['params']['track']['mrtrix_autolmax']     = config['params']['mrtrix_autolmax']
     config['params']['track']['mrtrix_lmax']         = config['params']['mrtrix_lmax']
+    config['params']['track']['mrTrixAlgo']          = config['params']['mrtrix_mrTrixAlgo']
+
     config['params']['track']['life_runLife']        = config['params']['life_runLife']
     config['params']['track']['life_discretization'] = config['params']['life_discretization']
     config['params']['track']['life_num_iterations'] = config['params']['life_num_iterations']
@@ -67,15 +69,19 @@ def parse_config(input_file,
     # Remove the other track_ fields
     del config['params']['track_faMaskThresh']
     del config['params']['track_faFodThresh']
+
     del config['params']['mrtrix_useACT']
     del config['params']['mrtrix_autolmax']
     del config['params']['mrtrix_lmax']
+    del config['params']['mrtrix_mrTrixAlgo']
+     
     del config['params']['life_runLife']
     del config['params']['life_discretization']
     del config['params']['life_num_iterations']
     del config['params']['life_test']
     del config['params']['life_saveOutput']
     del config['params']['life_writePDB']
+
     del config['params']['ET_numberFibers']
     del config['params']['ET_angleValues']
     del config['params']['ET_maxlength']
