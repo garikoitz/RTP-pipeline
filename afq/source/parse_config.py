@@ -94,8 +94,6 @@ def parse_config(input_file,
     # Add additional keys
     config['params']['run_mode'] = [],
     config['params']['outdir'] = []
-    config['params']['outname'] = config['params']['RTP_Output_Name']
-    del config['params']['RTP_Output_Name']
     config['params']['input_dir'] = input_dir
     config['params']['output_dir'] = output_dir
 
@@ -132,15 +130,15 @@ if __name__ == '__main__':
 
 
     # Example, for copy and pase
-    #  python parse_config.py --input_file /data/localhome/glerma/soft/RTP-pipeline/example_config.json \
-    #         --output_file /data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json \
-    #         --input_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input \
-    #         --output_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output \
-    #         --bvec_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bvec \
-    #         --bval_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bval \
-    #         --nifti_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi \
-    #         --anat_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical \
-    #         --fs_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs \
-    #         --tractparams_dir /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams
+    # python parse_config.py --input_file /data/localhome/glerma/soft/RTP-pipeline/example_config.json \
+    #        --output_file /data/localhome/glerma/soft/RTP-pipeline/example_output_parsed_kkkkkkk.json \
+    #        --input_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input \
+    #        --output_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output \
+    #        --bvec_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bvec \
+    #        --bval_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bval \
+    #        --nifti_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi \
+    #        --anat_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical \
+    #        --fs_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs \
+    #        --tractparams_dir /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams
 
            

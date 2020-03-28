@@ -5,7 +5,6 @@ function RTP(jsonargs)
 % INPUT ARGUMENTS: Note: must be a json string.
 %
 %       input_dir:  Directory containing dt6.mat
-%       out_name:   Name for the resulting afq file
 %       output_dir: Location to save the results
 %       params:     Key-Value pair of params for RTP_Create
 %{
@@ -27,7 +26,6 @@ disp(['[RTP] datestamp:', datestamp]);
 % Initialize args
 input_dir  = [];
 output_dir = [];
-out_name   = [];
 params     = [];
 anat_dir   = [];
 bval_dir   = [];
@@ -50,7 +48,6 @@ P
 input_dir  = P.input_dir;
 output_dir = P.output_dir;
 params     = P.params;
-out_name   = ['rtp_', datestamp];
 params     = P.params;
 anat_dir   = P.anat_dir;
 bval_dir   = P.bval_dir;
@@ -59,41 +56,47 @@ fs_dir     = P.fs_dir;
 nifti_dir  = P.nifti_dir;
 tractparams_dir = P.tractparams_dir;
 
+% Obtain the input filenames
+input_t1    = dir(fullfile(anat_dir ,'*.nii.gz'))   ; input_t1    = fullfile(input_t1.folder   ,input_t1.name);
+input_bvec  = dir(fullfile(bvec_dir ,'*.bvec*'))    ; input_bvec  = fullfile(input_bvec.folder ,input_bvec.name);
+input_bval  = dir(fullfile(bval_dir ,'*.bval*'))    ; input_bval  = fullfile(input_bval.folder ,input_bval.name);
+input_dwi   = dir(fullfile(nifti_dir,'*.nii.gz'))   ; input_dwi   = fullfile(input_dwi.folder  ,input_dwi.name);
+input_fszip = dir(fullfile(fs_dir   ,'*.zip'))      ; input_fszip = fullfile(input_fszip.folder,input_fszip.name);
+input_csv   = dir(fullfile(tractparams_dir,'*.csv')); input_csv   = fullfile(input_csv.folder  ,input_csv.name);
 
-
-% Copy files from input dir (probably read only) to the output dir
+% Create the destination input filenames
 rtp_dir    = fullfile(output_dir,'RTP');
-if exist(rtp_dir)
-	error('[RTP] rtp_dir exists in %s', rtp_dir)
-else
-	mkdir(rtp_dir);
-end
+if   exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
+else mkdir(rtp_dir);end
 % We need these files in root dir (rtp_dir) to start working
 t1_file    = fullfile(rtp_dir, 't1.nii.gz');
 bvec_file  = fullfile(rtp_dir, 'dwi.bvecs');
 bval_file  = fullfile(rtp_dir, 'dwi.bvals');
 dwi_file   = fullfile(rtp_dir, 'dwi.nii.gz');
 fs_file    = fullfile(rtp_dir, 'fs.zip');
+csv_file   = fullfile(rtp_dir, 'params.csv');
 %% Copy input files to output/RTP/
-copyfile(fullfile(anat_dir ,'t1.nii.gz' ), t1_file)  ;
-copyfile(fullfile(bvec_dir ,'dwi.bvecs' ), bvec_file);
-copyfile(fullfile(bval_dir ,'dwi.bvals' ), bval_file);
-copyfile(fullfile(nifti_dir,'dwi.nii.gz'), dwi_file) ;
-copyfile(fullfile(fs_dir   ,'fs.zip'    ), fs_file)  ;
+copyfile(input_t1   , t1_file)  ;
+copyfile(input_bvec , bvec_file);
+copyfile(input_bval , bval_file);
+copyfile(input_dwi  , dwi_file) ;
+copyfile(input_fszip, fs_file)  ;
+copyfile(input_csv  , csv_file) ;
 % Check if copied properly
-if ~exist(t1_file);  error('%s file is not there', t1_file);end
-if ~exist(bvec_file);error('%s file is not there', bvec_file);end
-if ~exist(bval_file);error('%s file is not there', bval_file);end
-if ~exist(dwi_file); error('%s file is not there', dwi_file);end
-if ~exist(fs_file);  error('%s file is not there', fs_file);end
+if ~exist(t1_file)  ; error('[RTP] %s file is not there', t1_file)  ; end
+if ~exist(bvec_file); error('[RTP] %s file is not there', bvec_file); end
+if ~exist(bval_file); error('[RTP] %s file is not there', bval_file); end
+if ~exist(dwi_file) ; error('[RTP] %s file is not there', dwi_file) ; end
+if ~exist(fs_file)  ; error('[RTP] %s file is not there', fs_file)  ; end
+if ~exist(csv_file) ; error('[RTP] %s file is not there', csv_file) ; end
 
 % Unzip the output from FS
 unzip(fs_file, rtp_dir)
 % Check if the expected folders are here, and the minumun files so that the rest does not fail
-if ~exist(fullfile(rtp_dir,'fs'),'dir');error('fs folder does not exist, check the fs.zip file');end
-if ~exist(fullfile(rtp_dir,'fs','ROIs'),'dir');error('fs/ROIs folder does not exist, check the fs.zip file');end
-if ~exist(fullfile(rtp_dir,'fs','aparc+aseg.nii.gz'),'file');error('fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
-if ~exist(fullfile(rtp_dir,'fs','brainmask.nii.gz'),'file');error('fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs'),'dir');error('[RTP] fs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','ROIs'),'dir');error('[RTP] fs/ROIs folder does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','aparc+aseg.nii.gz'),'file');error('[RTP] fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
+if ~exist(fullfile(rtp_dir,'fs','brainmask.nii.gz'),'file');error('[RTP] fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
 
 
 % RTP dir will be zipped at the end, the whole dir
@@ -117,11 +120,11 @@ if 0 == min(paramsShells)
     paramsShells = paramsShells(paramsShells ~= 0);
     numShells    = length(paramsShells);
 else
-    error('It seems that this file have no b0. Check it please.')
+    error('[RTP] It seems that this file have no b0. Check it please.')
 end
 
 % Write the files back
-warning('The bVals were normalized.')
+warning('[RTP] The bVals were normalized.')
 dlmwrite(bval_file, roundedBval, 'delimiter',' ');
 
 
@@ -146,7 +149,7 @@ t1FileName    = t1_file;
 
 % I. Load the diffusion data, set up parameters and directories structure
 % Load the difusion data
-disp('Loading preprocessed (use rtp-preproc or already preprocessed) data...');
+disp('[RTP] Loading preprocessed (use rtp-preproc or already preprocessed) data...');
 dwRaw = niftiRead(dwRawFileName);
 dwParams.dwOutMm = dwRaw.pixdim(1:3);
 
@@ -170,8 +173,8 @@ dwDir.alignedBvalsFile = dwDir.bvalsFile;
 dwDir.dwAlignedRawFile = dwi_file;
 
 outBaseDir = dwDir.outBaseDir;
-fprintf('Dims = [%d %d %d %d] \nData Dir = %s \n', size(dwRaw.data), dwDir.dataDir);
-fprintf('Output Dir = %s \n', dwDir.subjectDir);
+fprintf('[RTP] Dims = [%d %d %d %d] \nData Dir = %s \n', size(dwRaw.data), dwDir.dataDir);
+fprintf('[RTP] Output Dir = %s \n', dwDir.subjectDir);
 
 dwParams.dt6BaseName = fullfile(rtp_dir);
 dt6FileName          = fullfile(rtp_dir, 'dt6.mat');
@@ -216,10 +219,10 @@ dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
 % Read the input file names and convert them
 basedir = rtp_dir;
 
-fprintf('This is basedir for RAS checks: %s\n',   basedir)
+fprintf('[RTP] This is basedir for RAS checks: %s\n',   basedir)
 
 J       = load(fullfile(rtp_dir,'dt6.mat'));
-disp('These are the contents of dt6.mat')
+disp('[RTP] These are the contents of dt6.mat')
 J.params.fs_dir = fullfile(rtp_dir,'fs');
 J.params.roi_dir = fullfile(rtp_dir,'fs','ROIs');
 J.params
@@ -239,11 +242,11 @@ if ~strcmp(p,basedir); J.files.alignedDwBvals = fullfile(basedir,[f e]); end
 
 
 J.files.t1path    = fullfile(J.params.output_dir,J.files.t1);
-fprintf('This is the absolute path to the t1: %s\n', J.files.t1path)
+fprintf('[RTP] This is the absolute path to the t1: %s\n', J.files.t1path)
 if exist(J.files.t1path,'file')
-    fprintf('T1 file %s Exists. \n', J.files.t1path)
+    fprintf('[RTP] T1 file %s Exists. \n', J.files.t1path)
 else
-    error('Cannot find %s', J.files.t1path)
+    error('[RTP] Cannot find %s', J.files.t1path)
 end
 
 % Check it in these files
@@ -252,9 +255,9 @@ for nc=1:length(checkfiles)
     fname = J.files.(checkfiles{nc});
     [c2r,orientation] = rtp_convert2RAScheck(fname);
     if ~c2r
-        fprintf('%s has orientation %s (RAS), no transformation required.\n',fname,orientation)
+        fprintf('[RTP] %s has orientation %s (RAS), no transformation required.\n',fname,orientation)
     else
-        fprintf('%s has orientation %s, converting to 123(4) (RAS) \n',fname,orientation)
+        fprintf('[RTP] %s has orientation %s, converting to 123(4) (RAS) \n',fname,orientation)
         [p,f,e] = fileparts(fname);
         % Check that it is .nii.gz
         if strcmp(e,'.gz')
@@ -263,7 +266,7 @@ for nc=1:length(checkfiles)
         elseif strcmp(e,'.nii')
             % do nothing
         else
-            error('File extension should be .nii.gz or .nii')
+            error('[RTP] File extension should be .nii.gz or .nii')
         end
         % If it is diffusion, we need to take care of gradients
         switch checkfiles{nc}
@@ -285,7 +288,7 @@ for nc=1:length(checkfiles)
                 fRASname = fullfile(p,[f 'ras.nii.gz']);
                 cmd = sprintf('mrconvert -quiet -force -stride 1,2,3 %s %s', ...
                                fname, fRASname);
-                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[dtiInitStandAloneWrapper] Could not change the strides to RAS');end
+                s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[RTP] Could not change the strides to RAS');end
                 % 2: change filenames to continue with processing normally
                 J.files.(checkfiles{nc}) = fRASname;
         end
@@ -295,33 +298,17 @@ end
 
 % Read the csv with the tract, so that we can pass it to AFQ_Create
 % TODO: shorten this script creating independent functions, for example, RAS check, or ROIs check
-
-csv = dir(fullfile(tractparams_dir,'*.csv'));
-if length(csv) > 1; 
-    error('There are more than one csv files for tract params');
-else
-    if isfile(fullfile(csv.folder, csv.name));
-        A = readtable(fullfile(csv.folder, csv.name), ...
-					 'FileType', 'text', ...
-					 'Delimiter','comma', ...
-					 'ReadVariableNames',true,...
-					 'TextType', 'string');
-    else
-        error('Cannot read %s or is not a file',fullfile(csv.folder, csv.name))
-    end
-end
+fprintf('[RTP] Trying to read tractparams file %s\n', csv_file);
+A = readtable(csv_file, ...
+			 'FileType', 'text', ...
+			 'Delimiter','comma', ...
+			 'ReadVariableNames',true,...
+			 'TextType', 'string');
+disp('[RTP] Showing contents of params.csv file:')
+A
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
 % Create list of all ROIs
-roi3names=[];
-for nr=1:length(A.roi3)
-	if ismissing(A.roi3(nr))
-		roi3names = [roi3names;""];
-	else
-		roi3names = [roi3names;strcat(A.roi3(nr),A.extroi3(nr))];
-	end
-end
-
-checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);roi3names];
+checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3)];
 % If there is an AND, this means that there are two ROIs 
 % Create a new list with the individual ROIs to create, after checking the individuals are there
 createROInew = [];
@@ -410,11 +397,10 @@ end
 
 %% Create afq structure
 
-disp('Running AFQ_create with the following options...');
-fprintf('sub_dirs: %s', sub_dirs{1})
-fprintf('output_dir: %s', output_dir)
-fprintf('out_name: %s', out_name)
-if ~exist(fullfile(input_dir,'bin'));mkdir(input_dir, 'bin');end
+disp('[RTP] Running AFQ_create with the following options...');
+fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
+fprintf('[RTP] output_dir: %s', output_dir)
+if ~exist(fullfile(rtp_dir,'bin'));mkdir(rtp_dir, 'bin');end
 % Add deleted variables to afq, the ones we want fixed
 J.params.clip2rois       = true;
 J.params.track.multishell= false;
@@ -424,23 +410,12 @@ J.params.track.algorithm = 'mrtrix';
 J.params.computeCSD      = true;
 afq = AFQ_Create(sub_dirs{1}, J.params, A);  
 
-
-
-%{
-afq.tracts = A;
-% Update afq values with the ones coming from the tract. 
-% TODO: do this inside AFQ_Create
-afq.fgnames = cellstr(afq.tracts.label');
-afq.roi1names = cellstr(strcat(afq.tracts.roi1,afq.tracts.extroi1)');
-afq.roi2names = cellstr(strcat(afq.tracts.roi2,afq.tracts.extroi2)');
-%}
-
 disp('[RTP] ... end running AFQ_Create')
 
 %% RUN RTP
 
 disp('[RTP] Running AFQ_run with the following options...');
-fprintf('sub_dirs: %s', sub_dirs{1})
+fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
 disp('[RTP] This is the afq struct going to AFQ_run');
 afq
 afq = AFQ_run(sub_dirs, 1, afq);

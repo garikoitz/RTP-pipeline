@@ -188,11 +188,11 @@ if ~exist(mrtrixdir,'dir'),mkdir(mrtrixdir);end
 % Get the lmax from the afq structure
 % lmax = AFQ_get(afq,'lmax');
 % Obtain the lmax from the bvalues, no need to set up, calculate
-if afq.params.track.mrtrix_autolmax
-    lmax = AFQ_calculateLmaxFrombvals(AFQ_get(afq, 'dt6path',ii));
-else
-    lmax = afq.params.track.mrtrix_lmax;
-end
+% if afq.params.track.mrtrix_autolmax
+%     lmax = AFQ_calculateLmaxFrombvals(AFQ_get(afq, 'dt6path',ii));
+% else
+lmax = afq.params.track.mrtrix_lmax;
+% end
 % Beware, in the latest versions of mrtrix we are not using lmax,
 % their scripts take care of it. 
 % So, there is manual, there is autoMax (calculated above) and

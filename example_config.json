@@ -1,9 +1,6 @@
 {
     "config": {
-        "RTP_Output_Name": "rtp_output",
-        "bsplineInterpFlag": 0,
         "fiberWeighting": 1,
-        "imresample": 1,
         "numberOfNodes": 100,
         "outname": "afq_output",
         "phaseEncodeDir": 2,
@@ -21,7 +18,7 @@
         "life_test": false,
         "life_writePDB": false,
         "mrTrixAlgo": "iFOD2",
-        "mrtrix_autolmax": false,
+        "mrtrix_autolmax": true,
         "mrtrix_lmax": 6,
         "mrtrix_useACT": false
     }

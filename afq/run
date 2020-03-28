@@ -4,7 +4,7 @@
 # Built to flywheel-v0 spec.
 #
 
-CONTAINER="[garikoitz/rtp-pipeline]"
+CONTAINER="[vistalab/rtp-pipeline]"
 echo -e "$CONTAINER  Initiated"
 
 # Configure the ENV for FSL
@@ -107,7 +107,6 @@ else
   cp $RTP_DIR/csv_files/*.csv $OUTPUT_DIR
   cp $RTP_DIR/tck_files/*.tck $OUTPUT_DIR
   cp $RTP_DIR/tck_files/*.obj $OUTPUT_DIR
-  cp $RTP_DIR/afq_*.mat $OUTPUT_DIR
   # Copy some other files interesting for debugging
   cp $RTP_DIR/bin/*.nii.gz $OUTPUT_DIR
   cp $RTP_DIR/mrtrix/*wmCsd*mif $OUTPUT_DIR
