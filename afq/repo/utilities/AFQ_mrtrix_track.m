@@ -119,6 +119,22 @@ end
 % Create the optional str that will be added to the tckgen call
 optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
 
+% Depending on the algo, the input files are different
+
+switch lower(algo)
+    case {'sd_stream','ifod1','ifod2'}
+        input_file = files.csd;
+    case {'tensor_det','tensor_prob'}
+        if multishell
+            input_file = char(join([files.dwiSS, "-grad " files.bSS]));
+        else
+            input_file = char(join([files.dwi, "-grad " files.b]));
+        end
+    otherwise
+        error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
+end
+
+
 % Generate the appropriate UNIX command string.
 [~, pathstr] = strip_ext(files.csd);
 if useACT
@@ -137,7 +153,7 @@ if useACT
                       '-angle ' num2str(ET_angleValues(na)) ' ' ...
                       '-select ' num2str(ET_numberFibers) ' ' ...
                       '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                      files.csd ' ' ...
+                      input_file ' ' ...
                       fgFileNameWithDir{na}];
         % Run it, if the file is not there (this is for debugging)
         if ~exist(fgFileNameWithDir{na},'file')
@@ -165,7 +181,7 @@ else
                     '-angle ' num2str(ET_angleValues(na)) ' ' ...
                     '-select ' num2str(ET_numberFibers) ' ' ...
                     '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                    files.csd ' ' ...
+                    input_file ' ' ...
                     fgFileNameWithDir{na}];
         % Run it, if the file is not there (this is for debugging)
         if ~exist(fgFileNameWithDir{na},'file')

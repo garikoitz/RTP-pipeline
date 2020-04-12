@@ -24,14 +24,14 @@ datestamp = strrep(char(datetime(datestr(now),'TimeZone','local','Format','yyyy-
 disp(['[RTP] datestamp:', datestamp]);
 
 % Initialize args
-input_dir  = [];
-output_dir = [];
-params     = [];
-anat_dir   = [];
-bval_dir   = [];
-bvec_dir   = [];
-fs_dir     = [];
-nifti_dir  = [];
+input_dir       = [];
+output_dir      = [];
+params          = [];
+anat_dir        = [];
+bval_dir        = [];
+bvec_dir        = [];
+fs_dir          = [];
+nifti_dir       = [];
 tractparams_dir = [];
 
 %% Handle jsonargs
@@ -68,6 +68,7 @@ input_csv   = dir(fullfile(tractparams_dir,'*.csv')); input_csv   = fullfile(inp
 rtp_dir    = fullfile(output_dir,'RTP');
 if   exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
 else mkdir(rtp_dir);end
+
 % We need these files in root dir (rtp_dir) to start working
 t1_file    = fullfile(rtp_dir, 't1.nii.gz');
 bvec_file  = fullfile(rtp_dir, 'dwi.bvecs');

@@ -29,7 +29,7 @@ function files = AFQ_mrtrixInit(dt6, ...
 % This performs the following operations:
 %
 % 1. Convert the raw dwi file into .mif format
-% 2. Convert the bvecs, bvals into .b format
+% 2. Convert the bvecs, bvals into .b formatf
 % 3. Convert the brain-mask to .mif format 
 % 4. Fit DTI and calculate FA and EV images
 % 5. Estimate the response function for single fibers, based on voxels with
@@ -75,12 +75,17 @@ end
 % SessionDir = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep)
 % This is where the dt6 is located
 AnalysisDir = fileparts(dt6);
-SessionDir = AnalysisDir;
+rtp_dir     = AnalysisDir;
+fs_dir      = fullfile(rtp_dir,'fs');
+if ~isdir(fs_dir);error('fs/ folder required in RTP directory');end
+fs_brainmask= fullfile(fs_dir,'brainmask.nii.gz');
+if ~isfile(fs_brainmask);error('brainmask.nii.gz file required in RTP/fs directory');end
+
 
 % Strip the file names out of the dt6 strings. 
 % The first option is the good one, but if I did this change I want to maintain it. Nevertheless, it cannot come from dt_info.params
 [p,f,e] = fileparts(dt_info.files.alignedDwRaw);
-dwRawFile = fullfile(SessionDir,[f e]); 
+dwRawFile = fullfile(rtp_dir,[f e]); 
 
 
 % This line removes the extension of the file (.nii.gz) and mainaints de path
@@ -139,7 +144,7 @@ end
 % Convert the brain mask from mrDiffusion into a .mif file.
 % We are not creating hte brainmask anymore, create it here
 if (~computed.('brainmask'))
-    AFQ_mrtrix_brainmask(files,0,0,mrtrixVersion);
+    AFQ_mrtrix_brainmask(files,0,0,mrtrixVersion,fs_brainmask);
 end
 
 % Dilate and erode the brainmask

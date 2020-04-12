@@ -9,11 +9,11 @@
   "source": "https://github.com/vistalab/RTP-pipeline",
   "license": "Other",
   "flywheel": "0",
-  "version": "4.2.6",
+  "version": "4.2.7",
   "custom": {
-    "docker-image": "vistalab/rtp-pipeline:4.2.6",
+    "docker-image": "vistalab/rtp-pipeline:4.2.7",
     "gear-builder": {
-      "image": "vistalab/rtp-pipeline:4.2.6",
+      "image": "vistalab/rtp-pipeline:4.2.7",
       "category": "analysis"
     },
     "flywheel": {
@@ -99,7 +99,7 @@
       "type": "number"
     },
     "mrtrix_mrTrixAlgo": {
-      "description": "MRTRIX: Tracking algorithm for mrTrix's tckgen. Options are: FACT, iFOD1, iFOD2, NullDits1/NullDist2, SD_STREAM, SpeedTest, Tensor_Det, Tensor_prob. Only iFOD2 and iFOD1 tested in this version, this note will be removed once we check all options are working properly. DEFAULT='iFOD2'",
+      "description": "MRTRIX: Tracking algorithm for mrTrix's tckgen. Options are: iFOD1, iFOD2, SD_STREAM, Tensor_Det, Tensor_prob. DEFAULT='iFOD2'",
       "default": "iFOD2",
       "type": "string"
     },

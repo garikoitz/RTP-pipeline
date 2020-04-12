@@ -44,3 +44,5 @@ cmd_str = ['tensor2metric -force ' ...
 
 % Send it to mrtrix:
 [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
+
+if ~isfile(files.fa);error('%s could not be created',files.fa);end

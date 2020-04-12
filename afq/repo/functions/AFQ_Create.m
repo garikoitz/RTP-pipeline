@@ -220,15 +220,7 @@ files = AFQ_mrtrixInit(dt6path, ...
 % created, one for each tissue type. We only pass the csd of the 
 % wm = wmMask for tractography, wmMask as seed_image
 % and tt5 for -act (instead of -mask)
-afq.files.mrtrix.wm{ii}         = files.wmMask;
-afq.files.mrtrix.wm_dilated{ii} = files.wmMask_dilated;
-afq.files.mrtrix.tt5{ii}        = files.tt5;
-afq.files.mrtrix.gmwmi{ii}      = files.gmwmi;
-% Now we are always providing the wmCsd to the tractography
-afq.files.mrtrix.csd{ii}        = files.wmCsd;
-% if afq.params.track.multishell; afq.files.mrtrix.csd{ii} = files.wmCsd;
-% else; afq.files.mrtrix.csd{ii}   = files.csd;
-% end
+afq.files.mrtrix = files;
 
 % This is new, here now we will create the files for the /bin
 % folder that we did not create in AFQ_dtiInit.m

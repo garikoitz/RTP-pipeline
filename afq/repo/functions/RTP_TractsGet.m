@@ -1,4 +1,3 @@
-% function [fg_classified,fg_unclassified,classification,fg]=RTP_TractsGet(...
 function [fg_classified,fg_clean,fg]=RTP_TractsGet(dt6File,afq) 
 % Categorizes each fiber in a group into one of the 20 tracts defined in
 % the Mori white matter atlas. 
@@ -136,15 +135,15 @@ if sum(afq.tracts.wbt) > 0
 	else
    		 fprintf('\nPerforming whole-brain tractograpy\n');
          %% Track with mrtrix if the right files are there
-         mrtrixpaths   = AFQ_get(afq,'mrtrix paths',afq.currentsub);
+         % mrtrixpaths   = AFQ_get(afq,'mrtrix paths',afq.currentsub);
          mrtrixVersion = 3;
          if ~isfield(afq.params.track, 'mrTrixAlgo') 
             afq.params.track.mrTrixAlgo = 'iFOD2';
             warning('[RTP_TractsGet] afq.params.track.mrTrixAlgo does not exist, it was set to iFOD2]');
          end
-         [status, results, fg, pathstr] = AFQ_mrtrix_track(mrtrixpaths, ...
-                                                           mrtrixpaths.wm, ... % roi, (wm = wmMask)
-                                                           mrtrixpaths.wm_dilated,...  % wmMask
+         [status, results, fg, pathstr] = AFQ_mrtrix_track(afq.files.mrtrix, ...
+                                                           afq.files.mrtrix.wmMask, ... % roi, (wm = wmMask)
+                                                           afq.files.mrtrix.wmMask_dilated,...  % wmMask
                                                            afq.params.track.mrTrixAlgo, ...
                                                            afq.params.track.ET_numberFibers,...
                                                            [],...
@@ -168,6 +167,10 @@ afq.tracts.cfpath    = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname);
 afq.tracts.nfibers   = zeros(height(afq.tracts),1);
 afq.tracts.cnfibers  = zeros(height(afq.tracts),1);
 
+% Add the path
+RoiPara = load(dt6File);
+fs_dir  = RoiPara.params.fs_dir;
+ROIs_dir = fullfile(fs_dir, 'ROIs');
 
 tracts = afq.tracts;
 for nt=1:height(tracts)
@@ -189,19 +192,15 @@ for nt=1:height(tracts)
        		 else; fg_clean(nt)=clean_tract; end
         end
 	else
-	    % Add the path
-        RoiPara = load(dt6File);
-        fs_dir  = RoiPara.params.fs_dir;
-        moridir = fullfile(fs_dir, 'ROIs');
         % Solve the dilate text
         if ts.dilroi1>0;dil1=strcat("_dil-",num2str(ts.dilroi1));else;dil1="";end 
         if ts.dilroi2>0;dil2=strcat("_dil-",num2str(ts.dilroi2));else;dil2="";end 
         if ts.dilroi3>0;dil3=strcat("_dil-",num2str(ts.dilroi3));else;dil3="";end 
-        roi1    = fullfile(moridir, strcat(ts.roi1,dil1,ts.extroi1));
-        roi2    = fullfile(moridir, strcat(ts.roi2,dil2,ts.extroi2));
+        roi1    = fullfile(ROIs_dir, strcat(ts.roi1,dil1,ts.extroi1));
+        roi2    = fullfile(ROIs_dir, strcat(ts.roi2,dil2,ts.extroi2));
         roi3    = "";
         if ~(strcmp(ts.roi3,"NO"))
-            join("-include", fullfile(moridir, strcat(ts.roi3,dil3,ts.extroi3)));
+            join("-include", fullfile(ROIs_dir, strcat(ts.roi3,dil3,ts.extroi3)));
         end
     
     
@@ -235,20 +234,48 @@ for nt=1:height(tracts)
     else
 		% TODO: add better logic roi1, roi2, roi3, what is seed, what it is waypoint
         fprintf('\n[RTP_TractsGet] Using tckgen to create %s\n', ts.label)
+        % Depending on the algo, different inputs are used
+        switch lower(ts.algorithm)
+            case {'sd_stream','ifod1','ifod2'}
+                input_file = afq.files.mrtrix.csd;
+            case {'tensor_det','tensor_prob'}
+                input_file = join([afq.files.mrtrix.dwi, ...
+                                  "-grad " afq.files.mrtrix.b]);
+            otherwise
+                error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
+        end
         cmd       = join([ "tckgen", "-algorithm", ts.algorithm, ...
-                            "-select 5000", ...
+                            "-select ", ts.select, ...
                             "-seed_image", roi1, ...
                             "-include", roi2, ...
                             "-seed_image", roi2, ...
                             "-include", roi1, ...
                             "-angle", ts.angle, "-cutoff", ts.cutoff, ...
                             "-minlength", ts.minlen, "-maxlength", ts.maxlen, ...
-                            "-stop", afq.files.mrtrix.csd{1}, ts.fpath]);
+                            "-stop", ...
+                            input_file, ...
+                            ts.fpath]);
         spres     = AFQ_mrtrix_cmd(cmd);
     end
+    
+    
+        
 
     % Read the tract, we want to have the same fg struct as before
-    tract = fgRead(ts.fpath);
+    if isfile(ts.fpath)
+        tract = fgRead(ts.fpath);
+    else
+        if nt==1
+            error('it was not possible to even get the first tract, check options')
+        else
+            warning('%s could not be tracked',ts.fpath)
+            tract        = fg_classified(1);
+            [~, n, ~]    = fileparts(ts.fpath);
+            tract.name   = n;
+            tract.fibers = {zeros(3,1)};
+        end
+    end
+    
     if nt==1; fg_classified=tract;
 	else; fg_classified(nt)=tract; end
 
@@ -276,6 +303,69 @@ for nt=1:height(tracts)
     fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
 end
 end
+
+
+
+% Path to ROIs
+if notDefined('fsROIdir')
+    fsROIdir = uigetdir([],'Select an ROI directory');
+end
+% output directory
+if notDefined('outdir')
+    outdir = uigetdir([],'Select an output directory');
+end
+
+
+
+
+
+
+% Obtain ROIs in .mat format
+% fsIn   = fullfile(fs_dir,'aparc+aseg.nii.gz'); 
+% outDir = ROIs_dir;
+% vtype  = 'mat';
+% refT1  = dt.files.t1;  
+% fs_roisFromAllLabels(fsIn,outDir,vtype,refT1)
+% Obtain VOFs and pArcs
+% wholebrainfgPath = fg ;
+% L_arcuate        = fgRead(tracts.cfpath(tracts.label=="Left_Arcuate"));
+% R_arcuate        = fgRead(tracts.cfpath(tracts.label=="Right_Arcuate"));
+% fsROIdir         = ROIs_dir;
+% outdir           = mrtrixDir;  % It shuold not write anything but just in case
+% thresh           = [.95 .6];  % Remove any fiber that doesn't go vertical (positive z) for thresh% of its  coordinates
+% v_crit           = 1.3;  % Fibers must travel this much farther vertically than other directions
+% savefiles        = false;  % We don't want the mat files, we will save them as tck
+% arcThresh        = 20;  % Default is to define VOF as fibers that have fewer than 20 nodes of overlap with the arcuate
+% parcThresh       =  1;  % Default is to consider fibers that are anterior to the posterior arcuate  as not part of the VOF
+% [L_VOF, R_VOF, L_pArc, R_pArc, L_pArc_vot, R_pArc_vot] = AFQ_FindVOF(...
+%                                                                      wholebrainfgPath,...
+%                                                                      L_arcuate,...
+%                                                                      R_arcuate,...
+%                                                                      fsROIdir,...
+%                                                                      outdir,...
+%                                                                      thresh,...
+%                                                                      v_crit, ...
+%                                                                      dt, ...
+%                                                                      savefiles, ...
+%                                                                      arcThresh, ...
+%                                                                      parcThresh)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 afq = rmfield(afq,'tracts');
 afq.tracts = tracts;
 
@@ -366,8 +456,8 @@ if false % useRoiBasedApproach
 		% find ROI location
        RoiPara = load(dt6File);
        fs_dir = RoiPara.params.fs_dir;
-       moridir = fullfile(fs_dir, 'MORI');
-       ROI_img_file=fullfile(moridir, moriRois{nt, 1});
+       ROIs_dir = fullfile(fs_dir, 'ROIs');
+       ROI_img_file=fullfile(ROIs_dir, moriRois{nt, 1});
         % Transform ROI-1 to an individuals native space
 %         if recomputeROIs
 %             % Default is to use the spm normalization unless a superior
@@ -392,7 +482,7 @@ if false % useRoiBasedApproach
         [fgOut,contentiousFibers, keep1(:, nt)] = dtiIntersectFibersWithRoi([], 'and', minDist, roi1(nt), fg);
         keepID1=find(keep1(:, nt));
         % Load the nifit image containing ROI-2 in MNI space
-         ROI_img_file=fullfile(moridir, ['MORI_', moriRois{nt, 2}]);
+         ROI_img_file=fullfile(ROIs_dir, ['MORI_', moriRois{nt, 2}]);
 
 %         % Transform ROI-2 to an individuals native space
 %         if recomputeROIs
