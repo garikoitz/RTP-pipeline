@@ -129,10 +129,10 @@ if ~exist(mrtrixDir,'dir'); mkdir(mrtrixDir); end
 if sum(afq.tracts.wbt) > 0
 	% Check if it exist and force is false:
 	if exist(fullfile(fibDir,'WholeBrainFG.mat'),'file') && afq.force==false
-		fprintf('WBT file %s exists and will not be overwritten\n',fullfile(fibDir,'WholeBrainFG.mat'))
+		fprintf('[RTP_TractsGet] WBT file %s exists and will not be overwritten\n',fullfile(fibDir,'WholeBrainFG.mat'))
         fg = AFQ_get(afq,'wholebrain fiber group',1);
 	else
-   		 fprintf('\nPerforming whole-brain tractograpy\n');
+   		 fprintf('\n[RTP_TractsGet] Performing whole-brain tractograpy\n');
          %% Track with mrtrix if the right files are there
          % mrtrixpaths   = AFQ_get(afq,'mrtrix paths',afq.currentsub);
          mrtrixVersion = 3;
@@ -236,7 +236,7 @@ for nt=1:height(tracts)
         % Depending on the algo, different inputs are used
         switch lower(ts.algorithm)
             case {'sd_stream','ifod1','ifod2'}
-                input_file = afq.files.mrtrix.csd;
+                input_file = afq.files.mrtrix.wmCsd;
             case {'tensor_det','tensor_prob'}
                 input_file = join([afq.files.mrtrix.dwi, ...
                                   "-grad " afq.files.mrtrix.b]);

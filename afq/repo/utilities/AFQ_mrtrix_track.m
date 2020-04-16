@@ -123,7 +123,7 @@ optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
 
 switch lower(algo)
     case {'sd_stream','ifod1','ifod2'}
-        input_file = files.csd;
+        input_file = files.wmCsd;
     case {'tensor_det','tensor_prob'}
         if multishell
             input_file = char(join([files.dwiSS, "-grad " files.bSS]));
