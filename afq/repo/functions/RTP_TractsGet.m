@@ -105,7 +105,7 @@ function [fg_classified,fg_clean,fg]=RTP_TractsGet(dt6File,afq)
 % (c) Vistalab
 
 %% Check arguments
-disp(['[RTP_TractsGet] Using MORI ROIs to select fibers from whole brain tractogram']);
+disp(['[RTP_TractsGet] It will take ROIs from the FS Docker container to create tracts']);
 
 %% Read the data
 % Load the dt6 file
@@ -117,7 +117,6 @@ else
     baseDir = fileparts(dt.dataFile);
     dt6File = dt.dataFile;
 end
-
 
 % Make sure fiber folder exist before tracking or checking
 fibDir = fullfile(baseDir,'fibers');
@@ -319,7 +318,7 @@ end
 
 
 
-
+% TODO: add vof as an option
 % Obtain ROIs in .mat format
 % fsIn   = fullfile(fs_dir,'aparc+aseg.nii.gz'); 
 % outDir = ROIs_dir;

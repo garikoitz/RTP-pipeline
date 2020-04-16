@@ -26,3 +26,12 @@ END
 # Add a gitignore so that it never goes back anything in the /compiled folder
 # git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch /data/localhome/glerma/soft/afq-pipeline/afq/source/bin/compiled/AFQ_StandAlone_QMR' --prune-empty --tag-name-filter cat -- --all
 
+
+
+
+
+
+
+
+
+

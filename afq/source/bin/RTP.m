@@ -9,16 +9,13 @@ function RTP(jsonargs)
 %       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-jsonargs = "/black/localhome/glerma/TESTDATA/FS/paramsBLACK.json";
-jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
-RTP(jsonargs);
+    jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
+    RTP(jsonargs);
 %}
 %
 %#ok<*AGROW>
 
-
 %% Begin
-
 disp('[RTP] Starting RTP...');
 datestamp = strrep(char(datetime(datestr(now),'TimeZone','local','Format','yyyy-MM-dd''T''HH:mm:ssz')),':','_');
 disp(['[RTP] datestamp:', datestamp]);
@@ -38,51 +35,66 @@ tractparams_dir = [];
 disp('[RTP] This is the json string to be read by loadjson:')
 disp(jsonargs)
 
-
 % Read the file in the variable P
 if exist('jsonargs', 'var') && ~isempty(jsonargs)
     P = jsondecode(fileread(jsonargs));
 end
+disp('[RTP] Contents of the config json file are:');
 P
+
 %% Configure inputs and defaults, get rid of P:
-input_dir  = P.input_dir;
-output_dir = P.output_dir;
-params     = P.params;
-params     = P.params;
-anat_dir   = P.anat_dir;
-bval_dir   = P.bval_dir;
-bvec_dir   = P.bvec_dir;
-fs_dir     = P.fs_dir;
-nifti_dir  = P.nifti_dir;
+input_dir       = P.input_dir;
+output_dir      = P.output_dir;
+params          = P.params;
+params          = P.params;
+anat_dir        = P.anat_dir;
+bval_dir        = P.bval_dir;
+bvec_dir        = P.bvec_dir;
+fs_dir          = P.fs_dir;
+nifti_dir       = P.nifti_dir;
 tractparams_dir = P.tractparams_dir;
 
 % Obtain the input filenames
-input_t1    = dir(fullfile(anat_dir ,'*.nii.gz'))   ; input_t1    = fullfile(input_t1.folder   ,input_t1.name);
-input_bvec  = dir(fullfile(bvec_dir ,'*.bvec*'))    ; input_bvec  = fullfile(input_bvec.folder ,input_bvec.name);
-input_bval  = dir(fullfile(bval_dir ,'*.bval*'))    ; input_bval  = fullfile(input_bval.folder ,input_bval.name);
-input_dwi   = dir(fullfile(nifti_dir,'*.nii.gz'))   ; input_dwi   = fullfile(input_dwi.folder  ,input_dwi.name);
-input_fszip = dir(fullfile(fs_dir   ,'*.zip'))      ; input_fszip = fullfile(input_fszip.folder,input_fszip.name);
-input_csv   = dir(fullfile(tractparams_dir,'*.csv')); input_csv   = fullfile(input_csv.folder  ,input_csv.name);
+input_t1        = dir(fullfile(anat_dir ,'*.nii.gz'))   ; 
+input_t1        = fullfile(input_t1.folder   ,input_t1.name);
 
+input_bvec      = dir(fullfile(bvec_dir ,'*.bvec*'))    ; 
+input_bvec      = fullfile(input_bvec.folder ,input_bvec.name);
+
+input_bval      = dir(fullfile(bval_dir ,'*.bval*'))    ; 
+input_bval      = fullfile(input_bval.folder ,input_bval.name);
+
+input_dwi       = dir(fullfile(nifti_dir,'*.nii.gz'))   ; 
+input_dwi       = fullfile(input_dwi.folder  ,input_dwi.name);
+
+input_fszip     = dir(fullfile(fs_dir   ,'*.zip'))      ; 
+input_fszip     = fullfile(input_fszip.folder,input_fszip.name);
+
+input_csv       = dir(fullfile(tractparams_dir,'*.csv')); 
+input_csv       = fullfile(input_csv.folder  ,input_csv.name);
+
+%% Copy input files to working directory
 % Create the destination input filenames
-rtp_dir    = fullfile(output_dir,'RTP');
-if   exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
+rtp_dir         = fullfile(output_dir,'RTP');
+if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
 else mkdir(rtp_dir);end
 
 % We need these files in root dir (rtp_dir) to start working
-t1_file    = fullfile(rtp_dir, 't1.nii.gz');
-bvec_file  = fullfile(rtp_dir, 'dwi.bvecs');
-bval_file  = fullfile(rtp_dir, 'dwi.bvals');
-dwi_file   = fullfile(rtp_dir, 'dwi.nii.gz');
-fs_file    = fullfile(rtp_dir, 'fs.zip');
-csv_file   = fullfile(rtp_dir, 'params.csv');
-%% Copy input files to output/RTP/
+t1_file         = fullfile(rtp_dir, 't1.nii.gz');
+bvec_file       = fullfile(rtp_dir, 'dwi.bvecs');
+bval_file       = fullfile(rtp_dir, 'dwi.bvals');
+dwi_file        = fullfile(rtp_dir, 'dwi.nii.gz');
+fs_file         = fullfile(rtp_dir, 'fs.zip');
+csv_file        = fullfile(rtp_dir, 'params.csv');
+
+% Copy input files to output/RTP/
 copyfile(input_t1   , t1_file)  ;
 copyfile(input_bvec , bvec_file);
 copyfile(input_bval , bval_file);
 copyfile(input_dwi  , dwi_file) ;
 copyfile(input_fszip, fs_file)  ;
 copyfile(input_csv  , csv_file) ;
+
 % Check if copied properly
 if ~exist(t1_file)  ; error('[RTP] %s file is not there', t1_file)  ; end
 if ~exist(bvec_file); error('[RTP] %s file is not there', bvec_file); end
@@ -99,14 +111,13 @@ if ~exist(fullfile(rtp_dir,'fs','ROIs'),'dir');error('[RTP] fs/ROIs folder does 
 if ~exist(fullfile(rtp_dir,'fs','aparc+aseg.nii.gz'),'file');error('[RTP] fs/ROIs/aparc+aseg.nii.gz file does not exist, check the fs.zip file');end
 if ~exist(fullfile(rtp_dir,'fs','brainmask.nii.gz'),'file');error('[RTP] fs/ROIs/brainmask.nii.gz file does not exist, check the fs.zip file');end
 
-
-% RTP dir will be zipped at the end, the whole dir
-% output_dir will be the output in FW, it will have the RTP dir and the files we want to be accesible for reading in FW output
-% Only one subject, but until changed this is a cell array
+% RTP dir will be zipped at the end, the whole dir output_dir will be the output
+% in FW, it will have the RTP dir and the files we want to be accesible for
+% reading in FW output Only one subject, but until changed this is a cell array
 sub_dirs{1} = rtp_dir;
 
-
-%% Initialize diffusion parameters. This was for dtiInit and dt6Creation. Not really required. TODO: remove this
+%% Initialize diffusion parameters. This was for dtiInit and dt6Creation. 
+% Not really required. TODO: remove this
 dwParams            = dtiInitParams;
 dwParams.outDir     = output_dir;
 dwParams.bvecsFile  = bvec_file;
@@ -114,9 +125,9 @@ dwParams.bvalsFile  = bval_file;
 
 %% Validate that the bval values are normalized
 % Determine shell
-bvals        = dlmread(bval_file);
-roundedBval  = 100 * round(bvals/100);
-paramsShells = unique(roundedBval);
+bvals            = dlmread(bval_file);
+roundedBval      = 100 * round(bvals/100);
+paramsShells     = unique(roundedBval);
 if 0 == min(paramsShells)
     paramsShells = paramsShells(paramsShells ~= 0);
     numShells    = length(paramsShells);
@@ -127,8 +138,6 @@ end
 % Write the files back
 warning('[RTP] The bVals were normalized.')
 dlmwrite(bval_file, roundedBval, 'delimiter',' ');
-
-
 
 %% Run (the equivalent ) dtiInit
 % From 3.0.5 onwards I am forking dtiInit and giving it less
@@ -206,8 +215,7 @@ files.fa            = fullfile('RTP','bin','fa.nii.gz');
 save(dt6FileName,'adcUnits','params','files');
 dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
 
-
-%% CHECK IF INPUT IS RAS  (THIS WAS IN RTP CONTAINER)
+%% CHECK IF INPUT IS RAS
 % New in 3.1.2: check the file is RAS If not, convert to RAS Be careful, bvecs
 % needs to be changed as well accordingly Instead of changing bvecs manually, we
 % will let mrtrix take care of it Convert files to mif, add the bvecs and bvals
@@ -218,13 +226,13 @@ dtiInitDt6Files(dt6FileName,dwDir,t1FileName);
 % it is not installed in the Docker container)
 
 % Read the input file names and convert them
-basedir = rtp_dir;
+basedir          = rtp_dir;
 
 fprintf('[RTP] This is basedir for RAS checks: %s\n',   basedir)
 
-J       = load(fullfile(rtp_dir,'dt6.mat'));
+J                = load(fullfile(rtp_dir,'dt6.mat'));
 disp('[RTP] These are the contents of dt6.mat')
-J.params.fs_dir = fullfile(rtp_dir,'fs');
+J.params.fs_dir  = fullfile(rtp_dir,'fs');
 J.params.roi_dir = fullfile(rtp_dir,'fs','ROIs');
 J.params
 J.files
@@ -240,7 +248,6 @@ if ~strcmp(p,basedir); J.files.alignedDwBvecs = fullfile(basedir,[f e]); end
 % BVAL file
 [p,f,e]= fileparts(J.files.alignedDwBvals);
 if ~strcmp(p,basedir); J.files.alignedDwBvals = fullfile(basedir,[f e]); end
-
 
 J.files.t1path    = fullfile(J.params.output_dir,J.files.t1);
 fprintf('[RTP] This is the absolute path to the t1: %s\n', J.files.t1path)
@@ -296,17 +303,43 @@ for nc=1:length(checkfiles)
     end
 end
 
-
-% Read the csv with the tract, so that we can pass it to AFQ_Create
-% TODO: shorten this script creating independent functions, for example, RAS check, or ROIs check
+%% Read the tractparams.csv and validate
+% TODO: shorten this script creating independent functions, for example,ROIsCheck
 fprintf('[RTP] Trying to read tractparams file %s\n', csv_file);
-A = readtable(csv_file, ...
-			 'FileType', 'text', ...
-			 'Delimiter','comma', ...
-			 'ReadVariableNames',true,...
-			 'TextType', 'string');
+A = readtable(csv_file, 'FileType', 'text', ...
+                        'Delimiter','comma', ...
+                        'ReadVariableNames',true,...
+                        'TextType', 'string');
 disp('[RTP] Showing contents of params.csv file:')
 A
+disp('[RTP] Checking there are the required variables, and that the tract names are correct')
+
+varsShouldBe = {'roi1' 'extroi1' 'roi2' 'extroi2' 'roi3' 'extroi3' 'dilroi1' ...
+                'dilroi2' 'dilroi3' 'label' 'fgnum' 'hemi' 'slabel' 'shemi' ...
+                'nhlabel' 'wbt' 'usecortex' 'maxlen' 'minlen' 'angle' 'algorithm' ...
+                'select' 'cutoff' 'maxDist' 'maxLen' 'numNodes' 'meanmed' 'maxIter'};
+varsAre = A.Properties.VariableNames;
+if ~isequal(varsShouldBe,varsAre)
+    disp('[RTP] The variable names or the number of variables in tractparams.csv is not correct.')
+    disp('[RTP] The variables should be:')
+    varsShouldBe
+    error('[RTP] Ending the RTP-Pipeline')
+end
+% Check tract names:
+A.label = strrep(A.label,'-','_');
+A.label = strrep(A.label,'&','_');
+A.label = strrep(A.label,'$','_');
+A.label = strrep(A.label,'%','_');
+A.label = strrep(A.label,'(','_');
+A.label = strrep(A.label,')','_');
+
+A.slabel = strrep(A.slabel,'-','_');
+A.slabel = strrep(A.slabel,'&','_');
+A.slabel = strrep(A.slabel,'$','_');
+A.slabel = strrep(A.slabel,'%','_');
+A.slabel = strrep(A.slabel,'(','_');
+A.slabel = strrep(A.slabel,')','_');
+
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
 % Create list of all ROIs
 checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3)];
@@ -392,35 +425,28 @@ for nl=1:height(A)
 end
 % FINISHED ROI CHECK AND CREATION
 
-
-
-
-
 %% Create afq structure
-
 disp('[RTP] Running AFQ_create with the following options...');
 fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
 fprintf('[RTP] output_dir: %s', output_dir)
 if ~exist(fullfile(rtp_dir,'bin'));mkdir(rtp_dir, 'bin');end
-% Add deleted variables to afq, the ones we want fixed
-J.params.clip2rois       = true;
-J.params.track.multishell= false;
+% Add deleted variables to afq, the ones we want constant
+J.params.clip2rois        = true;
+J.params.track.multishell = false;
 if length(paramsShells) > 1;J.params.track.multishell=true;end
-J.params.track.tool      = 'freesurfer';
-J.params.track.algorithm = 'mrtrix';
-J.params.computeCSD      = true;
+J.params.track.tool       = 'freesurfer';
+J.params.track.algorithm  = 'mrtrix';
+J.params.computeCSD       = true;
 afq = AFQ_Create(sub_dirs{1}, J.params, A);  
-
 disp('[RTP] ... end running AFQ_Create')
 
 %% RUN RTP
-
-disp('[RTP] Running AFQ_run with the following options...');
+disp(   '[RTP] Running AFQ_run with the following options...');
 fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
-disp('[RTP] This is the afq struct going to AFQ_run');
+disp(   '[RTP] This is the afq struct going to AFQ_run');
 afq
 afq = AFQ_run(sub_dirs, 1, afq);
-disp('      ... end running AFQ_run');
+disp('  ... end running AFQ_run');
 
 %% Check for empty fiber groups
 disp('[RTP] Checking for empty fiber groups...');
@@ -435,8 +461,7 @@ end
 outname = fullfile(rtp_dir,['afq_' datestamp]);
 save(outname,'afq');
 
-
-%% Export the data to csv files (don't use AFQ_exportData)
+%% Export the data to csv files
 disp('[RTP] Exporting data to csv files...');
 % We will add the diffusion parameters and the series number to the name
 csv_dir = fullfile(rtp_dir,'csv_files');
@@ -467,8 +492,7 @@ for ii = 1:numel(properties)
     end
 end
 
-
-
+%% Create the tck files for visualizing the results
 disp('[RTP] Exporting tck files for QA...');
 % We will add the diffusion parameters and the series number to the name
 tck_dir    = fullfile(rtp_dir,'tck_files');
@@ -489,166 +513,13 @@ end
 %TODO: add a flag, saveIntermediateFilesForQC 
 % It will show the files showns below in the results folder
 
-%% Create the tck files for visualizing the results
-%{
-We want to see the following things for checking the quality and/or continuing
-the processing of the tracts. 
-Visualize (all after alignment):
-      T1w file
-      5tt file (hopefuly based on FS-s aparc+aseg.mgz)
-      _fa.mif
-      _brainmask.mif
-      _wmMask.mif and _wMask_dilated.mif
-      _csd file, usually a good idea to check in the first subject to check
-          bvec alignment
-Visualize final results (first check if the values make sense)
-      whole tractogram.tck: how does it fill the WM?
-      TRACTS
-        - Uncleaned
-        - Cleaned
-        - ROIs
-        
-%}
-
-
-% Obtain the files
-%if isdeployed
-	% disp('Creating the obj files for visualization and QA in FW...');
-	% % We will add the diffusion parameters and the series number to the name
-	% vis_dir = fullfile(output_dir,'vis_files');
-	% mkdir(vis_dir);
-    % Convert the ROIs from mat to .nii.gz
-    % Not now, now the ROIs come from FS, there is no .mat ROIs anymore
-    % Read the b0
-    % img  = niftiRead(fullfile(input_dir, 'bin', 'b0.nii.gz'));
-    % Convert the segmented fg-s to tck so that we can see them in mrview
-    % In the future we will make them obj so that they can be visualized in FW
-    % First create another two MoriSuperFibers out of the clipped and not
-    % clipped ones. 
-    %FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
-    %for nf = 1:length(FGs)
-    %    fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
-    %    fg                 = fgRead(fgname);
-    %    fgSF               = fg;
-    %    % Change the fiber by the superfiber
-    %    for nsf=1:length(fg)
-    %        if ~isempty(fg(nsf).fibers)
-    %            [SuperFiber] = dtiComputeSuperFiberRepresentation(fg(nsf),[],100);
-    %            fgSF(nsf).fibers= SuperFiber.fibers;
-    %        end
-    %    end
-    %    % Save the clipped ones as well for QA
-    %    [path, fname, fext] = fileparts(fgname);
-    %    sfFgName = fullfile(path,[fname '_SF' fext]);
-    %    dtiWriteFiberGroup(fgSF, sfFgName);
-    %end
-    %% Now we will have the same and the newly created ones, that we will
-    %% create the superFibers.
-    %FGs = dir(fullfile(input_dir, 'fibers', 'Mori*.mat'));
-    %for nf = 1:length(FGs)
-    %    fgname             = fullfile(input_dir, 'fibers', FGs(nf).name);
-    %    fg                 = fgRead(fgname);
-    %    saveToMrtrixFolder = true; createObjFiles     = true; 
-    %    AFQ_FgToTck(fg, fgname, saveToMrtrixFolder, createObjFiles)
-    %end
-    % Now we can copy the output to the vis_files, and decide later if copying
-    % it to results so that it can be visualized in FW
-%{    
-else
-    % This will be used to download the files when using matlab online:
-    % The important part is to make work the isdeployed part. 
-    % The code below will be run usually manually, usually for older FW analysis
-    % that didn't have the previous code.
-    st                    = scitran('stanfordlabs');
-    colecName             = '00_VIS';
-    analysisLabelContains = 'AllV02: Analysis afq-pipeline-3';
-    zipNameContains       = 'AFQ_Output_';
-    listOfFilesContain    = {'MoriGroups_clean','_wmMask.mif','_wmMask_dilated.mif', ...
-                             '_fa.mif', 'b0.nii.gz','_L.mat','_R.mat'};
-    downloadDir           = '/Users/glerma/Downloads/AllV02';
-    downFiles             = dr_fwDownloadFileFromZip(st, colecName, zipNameContains, ...
-                             'analysisLabelContains', analysisLabelContains, ...
-                             'filesContain'         , listOfFilesContain, ...
-                             'downloadTo'           , downloadDir, ...
-                             'showListSession'      , false);
-    % Read template in the same space to write the .mats
-    b0Path = downFiles{contains(downFiles,'bin/b0.nii.gz')};
-    img = niftiRead(b0Path);
-    MoriCleans = {}; nMC = 0;
-    for df=1:length(downFiles)
-        if contains(downFiles{df}, 'fibers/MoriGroups_clean')
-            nMC = nMC + 1;
-            MoriCleans{nMC} = downFiles{df};
-        end
-        if contains(downFiles{df}, 'fibers/MoriGroups')
-            fg       = fgRead(downFiles{df});
-            saveToMrtrixFolder = true;
-            createObjFiles     = false; % we want this in FW, not locally
-            AFQ_FgToTck(fg, downFiles{df}, saveToMrtrixFolder, createObjFiles)
-        end
-        if contains(downFiles{df}, 'ROIs/')
-            roi = dtiReadRoi(downFiles{df});
-            coords = roi.coords;
-            % convert vertex acpc coords to img coords
-            imgCoords  = mrAnatXformCoords(img.qto_ijk, coords);
-            % get coords for the unique voxels
-            imgCoords = unique(ceil(imgCoords),'rows');
-            % make a 3D image
-            roiData = zeros(img.dim);
-            roiData(sub2ind(img.dim, imgCoords(:,1), imgCoords(:,2), imgCoords(:,3))) = 1;
-            % change img data
-            img.data = roiData;
-            img.cal_min = min(roiData(:));
-            img.cal_max = max(roiData(:));
-            % write the nifti file
-            [~,roiNameWoExt] = fileparts(downFiles{df});
-            img.fname = fullfile(fileparts(downFiles{df}), [roiNameWoExt,'.nii.gz']); 
-            writeFileNifti(img);
-        end
-    end
-    % We need to create the clipped fibers for visualization
-    % Copy the same code used inside AFQ to do the same, we will create a
-    % new Mori file and the obtain the tck-s as fot the other Mori-groups
-    % For this, we need to be sure that all the roi-s have been
-    % downloaded previously...
-    for nMC=length(MoriCleans)
-        fg_clip = fgRead(MoriCleans{nMC});
-        dtiDir  = strrep(fileparts(MoriCleans{nMC},'/fibers',''));
-        % Remove all fibers that are too long and too far from the core of
-        % the group.  This algorithm will constrain the fiber group to
-        % something that can be reasonable represented as a 3d gaussian
-        for jj = 1:20
-            % load ROIs
-            [roi1, roi2] = AFQ_LoadROIs(jj,dtiDir);
-            fg_clip(jj) = dtiClipFiberGroupToROIs(fg_clean(jj),roi1,roi2);
-        end
-        % Save the clipped ones as well for QA
-        [path, fname, fext] = fileparts(MoriCleans{nMC});
-        clippedFgName       = fullfile(path,[fname '_CLIPPED' fext]);
-        dtiWriteFiberGroup(fg_clip, clippedFgName);
-        % Obtain the superfiber of the cleaned one first
-        fgClipSF = fg_clip;
-        % Change the fiber by the superfiber
-        for nf=1:length(fg)
-            SuperFiber = dtiComputeSuperFiberRepresentation(fg_clip(nf),[],100);
-            fgClipSF(nf).fibers= SuperFiber.fibers;
-        end
-        % Save the clipped ones as well for QA
-        sfClipFgName = fullfile(path,[fname '_CLIPPED_SF' fext]);
-        dtiWriteFiberGroup(fgClipSF, sfClipFgName);
-        % In the same place we have the clipped and the clippedSF, create tcks
-        AFQ_FgToTck(fg_clip, clippedFgName, saveToMrtrixFolder, createObjFiles)
-        AFQ_FgToTck(fgClipSF, sfClipFgName, saveToMrtrixFolder, createObjFiles)
-    end
-end
-%}
-
-R = {};
-R.date = datestamp;
-[~, R.arch] = system('lsb_release -a');
-R.software.version = version;
-R.software.libs = ver;
-R.code = {};
+%% Save reproducibility info
+R                   = {};
+R.date              = datestamp;
+[~, R.arch]         = system('lsb_release -a');
+R.software.version  = version;
+R.software.libs     = ver;
+R.code              = {};
 
 % R.analysis.metadata = metadata;
 R.analysis.params   = afq.params;
@@ -656,7 +527,6 @@ R.analysis.subject  = sub_dirs;
 
 save(fullfile(output_dir,'Reproduce.mat'), 'R');
 savejson('', R, fullfile(output_dir,'Reproduce.json'));
-
 
 %% END
 
@@ -668,14 +538,3 @@ else
 end
 
 return
-
-% Use compile.sh to compile this file 
-% This is the command used to launch it with the MCR
-% ./run_AFQ_StandAlone_QMR.sh /data/localhome/glerma/soft/matlab/mcr92/v92   '{\"input_dir\" : \"/data/localhome/glerma/TESTDATA/AFQ/input/dtiInit111_mcr/dti90trilin\", \"output_dir\": \"/data/localhome/glerma/TESTDATA/AFQ/output/withDtiinit111_mrtrix_mcr\",\"params\"    :\"/data/localhome/glerma/TESTDATA/AFQ/input/config_parsed.json\"}'
-
-% After adding LiFE, add this packages too:
-%       addpath(genpath('/data/localhome/glerma/soft/encode'));
-%       addpath(genpath('/data/localhome/glerma/soft/app-life'));
-% So the new mcc command is as follows:
-% mcc -m -I /data/localhome/glerma/soft/encode -I /data/localhome/glerma/soft/app-life -I /black/localhome/glerma/soft/spm8 -I /data/localhome/glerma/soft/vistasoft -I /data/localhome/glerma/soft/jsonlab /data/localhome/glerma/soft/afq-pipeline/afq/source/bin/AFQ_StandAlone_QMR.m  
-
