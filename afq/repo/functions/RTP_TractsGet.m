@@ -306,6 +306,7 @@ end
 
 
 % Path to ROIs
+%{
 if notDefined('fsROIdir')
     fsROIdir = uigetdir([],'Select an ROI directory');
 end
@@ -313,7 +314,7 @@ end
 if notDefined('outdir')
     outdir = uigetdir([],'Select an output directory');
 end
-
+%}
 
 
 
