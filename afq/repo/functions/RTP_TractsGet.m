@@ -179,7 +179,7 @@ for nt=1:height(tracts)
     ts     = tracts(nt,:);
     fprintf('[RTP_TractsGet] Getting %s ...\n', ts.label)
     if exist(ts.fpath,'file')
-       fprintf('[RTP_TractsGet] Using exisging one because force=false\n')
+       fprintf('[RTP_TractsGet] Using existing one because force=false\n')
     	% Read the tract, we want to have the same fg struct as before
         tract = fgRead(ts.fpath);
         if nt==1;fg_classified=tract;
@@ -192,115 +192,116 @@ for nt=1:height(tracts)
         end
 	else
         % Solve the dilate text
-        if ts.dilroi1>0;dil1=strcat("_dil-",num2str(ts.dilroi1));else;dil1="";end 
-        if ts.dilroi2>0;dil2=strcat("_dil-",num2str(ts.dilroi2));else;dil2="";end 
-        if ts.dilroi3>0;dil3=strcat("_dil-",num2str(ts.dilroi3));else;dil3="";end 
+        if ts.dilroi1>0;dil1=strcat("_dil-",num2str(ts.dilroi1));else;dil1="";end
+        if ts.dilroi2>0;dil2=strcat("_dil-",num2str(ts.dilroi2));else;dil2="";end
+        if ts.dilroi3>0;dil3=strcat("_dil-",num2str(ts.dilroi3));else;dil3="";end
         roi1    = fullfile(ROIs_dir, strcat(ts.roi1,dil1,ts.extroi1));
         roi2    = fullfile(ROIs_dir, strcat(ts.roi2,dil2,ts.extroi2));
         roi3    = "";
         if ~(strcmp(ts.roi3,"NO"))
-            join("-include", fullfile(ROIs_dir, strcat(ts.roi3,dil3,ts.extroi3)));
+            roi3 = join(["-include", fullfile(string(ROIs_dir), strcat(ts.roi3,dil3,ts.extroi3))]);
         end
-    
-    
+        
+        
         % The most important is wbt (whole brain tractography), whether we want to
         % use it or track the tract ourselves (ex OR)
         if ts.wbt
-        % TODO: This code is still working, make two wbt, one with interhemispheric fibers and one without 
-        % Make an ROI for the mid saggital plane
-	    % midSaggitalRoi= dtiRoiMakePlane([0, dt.bb(1, 2), dt.bb(1, 3); 0 , dt.bb(2, 2) , dt.bb(2, 3)], 'midsaggital', 'g');
-	    % keep1=zeros(length(fg.fibers), size(moriRois, 1));
-	    % keep2=zeros(length(fg.fibers), size(moriRois, 1));
-	    % Find fibers that cross mid saggital plane
-	    % [fgOut, contentiousFibers, InterHemisphericFibers] = dtiIntersectFibersWithRoi([], 'not', [], midSaggitalRoi, fg);
-	    %NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
-	    %midSaggitalRoi.
-	    % keep3=repmat(InterHemisphericFibers, [1 size(moriRois, 1)]);
+            % TODO: This code is still working, make two wbt, one with interhemispheric fibers and one without 
+            % Make an ROI for the mid saggital plane
+            % midSaggitalRoi= dtiRoiMakePlane([0, dt.bb(1, 2), dt.bb(1, 3); 0 , dt.bb(2, 2) , dt.bb(2, 3)], 'midsaggital', 'g');
+            % keep1=zeros(length(fg.fibers), size(moriRois, 1));
+            % keep2=zeros(length(fg.fibers), size(moriRois, 1));
+            % Find fibers that cross mid saggital plane
+            % [fgOut, contentiousFibers, InterHemisphericFibers] = dtiIntersectFibersWithRoi([], 'not', [], midSaggitalRoi, fg);
+            %NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
+            %midSaggitalRoi.
+            % keep3=repmat(InterHemisphericFibers, [1 size(moriRois, 1)]);
 
 
 
-       fprintf('\n[RTP_TractsGet] Using tckedit to separate %s\n', ts.label)
-       % Select the tracts that go in to tckedit
-       tracks_in = fullfile(char(ts.fdir),[fg.name '.tck']);
-       cmd       = join(["tckedit", ...
-                    "-include",roi1, "-include",roi2, roi3, ...
-                    "-maxlength",ts.maxlen, "-minlength", ts.minlen, ...
-                    tracks_in, ts.fpath]);
-       spres     = AFQ_mrtrix_cmd(cmd);
-       % Make it readable and writeable
-       fileattrib(ts.fpath, '+w +x') 
-       
-    else
-		% TODO: add better logic roi1, roi2, roi3, what is seed, what it is waypoint
-        fprintf('\n[RTP_TractsGet] Using tckgen to create %s\n', ts.label)
-        % Depending on the algo, different inputs are used
-        switch lower(ts.algorithm)
-            case {'sd_stream','ifod1','ifod2'}
-                input_file = afq.files.mrtrix.wmCsd;
-            case {'tensor_det','tensor_prob'}
-                input_file = join([afq.files.mrtrix.dwi, ...
-                                  "-grad " afq.files.mrtrix.b]);
-            otherwise
-                error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
+           fprintf('\n[RTP_TractsGet] Using tckedit to separate %s\n', ts.label)
+           % Select the tracts that go in to tckedit
+           tracks_in = fullfile(char(ts.fdir),[fg.name '.tck']);
+           cmd       = join(["tckedit", ...
+                        "-include",roi1, "-include",roi2, roi3, ...
+                        "-maxlength",ts.maxlen, "-minlength", ts.minlen, ...
+                        tracks_in, ts.fpath]);
+           spres     = AFQ_mrtrix_cmd(cmd);
+           % Make it readable and writeable
+           fileattrib(ts.fpath, '+w +x') 
+
+        else
+            % TODO: add better logic roi1, roi2, roi3, what is seed, what it is waypoint
+            fprintf('\n[RTP_TractsGet] Using tckgen to create %s\n', ts.label)
+            % Depending on the algo, different inputs are used
+            switch lower(ts.algorithm)
+                case {'sd_stream','ifod1','ifod2'}
+                    input_file = afq.files.mrtrix.wmCsd;
+                case {'tensor_det','tensor_prob'}
+                    input_file = join([afq.files.mrtrix.dwi, ...
+                                      "-grad " afq.files.mrtrix.b]);
+                otherwise
+                    error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
+            end
+            cmd       = join([ "tckgen -quiet ", "-algorithm", ts.algorithm, ...
+                                "-select ", ts.select, ...
+                                "-seed_image", roi1, ...
+                                "-include", roi2, ...
+                                "-seed_image", roi2, ...
+                                "-include", roi1, ...
+                                roi3, ...
+                                "-angle", ts.angle, "-cutoff", ts.cutoff, ...
+                                "-minlength", ts.minlen, "-maxlength", ts.maxlen, ...
+                                "-stop", ...
+                                input_file, ...
+                                ts.fpath]);
+            spres     = AFQ_mrtrix_cmd(cmd);
         end
-        cmd       = join([ "tckgen", "-algorithm", ts.algorithm, ...
-                            "-select ", ts.select, ...
-                            "-seed_image", roi1, ...
-                            "-include", roi2, ...
-                            "-seed_image", roi2, ...
-                            "-include", roi1, ...
-                            "-angle", ts.angle, "-cutoff", ts.cutoff, ...
-                            "-minlength", ts.minlen, "-maxlength", ts.maxlen, ...
-                            "-stop", ...
-                            input_file, ...
-                            ts.fpath]);
-        spres     = AFQ_mrtrix_cmd(cmd);
-    end
     
     
         
 
-    % Read the tract, we want to have the same fg struct as before
-    if isfile(ts.fpath)
-        tract = fgRead(ts.fpath);
-    else
-        if nt==1
-            error('it was not possible to even get the first tract, check options')
+        % Read the tract, we want to have the same fg struct as before
+        if isfile(ts.fpath)
+            tract = fgRead(ts.fpath);
         else
-            warning('%s could not be tracked',ts.fpath)
-            tract        = fg_classified(1);
-            [~, n, ~]    = fileparts(ts.fpath);
-            tract.name   = n;
-            tract.fibers = {zeros(3,1)};
+            if nt==1
+                error('it was not possible to even get the first tract, check options')
+            else
+                warning('%s could not be tracked',ts.fpath)
+                tract        = fg_classified(1);
+                [~, n, ~]    = fileparts(ts.fpath);
+                tract.name   = n;
+                tract.fibers = {zeros(3,1)};
+            end
         end
+
+        if nt==1; fg_classified=tract;
+        else; fg_classified(nt)=tract; end
+
+        % Update the value of the number of fibers
+        ts.nfibers = size(tract.fibers,1);
+
+        % If more than 10 fibers clean it, otherwise copy it as it is
+        if ts.nfibers>10
+           clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
+        else
+           clean_tract = tract;
+        end
+
+        % Add it to fg_clean
+        if nt==1; fg_clean=clean_tract;
+        else; fg_clean(nt)=clean_tract; end
+
+        AFQ_fgWrite(clean_tract, ts.cfpath,'tck');
+        fileattrib(ts.cfpath, '+w +x') % make it readable and writeable
+        % Update the value of the number of fibers
+        ts.cnfibers = size(clean_tract.fibers,1);    
+
+        % Update the table, maybe we updated some of the fields (e.g. nfibers)
+        tracts(nt,:) = ts;
+        fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
     end
-    
-    if nt==1; fg_classified=tract;
-	else; fg_classified(nt)=tract; end
-
-    % Update the value of the number of fibers
-    ts.nfibers = size(tract.fibers,1);
-
-    % If more than 10 fibers clean it, otherwise copy it as it is
-    if ts.nfibers>10
-       clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
-	else
-	   clean_tract = tract;
-    end
-
-	% Add it to fg_clean
-    if nt==1; fg_clean=clean_tract;
-    else; fg_clean(nt)=clean_tract; end
-
-    AFQ_fgWrite(clean_tract, ts.cfpath,'tck');
-    fileattrib(ts.cfpath, '+w +x') % make it readable and writeable
-    % Update the value of the number of fibers
-    ts.cnfibers = size(clean_tract.fibers,1);    
-    
-    % Update the table, maybe we updated some of the fields (e.g. nfibers)
-    tracts(nt,:) = ts;
-    fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
-end
 end
 
 

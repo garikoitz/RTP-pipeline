@@ -152,7 +152,14 @@ dlmwrite(bval_file, roundedBval, 'delimiter',' ');
 % 4.0.0 now, that we already removed dtiInit and afq-browser.
 % 4.2.0 reads csv and creates tracts table, now any tract can be done
 % 4.2.1 ROIs: dilates and concatenates them
-
+% 4.2.8: make mrtrix -quiet
+%        [ENH] WBT: make separate WBT-s per lenght
+%        [ENH] add the option to make the optic verve without brainmask
+%        [FIX] check if 'select' param is being read
+%        [ENH] add roi3 to tckgen
+%        [FIX] .tck extension added twice to tract name 
+%
+%
 % Here dtiInit was called, assign variables
 dwRawFileName = dwi_file;
 t1FileName    = t1_file;
@@ -395,8 +402,8 @@ for nl=1:height(A)
 	if ts.dilroi1>0
 		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'.nii.gz')));
 		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'_dil-',num2str(ts.dilroi1),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi1)  ' ' inroi  ' dilate - | '...
-				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi1)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -quiet -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
 			error('[RTP] ROI could not be created, this was the command: %s', cmd)
@@ -405,8 +412,8 @@ for nl=1:height(A)
 	if ts.dilroi2>0
 		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'.nii.gz')));
 		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'_dil-',num2str(ts.dilroi2),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi2)  ' ' inroi  ' dilate - | '...
-				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi2)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -quiet -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
 			error('[RTP] ROI could not be created, this was the command: %s', cmd)
@@ -415,8 +422,8 @@ for nl=1:height(A)
 	if ts.dilroi3>0 && ~strcmp(ts.roi3,"NO")
 		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'.nii.gz')));
 		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'_dil-',num2str(ts.dilroi3),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi3)  ' ' inroi  ' dilate - | '...
-				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi3)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -quiet -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
 			error('[RTP] ROI could not be created, this was the command: %s', cmd)

@@ -5,13 +5,13 @@ cat > build.m <<END
 % addpath(genpath('/data/localhome/lmx/TESTDATA/RTP-pipeline'));
 addpath(genpath('/data/localhome/glerma/soft/RTP-pipeline'));
 rmpath(genpath('/data/localhome/glerma/soft/RTP-pipeline/local'));
-addpath(genpath('/data/localhome/glerma/soft/vistasoft'));
-rmpath(genpath('/data/localhome/glerma/soft/vistasoft/local'));
-addpath(genpath('/data/localhome/glerma/soft/jsonlab'));
+addpath(genpath('/data/localhome/glerma/toolboxes/vistasoft'));
+rmpath(genpath('/data/localhome/glerma/toolboxes/vistasoft/local'));
+addpath(genpath('/data/localhome/glerma/toolboxes/jsonlab_v1.2'));
 addpath(genpath('/data/localhome/glerma/soft/encode'));
-addpath(genpath('/data/localhome/glerma/soft/JSONio'));
+addpath(genpath('/data/localhome/glerma/toolboxes/JSONio'));
 addpath(genpath('/data/localhome/glerma/soft/app-life'));
-addpath(genpath('/data/localhome/glerma/soft/freesurfer_mrtrix_afni_matlab_tools'));
+addpath(genpath('/data/localhome/glerma/toolboxes/freesurfer_mrtrix_afni_matlab_tools'));
 
 
 mcc -m -R -nodisplay -a /data/localhome/lmx/TESTDATA/RTP-pipeline/afq/includeFiles -a /data/localhome/glerma/soft/encode/mexfiles  -d compiled RTP.m
