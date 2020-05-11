@@ -303,7 +303,9 @@ for nt=1:height(tracts)
         fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
     end
 end
-
+if sum(afq.tracts.wbt) == 0
+    fg = fg_classified;
+end
 
 
 % Path to ROIs
