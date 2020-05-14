@@ -10,7 +10,6 @@ function RTP(jsonargs)
 %{
 % EXAMPLE USAGE:
     jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
-    RTP(jsonargs);
 %}
 %
 %#ok<*AGROW>
@@ -76,8 +75,10 @@ input_csv       = fullfile(input_csv.folder  ,input_csv.name);
 %% Copy input files to working directory
 % Create the destination input filenames
 rtp_dir         = fullfile(output_dir,'RTP');
-% if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
-% else mkdir(rtp_dir);end
+if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
+else
+    mkdir(rtp_dir);
+end
 
 % We need these files in root dir (rtp_dir) to start working
 t1_file         = fullfile(rtp_dir, 't1.nii.gz');
