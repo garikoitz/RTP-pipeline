@@ -514,7 +514,7 @@ for nt=1:length(clean_tcks)
 	dstplyname = fullfile(tck_dir  , strrep(clean_tcks(nt).name,'tck','ply'));
 	copyfile(srctckname,dsttckname)
 	% Use the same step to create the ply file in the vis folder. We wil convert them to obj with python
-	cmd  = sprintf('tckconvert -dec %s %s', dsttckname, dstplyname);
+	cmd  = sprintf('tckconvert -force -dec %s %s', dsttckname, dstplyname);
 	rcmd = AFQ_mrtrix_cmd(cmd);
 end
 
