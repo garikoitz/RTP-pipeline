@@ -116,8 +116,21 @@ if ET_stepSizeMm == 999
     ET_stepSizeMmStr = [' -step ' num2str(ET_stepSizeMm) ' '];
 end
 
+if useACT
+    disp('Running Ensemble Tractography with mrTrix3 and ACT.');
+    ACT_specific = ['-backtrack -crop_at_gmwmi -info ' ...
+                      '-seed_gmwmi ' files.gmwmi ' ' ...
+                      '-act ' files.tt5 ' '];
+else
+    disp('Running Ensemble Tractography with mrTrix3 and no ACT.');
+    ACT_specific = ['-seed_image ' roi ' ' ...
+                    '-mask ' mask ' ' ...
+                    ];
+end
+
+
 % Create the optional str that will be added to the tckgen call
-optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
+optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr ACT_specific];
 
 % Depending on the algo, the input files are different
 
@@ -137,128 +150,128 @@ end
 
 % Generate the appropriate UNIX command string.
 [~, pathstr] = strip_ext(files.csd);
-if useACT
-    disp('Running Ensemble Tractography with mrTrix3 and ACT.');
-    tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                      '-',num2str(nSeeds),'_ET_ACT.tck'));
-    numconcatenate = [];
-    for na=1:length(ET_angleValues)
-        fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) '_angle' strrep(num2str(ET_angleValues(na)),'.','p') '_ACT.tck'];
-        fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
-        cmd_str = ['tckgen -force ' ...
-                      '-algo ' algo optionalStr ' ' ...
-                      '-backtrack -crop_at_gmwmi -info ' ...
-                      '-seed_gmwmi ' files.gmwmi ' ' ...
-                      '-act ' files.tt5 ' ' ...
-                      '-angle ' num2str(ET_angleValues(na)) ' ' ...
-                      '-select ' num2str(ET_numberFibers) ' ' ...
-                      '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                      input_file ' ' ...
-                      fgFileNameWithDir{na}];
-        % Run it, if the file is not there (this is for debugging)
-        if ~exist(fgFileNameWithDir{na},'file')
-            [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
+fgFileName = {};
+fgFileNameWithDir = {};
+for na=1:length(ET_angleValues)
+    fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) ...
+                    '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
+                    '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
+                    '.tck'];
+    fgFileNameWithDir{na}=fullfile(pathstr, fgFileName{na});
+    cmd_str = ['tckgen -force ' ...
+                  '-algo ' algo optionalStr ' ' ...
+                  '-angle ' num2str(ET_angleValues(na)) ' ' ...
+                  '-select ' num2str(ET_numberFibers) ' ' ...
+                  '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
+                  input_file ' ' ...
+                  fgFileNameWithDir{na}];
+    % Run it, if the file is not there (this is for debugging)
+    if ~exist(fgFileNameWithDir{na},'file')
+        [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
+    end
+    
+    % numconcatenate = [numconcatenate, ET_numberFibers];
+end
+% We used to have one connectome, now we have several
+    % fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck');
+% Concatenate and create the required fg-s
+maxlens = unique(ET_maxlength);
+% First, concatenate
+fgs       = {};
+tck_files = {};
+for ml=1:length(maxlens)
+    tck_files{ml} = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
+                                      '-',num2str(ET_numberFibers), ...
+                                      '_maxLen-', num2str(maxlens(ml)), '_ET.tck'));
+    tmpfgFileName=['ET_fibs' num2str(ET_numberFibers) ...
+                    '_angle*'  ...
+                    '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
+                    '.tck'];
+    tmpfgFileNameWithDir = fullfile(pathstr, tmpfgFileName);
+    fs = dir(tmpfgFileNameWithDir);
+    numconcatenates   = [];
+    fgFPathNames      = {};
+    for nf=1:length(fs)
+        numconcatenates  = [numconcatenates, ET_numberFibers];
+        fgFPathNames{nf} = fullfile(fs(nf).folder, fs(nf).name);
+    end
+    % Concatenate each one
+    fg{ml} = et_concatenateconnectomes(fgFPathNames, tck_files{ml}, ...
+                                       numconcatenates, 'tck');
+    
+    % Decide if we run LiFE
+    if life_runLife
+        % "clean" the tractogram before using it further
+        % First, obtain the dirNames the mainLife that we already had was using, so
+        % that we do not change much in the first iteration
+
+        % Obtain the session name. This is usually the zip name if it has not
+        % been edited. 
+        mrtrixDir  = pathstr;
+        dtiDir     = fileparts(pathstr);
+        sessionDir = dtiDir;
+        lifedir    = fullfile(dtiDir, ['LiFE_maxLen-' num2str(maxlens(ml))]);
+        % Change dir to LIFEDIR so that it writes everything there
+        if ~exist(lifedir); mkdir(lifedir); end;
+        cd(lifedir)
+
+        
+        config.dtiinit             = dtiDir;
+        config.track               = tck_files{ml};
+        config.life_discretization = life_discretization;
+        config.num_iterations      = life_num_iterations;
+        config.test                = life_test;
+        
+        disp('loading dt6.mat')
+        disp(['Looking for file: ' fullfile(config.dtiinit, 'dt6.mat')])
+        dt6 = load(fullfile(config.dtiinit, 'dt6.mat'))
+        [~,NAME,EXT] = fileparts(dt6.files.alignedDwRaw);
+        aligned_dwi = fullfile(sessionDir, [NAME,EXT])
+
+        [ fe, out ] = life(config, aligned_dwi);
+
+        out.stats.input_tracks = length(fe.fg.fibers);
+        out.stats.non0_tracks = length(find(fe.life.fit.weights > 0));
+        fprintf('number of original tracks	: %d\n', out.stats.input_tracks);
+        fprintf('number of non-0 weight tracks	: %d (%f)\n', ...
+                 out.stats.non0_tracks, out.stats.non0_tracks / out.stats.input_tracks*100);
+
+        if life_saveOutput
+            disp('writing outputs')
+            save('LiFE_fe.mat' ,'fe' , '-v7.3');
+            save('LiFE_out.mat','out', '-v7.3');
+        else
+            disp('User selected not to write LiFE output')
         end
-        numconcatenate = [numconcatenate, ET_numberFibers];
+
+        % This is what we want to pass around
+        fg{ml} = out.life.fg;
+        % And I think I would need to write and substitute the non cleaned ET
+        % tractogram tck with the new one...
+        % Write file
+        [PATHSTR,NAME,EXT] = fileparts(tck_files{ml});
+        tck_files{ml} =fullfile(PATHSTR, [NAME '_LiFE' EXT]);
+        fg{ml}.name = [NAME '_LiFE'];
+        AFQ_fgWrite(fg{ml}, tck_files{ml}, 'tck');
     end
-    fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
-else
-    disp('Running Ensemble Tractography with mrTrix3 and no ACT.');
-    tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
-                                      '-',num2str(nSeeds),'_ET.tck'));
-    numconcatenate = [];
-    for na=1:length(ET_angleValues)
-        fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) ...
-                                '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
-                                '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
-                                '.tck'];
-        fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
-        cmd_str = ['tckgen -force ' ...
-                    '-algo ' algo ...
-                    optionalStr ...
-                    '-seed_image ' roi ' ' ...
-                    '-mask ' mask ' ' ...
-                    '-angle ' num2str(ET_angleValues(na)) ' ' ...
-                    '-select ' num2str(ET_numberFibers) ' ' ...
-                    '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
-                    input_file ' ' ...
-                    fgFileNameWithDir{na}];
-        % Run it, if the file is not there (this is for debugging)
-        if ~exist(fgFileNameWithDir{na},'file')
-            [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
-        end
-        numconcatenate = [numconcatenate, ET_numberFibers];
+    cd(mrtrixDir)
+    
+    % Decide if we want to write PDB
+    if life_writePDB
+        % This is the final output. Decide if we need the pdb output. 
+        % It was removed because it was requiring huge amounts of RAM.
+        % It can break an otherwise working gear. 
+        % In any case, this should not affect the output, we want to pass fg to parent
+        % function
+        % The variable will still be called life_writePDB, though...
+        % Convert the .tck fibers created by mrtrix to mrDiffusion/Quench format (pdb):
+        % We will write both, but we want the cleaned ones to be used by vOF or any
+        % other downstream code
+        pdb_file = fullfile(pathstr,strcat(strip_ext(tck_files{ml}), '.pdb'));
+        mrtrix_tck2pdb(tck_files{ml}, pdb_file);
     end
-    fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
+                                   
 end
-
-if life_runLife
-    % "clean" the tractogram before using it further
-    % First, obtain the dirNames the mainLife that we already had was using, so
-    % that we do not change much in the first iteration
-
-    mrtrixFolderParts  = split(files.csd, filesep);
-    % Obtain the session name. This is usually the zip name if it has not
-    % been edited. 
-    mrtrixDir  = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-1)), filesep);
-    dtiDir     = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep);
-    sessionDir = dtiDir;
-    lifedir    = fullfile(dtiDir, 'LiFE');
-
-    config.dtiinit             = dtiDir;
-    config.track               = tck_file;
-    config.life_discretization = life_discretization;
-    config.num_iterations      = life_num_iterations;
-    config.test                = life_test;
-    % Change dir to LIFEDIR so that it writes everything there
-    if ~exist(lifedir); mkdir(lifedir); end;
-    cd(lifedir)
-
-    disp('loading dt6.mat')
-    disp(['Looking for file: ' fullfile(config.dtiinit, 'dt6.mat')])
-    dt6 = load(fullfile(config.dtiinit, 'dt6.mat'))
-    [~,NAME,EXT] = fileparts(dt6.files.alignedDwRaw);
-    aligned_dwi = fullfile(sessionDir, [NAME,EXT])
-
-    [ fe, out ] = life(config, aligned_dwi);
-
-    out.stats.input_tracks = length(fe.fg.fibers);
-    out.stats.non0_tracks = length(find(fe.life.fit.weights > 0));
-    fprintf('number of original tracks	: %d\n', out.stats.input_tracks);
-    fprintf('number of non-0 weight tracks	: %d (%f)\n', ...
-             out.stats.non0_tracks, out.stats.non0_tracks / out.stats.input_tracks*100);
- 
-    if life_saveOutput
-        disp('writing outputs')
-        save('LiFE_fe.mat' ,'fe' , '-v7.3');
-        save('LiFE_out.mat','out', '-v7.3');
-    else
-        disp('User selected not to write LiFE output')
-    end
-
-    % This is what we want to pass around
-    fg = out.life.fg;
-    % And I think I would need to write and substitute the non cleaned ET
-    % tractogram tck with the new one...
-    % Write file
-    [PATHSTR,NAME,EXT] = fileparts(tck_file);
-    tck_file =fullfile(PATHSTR, [NAME '_LiFE' EXT]);
-    fg.name = [NAME '_LiFE'];
-    AFQ_fgWrite(fg, tck_file, 'tck');
-end
-
-if life_writePDB
-    % This is the final output. Decide if we need the pdb output. 
-    % It was removed because it was requiring huge amounts of RAM.
-    % It can break an otherwise working gear. 
-    % In any case, this should not affect the output, we want to pass fg to parent
-    % function
-    % The variable will still be called life_writePDB, though...
-    % Convert the .tck fibers created by mrtrix to mrDiffusion/Quench format (pdb):
-    % We will write both, but we want the cleaned ones to be used by vOF or any
-    % other downstream code
-    pdb_file = fullfile(pathstr,strcat(strip_ext(tck_file), '.pdb'));
-    mrtrix_tck2pdb(tck_file, pdb_file);
-end
+    
 
 end

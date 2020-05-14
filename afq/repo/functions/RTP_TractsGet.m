@@ -128,9 +128,23 @@ if ~exist(mrtrixDir,'dir'); mkdir(mrtrixDir); end
 % The Whole Brain Tactrography will only be done here. 
 if sum(afq.tracts.wbt) > 0
 	% Check if it exist and force is false:
-	if exist(fullfile(fibDir,'WholeBrainFG.mat'),'file') && afq.force==false
-		fprintf('[RTP_TractsGet] WBT file %s exists and will not be overwritten\n',fullfile(fibDir,'WholeBrainFG.mat'))
-        fg = AFQ_get(afq,'wholebrain fiber group',1);
+    % Now we are using more than one WholeBrainFG, check if they are there
+    maxLens       = unique(afq.params.track.ET_maxlength);
+    doesNotExist  = [];
+    for nml=1:length(maxLens)
+        if exist(fullfile(fibDir,['WholeBrainFG_maxLen-' num2str(maxLens(nml)) '.mat']),'file')
+            doesNotExist  = [doesNotExist; 0];
+        else
+            doesNotExist  = [doesNotExist; 1];
+        end
+    end
+	if sum(doesNotExist)==0 && afq.force==false
+		fg = {};
+        for nml=1:length(maxLens)
+            fprintf('[RTP_TractsGet] WBT file %s exists and will not be overwritten\n',...
+                fullfile(fibDir,['WholeBrainFG_maxLen-' num2str(maxLens(nml)) '.mat']))
+            fg{nml} = dtiReadFibers(fullfile(fibDir,['WholeBrainFG_maxLen-' num2str(maxLens(nml)) '.mat']));
+        end
 	else
    		 fprintf('\n[RTP_TractsGet] Performing whole-brain tractograpy\n');
          %% Track with mrtrix if the right files are there
@@ -140,6 +154,7 @@ if sum(afq.tracts.wbt) > 0
             afq.params.track.mrTrixAlgo = 'iFOD2';
             warning('[RTP_TractsGet] afq.params.track.mrTrixAlgo does not exist, it was set to iFOD2]');
          end
+         % afq.params.track.ET_numberFibers = 100;
          [status, results, fg, pathstr] = AFQ_mrtrix_track(afq.files.mrtrix, ...
                                                            afq.files.mrtrix.wmMask, ... % roi, (wm = wmMask)
                                                            afq.files.mrtrix.wmMask_dilated,...  % wmMask
@@ -151,9 +166,31 @@ if sum(afq.tracts.wbt) > 0
                                                             mrtrixVersion, ...
                                                             afq.params);
    		 % Save it
-   		 dtiWriteFiberGroup(fg,fullfile(fibDir,'WholeBrainFG.mat'));
-   		 % Set the path to the fibers in the afq structure
-   		 afq = AFQ_set(afq,'wholebrain fg path','subnum',1,fullfile(fibDir,'WholeBrainFG.mat'));
+         if iscell(fg)
+             for ni=1:length(fg)
+                 % Obtain the maxLen based on the BIDSlike name we gave
+                 ffgg       = fg{ni};
+                 ffggsplit  = strsplit(ffgg.name,'_');
+                 maxLenOnly = ffggsplit(contains(ffggsplit,'maxLen'));
+                 if length(maxLenOnly)~=1
+                     error('We should only have one maxLen, check filenames')
+                 else
+                     maxLen = strsplit(maxLenOnly{1},'-');
+                     maxLen = maxLen{2};
+                 end
+                 dtiWriteFiberGroup(ffgg, ...
+                     fullfile(fibDir,['WholeBrainFG_maxLen-' maxLen '.mat']));
+                 % Set the path to the fibers in the afq structure
+                 % We will use a trick to write several files using subnum
+                 afq = AFQ_set(afq,'wholebrain fg path','subnum',ni, ...
+                       fullfile(fibDir,['WholeBrainFG_maxLen-' maxLen '.mat']));
+             end
+         else
+             dtiWriteFiberGroup(fg,fullfile(fibDir,'WholeBrainFG.mat'));
+             % Set the path to the fibers in the afq structure
+             afq = AFQ_set(afq,'wholebrain fg path','subnum',1,fullfile(fibDir,'WholeBrainFG.mat'));
+         end
+         
 	end
 end
 
@@ -173,7 +210,6 @@ ROIs_dir = fullfile(fs_dir, 'ROIs');
 
 tracts = afq.tracts;
 for nt=1:height(tracts)
-
 	% TODO: add the clipping, create fg_clip and write the fibers. 
     % Mount all the components of the call based on the options in tracts table
     ts     = tracts(nt,:);
@@ -213,22 +249,55 @@ for nt=1:height(tracts)
             % keep2=zeros(length(fg.fibers), size(moriRois, 1));
             % Find fibers that cross mid saggital plane
             % [fgOut, contentiousFibers, InterHemisphericFibers] = dtiIntersectFibersWithRoi([], 'not', [], midSaggitalRoi, fg);
-            %NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
-            %midSaggitalRoi.
+            % NOTICE: ~keep3 (not "keep3") will mark fibers that DO NOT cross
+            % midSaggitalRoi.
             % keep3=repmat(InterHemisphericFibers, [1 size(moriRois, 1)]);
 
 
 
            fprintf('\n[RTP_TractsGet] Using tckedit to separate %s\n', ts.label)
            % Select the tracts that go in to tckedit
-           tracks_in = fullfile(char(ts.fdir),[fg.name '.tck']);
-           cmd       = join(["tckedit", ...
+           % Now we need to select the right fg, depending on the maxLen
+           
+           % Get the filename
+           if iscell(fg)
+               for ni=1:length(fg)
+                   % Obtain the maxLen based on the BIDSlike name we gave
+                   ffgg       = fg{ni};
+                   ffggsplit  = strsplit(ffgg.name,'_');
+                   maxLenOnly = ffggsplit(contains(ffggsplit,'maxLen'));
+                   if length(maxLenOnly)~=1
+                       error('We should only have one maxLen, check filenames')
+                   else
+                       maxLen = strsplit(maxLenOnly{1},'-');
+                       maxLen = maxLen{2};
+                       if strcmp(num2str(ts.tckmaxlen), maxLen)
+                           fgname = ffgg.name;
+                       end
+                   end
+               end
+           else
+               fgname = fg.name;
+           end
+               
+           % I had a bug that .tck was added twice. It seems it is not
+           % required. Do not risk it, check it and that's it
+           [pp,ff,ee] = fileparts(fgname);
+           if strcmp(ee, '.tck')
+               tracks_in = fullfile(char(ts.fdir), fgname);
+           else
+               tracks_in = fullfile(char(ts.fdir), [fgname '.tck']);
+           end
+           
+                      
+           cmd       = join(["tckedit -quiet ", ...
                         "-include",roi1, "-include",roi2, roi3, ...
-                        "-maxlength",ts.maxlen, "-minlength", ts.minlen, ...
+                        "-maxlength",ts.tckmaxlen, "-minlength", ts.tckminlen, ...
                         tracks_in, ts.fpath]);
            spres     = AFQ_mrtrix_cmd(cmd);
            % Make it readable and writeable
            fileattrib(ts.fpath, '+w +x') 
+           
 
         else
             % TODO: add better logic roi1, roi2, roi3, what is seed, what it is waypoint
@@ -245,22 +314,17 @@ for nt=1:height(tracts)
             end
             cmd       = join([ "tckgen -quiet ", "-algorithm", ts.algorithm, ...
                                 "-select ", ts.select, ...
-                                "-seed_image", roi1, ...
+                                "-seed_image", roi1, "-seed_unidirectional", ...
                                 "-include", roi2, ...
-                                "-seed_image", roi2, ...
-                                "-include", roi1, ...
                                 roi3, ...
-                                "-angle", ts.angle, "-cutoff", ts.cutoff, ...
-                                "-minlength", ts.minlen, "-maxlength", ts.maxlen, ...
+                                "-angle", ts.tckangle, "-cutoff", ts.cutoff, ...
+                                "-minlength", ts.tckminlen, "-maxlength", ts.tckmaxlen, ...
                                 "-stop", ...
                                 input_file, ...
                                 ts.fpath]);
             spres     = AFQ_mrtrix_cmd(cmd);
         end
     
-    
-        
-
         % Read the tract, we want to have the same fg struct as before
         if isfile(ts.fpath)
             tract = fgRead(ts.fpath);

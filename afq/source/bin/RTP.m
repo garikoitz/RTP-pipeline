@@ -76,8 +76,8 @@ input_csv       = fullfile(input_csv.folder  ,input_csv.name);
 %% Copy input files to working directory
 % Create the destination input filenames
 rtp_dir         = fullfile(output_dir,'RTP');
-if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
-else mkdir(rtp_dir);end
+% if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
+% else mkdir(rtp_dir);end
 
 % We need these files in root dir (rtp_dir) to start working
 t1_file         = fullfile(rtp_dir, 't1.nii.gz');
@@ -323,7 +323,7 @@ disp('[RTP] Checking there are the required variables, and that the tract names 
 
 varsShouldBe = {'roi1' 'extroi1' 'roi2' 'extroi2' 'roi3' 'extroi3' 'dilroi1' ...
                 'dilroi2' 'dilroi3' 'label' 'fgnum' 'hemi' 'slabel' 'shemi' ...
-                'nhlabel' 'wbt' 'usecortex' 'maxlen' 'minlen' 'angle' 'algorithm' ...
+                'nhlabel' 'wbt' 'usecortex' 'tckmaxlen' 'tckminlen' 'tckangle' 'algorithm' ...
                 'select' 'cutoff' 'maxDist' 'maxLen' 'numNodes' 'meanmed' 'maxIter'};
 varsAre = A.Properties.VariableNames;
 if ~isequal(varsShouldBe,varsAre)
