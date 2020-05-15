@@ -10,6 +10,7 @@ function RTP(jsonargs)
 %{
 % EXAMPLE USAGE:
     jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
+    RTP(jsonargs)
 %}
 %
 %#ok<*AGROW>
