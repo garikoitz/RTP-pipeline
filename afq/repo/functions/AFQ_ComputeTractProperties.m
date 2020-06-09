@@ -173,7 +173,9 @@ for jj=1:numfg
     % there is a problem such as only having 1 fiber in the fiber group.
     % To avoid breaking the whole loop we use the try catch loop
     try 
-        [fa(:, jj),md(:, jj),rd(:, jj),ad(:, jj),cl(:, jj),SuperFibersGroup(jj), ~ ,cp(:,jj),cs(:,jj),fgResampled]=dtiComputeDiffusionPropertiesAlongFG(fgtmp, dt, roi1, roi2, numberOfNodes,weighting);
+        [fa(:, jj),md(:, jj),rd(:, jj),ad(:, jj),cl(:, jj),SuperFibersGroup(jj),...
+            ~ ,cp(:,jj),cs(:,jj),fgResampled]=dtiComputeDiffusionPropertiesAlongFG(...
+                           fgtmp, dt, roi1, roi2, numberOfNodes,weighting);
         % Compute tract volume at each node
         volume(:,jj) = AFQ_TractProfileVolume(fgResampled);
         % Put mean fiber into Tract Profile structure

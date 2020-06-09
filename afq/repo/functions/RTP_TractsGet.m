@@ -128,6 +128,13 @@ if ~exist(mrtrixDir,'dir'); mkdir(mrtrixDir); end
 % The Whole Brain Tactrography will only be done here. 
 if sum(afq.tracts.wbt) > 0
 	% Check if it exist and force is false:
+    if exist(fullfile(fibDir,['WholeBrainFG.mat']),'file') && afq.force==false
+        fprintf('[RTP_TractsGet] WBT file %s exists and will not be overwritten\n',...
+                fullfile(fibDir,['WholeBrainFG.mat']))
+        fg=AFQ_get(afq,'wholebrain fiber group',1)
+    %{
+    % This implementation of the code for 4.2.8 was giving some problems so
+    instead of deleting it, I am desactivating
     % Now we are using more than one WholeBrainFG, check if they are there
     maxLens       = unique(afq.params.track.ET_maxlength);
     doesNotExist  = [];
@@ -145,6 +152,7 @@ if sum(afq.tracts.wbt) > 0
                 fullfile(fibDir,['WholeBrainFG_maxLen-' num2str(maxLens(nml)) '.mat']))
             fg{nml} = dtiReadFibers(fullfile(fibDir,['WholeBrainFG_maxLen-' num2str(maxLens(nml)) '.mat']));
         end
+    %}
 	else
    		 fprintf('\n[RTP_TractsGet] Performing whole-brain tractograpy\n');
          %% Track with mrtrix if the right files are there

@@ -149,6 +149,8 @@ end
 
 
 % Generate the appropriate UNIX command string.
+% Commented the code 4.2.8
+%{
 [~, pathstr] = strip_ext(files.csd);
 fgFileName = {};
 fgFileNameWithDir = {};
@@ -272,6 +274,105 @@ for ml=1:length(maxlens)
     end
                                    
 end
-    
+%} 
+% Here ends the code fro 4.2.8, maintain it if we want to go back to this    
+
+
+% Recover 4.2.7, but with the new strings
+[~, pathstr] = strip_ext(files.csd);
+tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
+                                  '-',num2str(nSeeds),'_ET.tck'));
+numconcatenate = [];
+for na=1:length(ET_angleValues)
+    fgFileName{na}=['ET_fibs' num2str(ET_numberFibers) ...
+                            '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
+                            '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
+                            '.tck'];
+    fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
+    cmd_str = ['tckgen -force ' ...
+                  '-algo ' algo optionalStr ' ' ...
+                  '-angle ' num2str(ET_angleValues(na)) ' ' ...
+                  '-select ' num2str(ET_numberFibers) ' ' ...
+                  '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
+                  input_file ' ' ...
+                  fgFileNameWithDir{na}];
+    % Run it, if the file is not there (this is for debugging)
+    if ~exist(fgFileNameWithDir{na},'file')
+        [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
+    end
+    numconcatenate = [numconcatenate, ET_numberFibers];
+end
+fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
+
+
+if life_runLife
+    % "clean" the tractogram before using it further
+    % First, obtain the dirNames the mainLife that we already had was using, so
+    % that we do not change much in the first iteration
+
+    mrtrixFolderParts  = split(files.csd, filesep);
+    % Obtain the session name. This is usually the zip name if it has not
+    % been edited. 
+    mrtrixDir  = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-1)), filesep);
+    dtiDir     = strjoin(mrtrixFolderParts(1:(length(mrtrixFolderParts)-2)), filesep);
+    sessionDir = dtiDir;
+    lifedir    = fullfile(dtiDir, 'LiFE');
+
+    config.dtiinit             = dtiDir;
+    config.track               = tck_file;
+    config.life_discretization = life_discretization;
+    config.num_iterations      = life_num_iterations;
+    config.test                = life_test;
+    % Change dir to LIFEDIR so that it writes everything there
+    if ~exist(lifedir); mkdir(lifedir); end;
+    cd(lifedir)
+
+    disp('loading dt6.mat')
+    disp(['Looking for file: ' fullfile(config.dtiinit, 'dt6.mat')])
+    dt6 = load(fullfile(config.dtiinit, 'dt6.mat'))
+    [~,NAME,EXT] = fileparts(dt6.files.alignedDwRaw);
+    aligned_dwi = fullfile(sessionDir, [NAME,EXT])
+
+    [ fe, out ] = life(config, aligned_dwi);
+
+    out.stats.input_tracks = length(fe.fg.fibers);
+    out.stats.non0_tracks = length(find(fe.life.fit.weights > 0));
+    fprintf('number of original tracks	: %d\n', out.stats.input_tracks);
+    fprintf('number of non-0 weight tracks	: %d (%f)\n', ...
+             out.stats.non0_tracks, out.stats.non0_tracks / out.stats.input_tracks*100);
+ 
+    if life_saveOutput
+        disp('writing outputs')
+        save('LiFE_fe.mat' ,'fe' , '-v7.3');
+        save('LiFE_out.mat','out', '-v7.3');
+    else
+        disp('User selected not to write LiFE output')
+    end
+
+    % This is what we want to pass around
+    fg = out.life.fg;
+    % And I think I would need to write and substitute the non cleaned ET
+    % tractogram tck with the new one...
+    % Write file
+    [PATHSTR,NAME,EXT] = fileparts(tck_file);
+    tck_file =fullfile(PATHSTR, [NAME '_LiFE' EXT]);
+    fg.name = [NAME '_LiFE'];
+    AFQ_fgWrite(fg, tck_file, 'tck');
+end
+
+if life_writePDB
+    % This is the final output. Decide if we need the pdb output. 
+    % It was removed because it was requiring huge amounts of RAM.
+    % It can break an otherwise working gear. 
+    % In any case, this should not affect the output, we want to pass fg to parent
+    % function
+    % The variable will still be called life_writePDB, though...
+    % Convert the .tck fibers created by mrtrix to mrDiffusion/Quench format (pdb):
+    % We will write both, but we want the cleaned ones to be used by vOF or any
+    % other downstream code
+    pdb_file = fullfile(pathstr,strcat(strip_ext(tck_file), '.pdb'));
+    mrtrix_tck2pdb(tck_file, pdb_file);
+end
+
 
 end

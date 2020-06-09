@@ -3,17 +3,17 @@
   "label": "RTP Pipeline: Reproducible Tract Profiles Pipeline (DTIInit + MRtrix3 + ET + LiFE + AFQ + ANTs). ",
   "description": "DEBUG Edition. This gear contains a multi-step pipeline designed to run MRtrix3, LiFE, ET, and AFQ. The preprocessing is done in RTP-preproc. MRTrix3 + Ensemble Tractography + LiFE generate a connectome which is then run through Automated Fiber Quantification (AFQ). AFQ generates tract profiles of tissue properties for major fiber tracts in the brain. This gear also generates AFQ Browser outputs for visualization. Required inputs are (1) DWI NIfTI image, (2) BVEC file, (3) BVAL file, and (4) and Anatomical NIfTI file - which is optional and will be used to align the DWI data, if provided.",
   "maintainer": "Garikoitz Lerma <garikoitz@gmail.com>",
-  "author": "Yeatman et al., Stanford VISTA Lab, FMRIB Software Lab, MRTrix, Pestilli et al., Takemura et al.",
-  "cite": "Yeatman J.D., Dougherty R.F., Myall N.J., Wandell B.A., Feldman H.M. (2012). Tract Profiles of White Matter Properties: Automating Fiber-Tract Quantification. PLoS One.; M. Jenkinson, C.F. Beckmann, T.E. Behrens, M.W. Woolrich, S.M. Smith. FSL. NeuroImage, 62:782-90, 2012.  Evaluation and statistical inference for human connectomes. F. Pestilli, J.D. Yeatman, A. Rokem, K.N. Kay & B.A. Wandell (2014) Nature Methods doi:10.1038/nmeth.3098 Published online 07 September 2014. https://mrtrix.readthedocs.io/en/latest/reference/references.html.  Takemura H, Caiafa CF, Wandell BA, Pestilli F (2016) Ensemble Tractography. PLoS Comput Biol 12(2): e1004692. https://doi.org/10.1371/journal.pcbi.1004692",
+  "author": "Lerma et al, Yeatman et al., Stanford VISTA Lab, FMRIB Software Lab, MRTrix, Pestilli et al., Takemura et al.",
+  "cite": "Garikoitz Lerma-Usabiaga, Michael L. Perry, and Brian A. Wandell. 2019.  Reproducible Tract Profiles (RTP): from diffusion MRI acquisition to publication, bioRxiv, doi: https://doi.org/10.1101/680173",
   "url": "https://github.com/vistalab/RTP-pipeline",
   "source": "https://github.com/vistalab/RTP-pipeline",
   "license": "Other",
   "flywheel": "0",
-  "version": "4.2.8",
+  "version": "4.2.9",
   "custom": {
-    "docker-image": "vistalab/rtp-pipeline:4.2.8",
+    "docker-image": "vistalab/rtp-pipeline:4.2.9",
     "gear-builder": {
-      "image": "vistalab/rtp-pipeline:4.2.8",
+      "image": "vistalab/rtp-pipeline:4.2.9",
       "category": "analysis"
     },
     "flywheel": {
