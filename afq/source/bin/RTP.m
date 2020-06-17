@@ -76,8 +76,9 @@ input_csv       = fullfile(input_csv.folder  ,input_csv.name);
 %% Copy input files to working directory
 % Create the destination input filenames
 rtp_dir         = fullfile(output_dir,'RTP');
-if exist(rtp_dir);error('[RTP] rtp_dir exists in %s', rtp_dir)
-else mkdir(rtp_dir);end
+if ~exist(rtp_dir)  % ;error('[RTP] rtp_dir exists in %s', rtp_dir)
+    mkdir(rtp_dir);
+end
 
 % We need these files in root dir (rtp_dir) to start working
 t1_file         = fullfile(rtp_dir, 't1.nii.gz');
@@ -314,9 +315,9 @@ disp('[RTP] Showing contents of params.csv file:')
 A
 disp('[RTP] Checking there are the required variables, and that the tract names are correct')
 
-varsShouldBe = {'roi1' 'extroi1' 'roi2' 'extroi2' 'roi3' 'extroi3' 'dilroi1' ...
-                'dilroi2' 'dilroi3' 'label' 'fgnum' 'hemi' 'slabel' 'shemi' ...
-                'nhlabel' 'wbt' 'usecortex' 'maxlen' 'minlen' 'angle' 'algorithm' ...
+varsShouldBe = {'roi1' 'extroi1' 'roi2' 'extroi2' 'roi3' 'extroi3'  'roi4' 'extroi4' 'dilroi1' ...
+                'dilroi2' 'dilroi3'  'dilroi4' 'label' 'fgnum' 'hemi' 'slabel' 'shemi' ...
+                'nhlabel' 'wbt' 'usecortex' 'tckmaxlen' 'tckminlen' 'tckangle' 'algorithm' ...
                 'select' 'cutoff' 'maxDist' 'maxLen' 'numNodes' 'meanmed' 'maxIter'};
 varsAre = A.Properties.VariableNames;
 if ~isequal(varsShouldBe,varsAre)
@@ -393,9 +394,9 @@ for nl=1:height(A)
 	% Check line by line and create the dilated ROIs.  
 	ts = A(nl,:);
 	if ts.dilroi1>0
-		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'.nii.gz')));
-		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'_dil-',num2str(ts.dilroi1),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi1)  ' ' inroi  ' dilate - | '...
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi1,ts.extroi1)));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi1,'_dil-',num2str(ts.dilroi1),ts.extroi1)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi1)  ' ' inroi  ' dilate - | '...
 				  'mrthreshold -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
@@ -403,9 +404,9 @@ for nl=1:height(A)
 		end
 	end
 	if ts.dilroi2>0
-		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'.nii.gz')));
-		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'_dil-',num2str(ts.dilroi2),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi2)  ' ' inroi  ' dilate - | '...
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi2,ts.extroi2)));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi2,'_dil-',num2str(ts.dilroi2),ts.extroi2)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi2)  ' ' inroi  ' dilate - | '...
 				  'mrthreshold -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
@@ -413,9 +414,19 @@ for nl=1:height(A)
 		end
 	end
 	if ts.dilroi3>0 && ~strcmp(ts.roi3,"NO")
-		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'.nii.gz')));
-		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'_dil-',num2str(ts.dilroi3),'.nii.gz')));
-		cmd    = ['maskfilter -force -npass ' num2str(ts.dilroi3)  ' ' inroi  ' dilate - | '...
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi3,ts.extroi3)));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi3,'_dil-',num2str(ts.dilroi3),ts.extroi3)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi3)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		cmdr   = AFQ_mrtrix_cmd(cmd);
+		if cmdr ~= 0
+			error('[RTP] ROI could not be created, this was the command: %s', cmd)
+		end
+	end
+	if ts.dilroi4>0 && ~strcmp(ts.roi4,"NO")
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi4,ts.extroi4)));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi4,'_dil-',num2str(ts.dilroi4),ts.extroi4)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi4)  ' ' inroi  ' dilate - | '...
 				  'mrthreshold -force -abs 0.5 - ' outroi];
 		cmdr   = AFQ_mrtrix_cmd(cmd);
 		if cmdr ~= 0
@@ -505,8 +516,8 @@ for nt=1:length(clean_tcks)
 	dsttckname = fullfile(tck_dir  , clean_tcks(nt).name);
 	dstplyname = fullfile(tck_dir  , strrep(clean_tcks(nt).name,'tck','ply'));
 	copyfile(srctckname,dsttckname)
-	% Use the same step to create the ply file in the vis folder. We wil convert them to obj with python
-	cmd  = sprintf('tckconvert -dec %s %s', dsttckname, dstplyname);
+	% Use the same step tc create the ply file in the vis folder. We wil convert them to obj with python
+	cmd  = sprintf('tckconvert -force -dec %s %s', dsttckname, dstplyname);
 	rcmd = AFQ_mrtrix_cmd(cmd);
 end
 
