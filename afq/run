@@ -8,7 +8,7 @@ CONTAINER="[vistalab/rtp-pipeline]"
 echo -e "$CONTAINER  Initiated"
 
 # Configure the ENV for FSL
-chmod +x /etc/fsl/5.0/fsl.sh
+# chmod +x /etc/fsl/5.0/fsl.sh
 source /etc/fsl/5.0/fsl.sh
 
 # Configure the ENV
@@ -41,9 +41,7 @@ FS_DIR=$INPUT_DIR/fs
 TRACTPARAMS_DIR=$INPUT_DIR/tractparams
 
 CONFIG_FILE=${FLYWHEEL_BASE}/config.json
-PARAMS_FILE=${FLYWHEEL_BASE}/params.json
-
-
+PARAMS_FILE=${OUTPUT_DIR}/params.json
 
 # Ensure there is an output directory
 if [[ ! -d "$OUTPUT_DIR" ]]

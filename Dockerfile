@@ -3,7 +3,7 @@
 
 # Start with the Matlab r2018b runtime container
 FROM  flywheel/matlab-mcr:v95
-MAINTAINER Garkoitz Lerma  <glerma@stanford.edu>
+MAINTAINER Garkoitz Lerma-Usabiaga  <garikoitz@gmail.com>
 
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
@@ -71,6 +71,7 @@ RUN apt-get update && apt-get install -y --force-yes \
 # MRTRIX 3
 
 # Here we download and build MRTRIX3 from source.
+## install mrtrix3 requirements
 RUN apt-get install -y \
     git \
     g++ \
@@ -84,20 +85,31 @@ RUN apt-get install -y \
     libfftw3-dev \
     libtiff5-dev
 
-ENV mrtrix3COMMIT=8cef83213c4dcce7be1296849bda2b097004dd0c
-RUN curl -#L  https://github.com/MRtrix3/mrtrix3/archive/$mrtrix3COMMIT.zip | bsdtar -xf- -C /usr/lib
-WORKDIR /usr/lib/
-RUN mv mrtrix3-${mrtrix3COMMIT} mrtrix3
-RUN chmod -R +rwx /usr/lib/mrtrix3
-WORKDIR /usr/lib/mrtrix3
-RUN  ./configure && \
-    ./build && \
-    ./set_path
+# Use tag instead of commit number, it is much more clear. 
+# ENV mrtrix3COMMIT=8cef83213c4dcce7be1296849bda2b097004dd0c
+# RUN curl -#L  https://github.com/MRtrix3/mrtrix3/archive/$mrtrix3COMMIT.zip | bsdtar -xf- -C /usr/lib
+# WORKDIR /usr/lib/
+# RUN mv mrtrix3-${mrtrix3COMMIT} mrtrix3
+# RUN chmod -R +rwx /usr/lib/mrtrix3
+# WORKDIR /usr/lib/mrtrix3
+# RUN  ./configure && \
+#     ./build && \
+#     ./set_path
 
-ENV PATH /usr/lib/mrtrix3/bin:$PATH
+
+## install and compile mrtrix3
+RUN git clone https://github.com/MRtrix3/mrtrix3.git
+RUN cd mrtrix3 && git fetch --tags && git checkout tags/3.0.1 && ./configure -nogui && ./build
+
+## manually add to path
+ENV PATH=$PATH:/mrtrix3/bin
 
 
-############################
+#https://wiki.ubuntu.com/DashAsBinSh
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+
+
 # DTIINIT: DELETE THIS: RIGHT NOW,  just commenting
 
 # ADD the dtiInit Matlab Stand-Alone (MSA) into the container.
