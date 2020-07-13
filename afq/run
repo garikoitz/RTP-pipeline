@@ -17,7 +17,8 @@ export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/op
 export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
 
 # Add mrtrix and ants to the path
-export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
+# export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
+export PATH=/usr/lib/ants:/mrtrix3/bin:$PATH
 
 # Set DISPLAY for xvfb
 export DISPLAY=:1.0
