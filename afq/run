@@ -78,7 +78,9 @@ $FLYWHEEL_BASE/parse_config.py \
         --tractparams_dir ${TRACTPARAMS_DIR}
 
 # Make sure the params file is saved with the output
-cp ${PARAMS_FILE} ${OUTPUT_DIR}
+# cp ${PARAMS_FILE} ${OUTPUT_DIR}
+mkdir ${OUTPUT_DIR}/tmp
+export MRTRIX_TMPFILE_DIR=${OUTPUT_DIR}/tmp
 
 # Start Xvfb and pass the input arguments to RTP execute the algorithm
 start_xvfb && time /usr/local/bin/RTP "$PARAMS_FILE" 
