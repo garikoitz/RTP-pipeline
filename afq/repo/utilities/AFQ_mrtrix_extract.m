@@ -15,8 +15,13 @@ if mrtrixVersion ~= 3; error('Only mrTrix version 3 supported.');end
        
 % If it is multishell data, we want to extract the shell closest to 1000 for DTI       
 if multishell
-    bfile = dlmread(files.b);
-    bvals = sort(unique(bfile(:,4)));
+    % bfile = dlmread(files.b);
+    % Mrtrix changed the b files and added a text string at the beginning
+    fid = fopen(files.b);
+    c   = textscan(fid,'%d %d %d %d','HeaderLines', 1 );
+    fclose(fid);
+    % bvals = sort(unique(bfile(:,4)));
+    bvals = sort(unique(c{4}));
     if bvals(1) ~= 0; error('There is no 0 bval');end
     % Find the closest value to 1000
     [~, closestIndex] = min(abs(bvals-1000));
