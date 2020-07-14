@@ -98,14 +98,11 @@ RUN apt-get install -y \
 
 
 ## install and compile mrtrix3
-RUN export cl=$PWD
-RUN cd /
 RUN git clone https://github.com/MRtrix3/mrtrix3.git
 RUN cd mrtrix3 && git fetch --tags && git checkout tags/3.0.1 && ./configure -nogui && ./build
-RUN cd $cl
 
 ## manually add to path
-ENV PATH=$PATH:/mrtrix3/bin
+ENV PATH=$PATH:/flywheel/v0//mrtrix3/bin
 
 
 #https://wiki.ubuntu.com/DashAsBinSh

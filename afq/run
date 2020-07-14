@@ -18,7 +18,7 @@ export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
 
 # Add mrtrix and ants to the path
 # export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
-export PATH=/usr/lib/ants:/mrtrix3/bin:$PATH
+export PATH=/usr/lib/ants:/flywheel/v0/mrtrix3/bin:$PATH
 
 # Set DISPLAY for xvfb
 export DISPLAY=:1.0
