@@ -33,7 +33,8 @@ end
 % have been reports with the same problems. Just in case use a tmp dir in
 % the home folder. Everything will be deleted automatically after use. 
 % If you want to maintain the tmp folders for visualization add -nocleanup
-tmpDir = '~/tmp';
+baseDir = fileparts(tt5_filename);
+tmpDir = fullfile(baseDir,'tmp');
 if ~exist(tmpDir, 'dir'), mkdir(tmpDir), end
 
 
@@ -43,14 +44,14 @@ if strcmp(tool, 'fsl')
     cmd_str = ['5ttgen fsl ' f '  ' ...
                input_file ' ' ...
                tt5_filename ' ' ...
-               '-nocrop -tempdir ' tmpDir];
+               '-nocrop -scratch ' tmpDir];
 else
     lutPath = flutlocation();
     cmd_str = ['5ttgen freesurfer ' f ' ' ...
                '-lut ' lutPath ' ' ...
                input_file   ' ' ...
                tt5_filename ' ' ...
-               '-nocrop -tempdir ' tmpDir];
+               '-nocrop -scratch ' tmpDir];
     
 end
 
