@@ -170,3 +170,4 @@ RUN chmod +x ${FLYWHEEL}/*
 ENTRYPOINT ["/flywheel/v0/run"]
 COPY manifest.json ${FLYWHEEL}/manifest.json
 
+RUN ldconfig
