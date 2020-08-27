@@ -1,4 +1,5 @@
-function [afq patient_data control_data norms abn abnTracts] = AFQ_run(sub_dirs, sub_group, afq)
+function [afq afq_C2ROI] = AFQ_run(sub_dirs, sub_group, afq)
+% function [afq patient_data control_data norms abn abnTracts afq_C2ROI] = AFQ_run(sub_dirs, sub_group, afq)
 % Run AFQ analysis on a set of subjects to generate Tract Profiles of white
 % matter properties.
 %
@@ -124,15 +125,19 @@ for ii = runsubs
     % Define the current subject to process
     afq    = AFQ_set(afq,'current subject',ii);
     dtFile = fullfile(sub_dirs{ii},'dt6.mat');
-    [fg_classified, fg_clean, fg] = RTP_TractsGet(dtFile, afq);
-        
+    [fg_classified, fg_clean, fg, fg_C2ROI] = RTP_TractsGet(dtFile, afq);
+    % Create new afq for the C2ROI tracts
+    afq_C2ROI = afq;
+
+
+
 
    %% Compute Tracts
    % Load Dt6 File
    dt     = dtiLoadDt6(dtFile);
    fprintf('\n[AFQ_run] Computing Tract Profiles for subject %s',sub_dirs{ii});
    % Determine how much to weight each fiber's contribution to the
-   % measurement at the tract core. Higher values mean steaper falloff
+   % measurement at the tract core. Higher values mean stepper falloff
    fWeight = AFQ_get(afq,'fiber weighting');
    % By default Tract Profiles of diffusion properties will always be
    % calculated
@@ -159,7 +164,56 @@ for ii = runsubs
    
    % Add Tract Profiles to the afq structure
    afq = AFQ_set(afq,'tract profile','subnum',ii,TractProfile);
+
+
+
+    %% Now do the same for the afq_C2ROI
+   [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
+                                           fg_C2ROI, ...
+                                           dt, ...
+                                           afq_C2ROI.params.numberOfNodes, ...
+                                           afq_C2ROI.params.clip2rois, ...
+                                           sub_dirs{ii}, ...
+                                           fWeight, ...
+                                           afq_C2ROI);
    
+   
+   % Parameterize the shape of each fiber group with calculations of
+   % curvature and torsion at each point and add it to the tract profile
+   [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_C2ROI, TractProfile);
+   
+   % Calculate the volume of each Tract Profile
+   TractProfile = AFQ_TractProfileVolume(TractProfile);
+   
+   % Add values to the afq structure
+   afq_C2ROI = AFQ_set(afq_C2ROI,'vals','subnum',ii,'fa',fa,'md',md,'rd',rd,...
+       'ad',ad,'cl',cl,'curvature',curv,'torsion',tors,'volume',vol);
+   
+   % Add Tract Profiles to the afq structure
+   afq_C2ROI = AFQ_set(afq_C2ROI,'tract profile','subnum',ii,TractProfile);
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
    % If any other images were supplied calculate a Tract Profile for that
    % parameter
    numimages = AFQ_get(afq, 'numimages');

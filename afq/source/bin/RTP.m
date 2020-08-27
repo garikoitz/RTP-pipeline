@@ -341,6 +341,17 @@ A.slabel = strrep(A.slabel,'%','_');
 A.slabel = strrep(A.slabel,'(','_');
 A.slabel = strrep(A.slabel,')','_');
 
+% Check that all short track names are unique
+if ~isequal(size(unique(A.slabel),1),height(A))
+	error('All tract short names (slabel) should be unique.')
+end
+
+
+
+
+
+
+
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
 % Create list of all ROIs
 checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3)];
@@ -456,7 +467,7 @@ disp(   '[RTP] Running AFQ_run with the following options...');
 fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
 disp(   '[RTP] This is the afq struct going to AFQ_run');
 afq
-afq = AFQ_run(sub_dirs, 1, afq);
+[afq, afq_C2ROI]= AFQ_run(sub_dirs, 1, afq);
 disp('  ... end running AFQ_run');
 
 %% Check for empty fiber groups
@@ -471,6 +482,8 @@ end
 % Save each iteration of afq run if an output directory was defined
 outname = fullfile(rtp_dir,['afq_' datestamp]);
 save(outname,'afq');
+outname = fullfile(rtp_dir,['afq_C2ROI' datestamp]);
+save(outname,'afq_C2ROI');
 
 %% Export the data to csv files
 disp('[RTP] Exporting data to csv files...');
@@ -503,6 +516,52 @@ for ii = 1:numel(properties)
     end
 end
 
+% Do the same for the C2ROI
+disp('[RTP] Exporting C2ROI data to csv files...');
+% We will add the diffusion parameters and the series number to the name
+
+% Get the names of each of the datatypes (e.g.,'FA','MD', etc.)
+properties = fieldnames(afq_C2ROI.vals);
+
+% Loop over the properties and create a table of values for each property
+for ii = 1:numel(properties)
+    % Loop over each fibergroup and insert the values into the table
+    for i = 1:numel(afq_C2ROI.fgnames)
+        % If this is the first time through create a table that we'll
+        % concatenate with each following table (t)
+        if i == 1
+            T = cell2table(num2cell(afq_C2ROI.vals.(properties{ii}){i}'),'variablenames',{regexprep(afq_C2ROI.fgnames{i},' ','_')});
+        else
+            t = cell2table(num2cell(afq_C2ROI.vals.(properties{ii}){i}'),'variablenames',{regexprep(afq_C2ROI.fgnames{i},' ','_')});
+
+            % Combine the tables
+            T = horzcat(T,t);
+        end
+
+        % Write out the table to a csv file
+        writetable(T,fullfile(csv_dir,['RTP_C2ROI' lower(properties{ii}) '.csv']));
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %% Create the tck files for visualizing the results
 disp('[RTP] Exporting tck files for QA...');
 % We will add the diffusion parameters and the series number to the name
@@ -510,7 +569,7 @@ tck_dir    = fullfile(rtp_dir,'tck_files');
 if ~exist(tck_dir,'dir');mkdir(tck_dir);end
 % Copy only the tck files we want to visualize, so that we do not need to unzip the big RTP file
 mrtrixdir  = fullfile(J.params.subDir,'mrtrix');
-clean_tcks = dir(fullfile(mrtrixdir,'*clean.tck'));
+clean_tcks = dir(fullfile(mrtrixdir,'*clean*.tck'));
 for nt=1:length(clean_tcks)
 	srctckname = fullfile(mrtrixdir, clean_tcks(nt).name);
 	dsttckname = fullfile(tck_dir  , clean_tcks(nt).name);

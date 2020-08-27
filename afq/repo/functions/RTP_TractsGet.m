@@ -1,4 +1,4 @@
-function [fg_classified,fg_clean,fg]=RTP_TractsGet(dt6File,afq) 
+function [fg_classified,fg_clean,fg,fg_C2ROI]=RTP_TractsGet(dt6File,afq) 
 % Categorizes each fiber in a group into one of the 20 tracts defined in
 % the Mori white matter atlas. 
 %
@@ -160,9 +160,15 @@ end
 % Start simple, with the existing tracts that we only want to do the tckedit
 afq.tracts.fname     = strcat(afq.tracts.slabel,".tck");
 afq.tracts.cfname    = strcat(afq.tracts.slabel,"_clean.tck");
+afq.tracts.c2roiname = strcat(afq.tracts.slabel,"_clean_C2ROI.tck");
+afq.tracts.cfname_SF = strcat(afq.tracts.slabel,"_clean_SF.tck");
+afq.tracts.c2roiname_SF = strcat(afq.tracts.slabel,"_clean_C2ROI_SF.tck");
 afq.tracts.fdir      = repmat(mrtrixDir,[height(afq.tracts),1]);
 afq.tracts.fpath     = strcat(afq.tracts.fdir,filesep,afq.tracts.fname);
 afq.tracts.cfpath    = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname);
+afq.tracts.c2roipath = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname);
+afq.tracts.cfpath_SF = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname_SF);
+afq.tracts.c2roipath_SF = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname_SF);
 afq.tracts.nfibers   = zeros(height(afq.tracts),1);
 afq.tracts.cnfibers  = zeros(height(afq.tracts),1);
 
@@ -184,11 +190,33 @@ for nt=1:height(tracts)
         tract = fgRead(ts.fpath);
         if nt==1;fg_classified=tract;
         else; fg_classified(nt)=tract;end
+        % Read the clean ones
 	    if exist(ts.cfpath,'file') 
 			clean_tract = fgRead(ts.cfpath);
-	        % Add it to fg_clean
+	        % Add it to fg
     	    if nt==1; fg_clean=clean_tract;
        		 else; fg_clean(nt)=clean_tract; end
+        end
+        % Read the clip2roi-s
+        if exist(ts.c2roipath,'file') 
+			clean_tract_c2roi = fgRead(ts.c2roipath);
+	        % Add it to fg
+    	    if nt==1; fg_C2ROI=clean_tract_c2roi;
+       		 else; fg_C2ROI(nt)=clean_tract_c2roi; end
+        end
+        % Read the clean SF
+        if exist(ts.cfpath_SF,'file') 
+			clean_tract_SF = fgRead(ts.cfpath_SF);
+	        % Add it to fg
+    	    if nt==1; fg_clean_SF=clean_tract_SF;
+       		 else; fg_clean_SF(nt)=clean_tract_SF; end
+        end
+        % Read the clip2roi SF
+        if exist(ts.c2roipath_SF,'file') 
+			clean_tract_c2roi_SF = fgRead(ts.c2roipath_SF);
+	        % Add it to fg
+    	    if nt==1; fg_C2ROI_SF=clean_tract_c2roi_SF;
+       		 else; fg_C2ROI_SF(nt)=clean_tract_c2roi_SF; end
         end
 	else
         % Solve the dilate text
@@ -308,7 +336,43 @@ for nt=1:height(tracts)
         fileattrib(ts.cfpath, '+w +x') % make it readable and writeable
         % Update the value of the number of fibers
         ts.cnfibers = size(clean_tract.fibers,1);    
+
+
+
+	 	% Now we do the C2ROI structure and send it back to the callling function so that we obtain the metrics
+		% Create the clipped version and save the tck files
+		% Create the SF-s for both the clipped and not clipped, and save it as a tck.
+    	% Create fg_C2ROI
+		fg_C2ROI(nt) = fg_clean(nt);
+    	fprintf('[RTP_TractsGet] Clipping and obtaining SF for %s ...\n', ts.label)
+		roi1mat=dtiImportRoiFromNifti(char(roi1));
+		roi2mat=dtiImportRoiFromNifti(char(roi2));
+    	fg_C2ROI(nt) = dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
+		% Write the clipped fiber as well
+        AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
+        fileattrib(ts.c2roipath, '+w +x') % make it readable and writeable
+       
         
+        % Create the SF-s for both the clipped and non-clipped versions
+        fg_clean_SF(nt) = fg_clean(nt);
+        fg_C2ROI_SF(nt) = fg_C2ROI(nt);
+        % Change the fiber by the superfiber
+        SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF(nt),[],100);
+        fg_clean_SF(nt).fibers= SuperFiber.fibers;
+        SuperFiber = dtiComputeSuperFiberRepresentation(fg_C2ROI_SF(nt),[],100);
+        fg_C2ROI_SF(nt).fibers= SuperFiber.fibers;
+		% Write both super fibers
+        AFQ_fgWrite(fg_clean_SF(nt), ts.cfpath_SF,'tck');
+        AFQ_fgWrite(fg_C2ROI_SF(nt), ts.c2roipath_SF,'tck');
+        fileattrib(ts.cfpath_SF, '+w +x') % make it readable and writeable
+        fileattrib(ts.c2roipath_SF, '+w +x') % make it readable and writeable
+		
+
+
+
+
+
+ 
         % Update the table, maybe we updated some of the fields (e.g. nfibers)
         tracts(nt,:) = ts;
         fprintf('\n[RTP_TractsGet] ... done %s\n', ts.label)
