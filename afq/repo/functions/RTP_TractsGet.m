@@ -343,27 +343,41 @@ for nt=1:height(tracts)
 		% Create the clipped version and save the tck files
 		% Create the SF-s for both the clipped and not clipped, and save it as a tck.
     	% Create fg_C2ROI
-		fg_C2ROI(nt) = fg_clean(nt);
     	fprintf('[RTP_TractsGet] Clipping and obtaining SF for %s ...\n', ts.label)
 		roi1mat=dtiImportRoiFromNifti(char(roi1));
 		roi2mat=dtiImportRoiFromNifti(char(roi2));
-    	fg_C2ROI(nt) = dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
-		% Write the clipped fiber as well
-        AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
+        if nt==1
+            fg_C2ROI=fg_clean;
+    	    % Write the clipped fiber as well
+            AFQ_fgWrite(fg_C2ROI, ts.c2roipath,'tck');
+            % Create the SF-s for both the clipped and non-clipped versions
+            fg_clean_SF = fg_clean;
+            fg_C2ROI_SF = fg_C2ROI;
+            % Change the fiber by the superfiber
+            SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF,[],100);
+            fg_clean_SF.fibers= SuperFiber.fibers;
+            SuperFiber = dtiComputeSuperFiberRepresentation(fg_C2ROI_SF,[],100);
+            fg_C2ROI_SF.fibers= SuperFiber.fibers;
+		    % Write both super fibers
+            AFQ_fgWrite(fg_clean_SF(nt), ts.cfpath_SF,'tck');
+            AFQ_fgWrite(fg_C2ROI_SF(nt), ts.c2roipath_SF,'tck');
+        else
+            fg_C2ROI(nt)=dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
+    	    % Write the clipped fiber as well
+            AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
+            % Create the SF-s for both the clipped and non-clipped versions
+            fg_clean_SF(nt) = fg_clean(nt);
+            fg_C2ROI_SF(nt) = fg_C2ROI(nt);
+            % Change the fiber by the superfiber
+            SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF(nt),[],100);
+            fg_clean_SF(nt).fibers= SuperFiber.fibers;
+            SuperFiber = dtiComputeSuperFiberRepresentation(fg_C2ROI_SF(nt),[],100);
+            fg_C2ROI_SF(nt).fibers= SuperFiber.fibers;
+		    % Write both super fibers
+            AFQ_fgWrite(fg_clean_SF(nt), ts.cfpath_SF,'tck');
+            AFQ_fgWrite(fg_C2ROI_SF(nt), ts.c2roipath_SF,'tck');
+        end
         fileattrib(ts.c2roipath, '+w +x') % make it readable and writeable
-       
-        
-        % Create the SF-s for both the clipped and non-clipped versions
-        fg_clean_SF(nt) = fg_clean(nt);
-        fg_C2ROI_SF(nt) = fg_C2ROI(nt);
-        % Change the fiber by the superfiber
-        SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF(nt),[],100);
-        fg_clean_SF(nt).fibers= SuperFiber.fibers;
-        SuperFiber = dtiComputeSuperFiberRepresentation(fg_C2ROI_SF(nt),[],100);
-        fg_C2ROI_SF(nt).fibers= SuperFiber.fibers;
-		% Write both super fibers
-        AFQ_fgWrite(fg_clean_SF(nt), ts.cfpath_SF,'tck');
-        AFQ_fgWrite(fg_C2ROI_SF(nt), ts.c2roipath_SF,'tck');
         fileattrib(ts.cfpath_SF, '+w +x') % make it readable and writeable
         fileattrib(ts.c2roipath_SF, '+w +x') % make it readable and writeable
 		

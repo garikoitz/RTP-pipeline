@@ -99,15 +99,15 @@ then
 else
   # Create the obj files from the ply files
   cd $RTP_DIR/tck_files
-  for pl in *.ply
-  do
-      python $FLYWHEEL_BASE/ply2obj.py $pl ${pl/ply/obj} 
-      rm $pl
-  done
+  # for pl in *.ply
+  # do
+  #     python $FLYWHEEL_BASE/ply2obj.py $pl ${pl/ply/obj} 
+  #     rm $pl
+  # done
   # Copy csv, mat, and json files to output
   cp $RTP_DIR/csv_files/*.csv $OUTPUT_DIR
   cp $RTP_DIR/tck_files/*.tck $OUTPUT_DIR
-  cp $RTP_DIR/tck_files/*.obj $OUTPUT_DIR
+#   cp $RTP_DIR/tck_files/*.obj $OUTPUT_DIR
   # Copy some other files interesting for debugging
   cp $RTP_DIR/bin/*.nii.gz $OUTPUT_DIR
   cp $RTP_DIR/mrtrix/*wmCsd*mif $OUTPUT_DIR

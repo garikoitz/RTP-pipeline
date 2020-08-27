@@ -453,7 +453,7 @@ fprintf('[RTP] sub_dirs: %s', sub_dirs{1})
 fprintf('[RTP] output_dir: %s', output_dir)
 if ~exist(fullfile(rtp_dir,'bin'));mkdir(rtp_dir, 'bin');end
 % Add deleted variables to afq, the ones we want constant
-J.params.clip2rois        = true;
+J.params.clip2rois        = false; % We tract without considering this, when obtaining metrics we use both true and false
 J.params.track.multishell = false;
 if length(paramsShells) > 1;J.params.track.multishell=true;end
 J.params.track.tool       = 'freesurfer';
@@ -576,8 +576,9 @@ for nt=1:length(clean_tcks)
 	dstplyname = fullfile(tck_dir  , strrep(clean_tcks(nt).name,'tck','ply'));
 	copyfile(srctckname,dsttckname)
 	% Use the same step tc create the ply file in the vis folder. We wil convert them to obj with python
-	cmd  = sprintf('tckconvert -force -dec %s %s', dsttckname, dstplyname);
-	rcmd = AFQ_mrtrix_cmd(cmd);
+	% TODO: make it optional
+	% cmd  = sprintf('tckconvert -force -dec %s %s', dsttckname, dstplyname);
+	% rcmd = AFQ_mrtrix_cmd(cmd);
 end
 
 %TODO: add a flag, saveIntermediateFilesForQC 

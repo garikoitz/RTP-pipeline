@@ -109,17 +109,6 @@ runsubs = AFQ_get(afq,'run subjects');
 % Define the name of the segmented fiber group
 segName = AFQ_get(afq,'segfilename');
 
-% If ANTS is installed on the system then precompute spatial normalization
-% with ANTS and save to the afq structure
-% BW suggests: move ants outputs to ANTs subdir
-
-tic
-if AFQ_get(afq, 'use ANTS')
-    disp('ANTs normalization, it can take hours')
-    afq = AFQ_ComputeSpatialNormalization(afq);
-end
-toc
-
 %%  Loop over every subject
 for ii = runsubs
     % Define the current subject to process
@@ -141,6 +130,7 @@ for ii = runsubs
    fWeight = AFQ_get(afq,'fiber weighting');
    % By default Tract Profiles of diffusion properties will always be
    % calculated
+   afq.params.clip2rois = false;
    [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
                                            fg_clean, ...
                                            dt, ...
@@ -153,7 +143,7 @@ for ii = runsubs
    
    % Parameterize the shape of each fiber group with calculations of
    % curvature and torsion at each point and add it to the tract profile
-   [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_classified, TractProfile);
+   [curv, tors, TractProfile] = AFQ_ParamaterizeTractShape(fg_clean, TractProfile);
    
    % Calculate the volume of each Tract Profile
    TractProfile = AFQ_TractProfileVolume(TractProfile);
@@ -165,10 +155,9 @@ for ii = runsubs
    % Add Tract Profiles to the afq structure
    afq = AFQ_set(afq,'tract profile','subnum',ii,TractProfile);
 
-
-
+    afq_C2ROI.params.clip2rois = true;
     %% Now do the same for the afq_C2ROI
-   [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
+    [fa,md,rd,ad,cl,vol,TractProfile]=AFQ_ComputeTractProperties(...
                                            fg_C2ROI, ...
                                            dt, ...
                                            afq_C2ROI.params.numberOfNodes, ...
