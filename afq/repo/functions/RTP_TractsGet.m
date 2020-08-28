@@ -331,7 +331,8 @@ for nt=1:height(tracts)
                 spres     = AFQ_mrtrix_cmd(cmd);
             
                 % Concatenate them both 
-                cmd = join(["tckedit ", ts.fpathDir1, ts.fpathDir2, ts.fpath]);
+                cmd     = join(["tckedit ", ts.fpathDir1, ts.fpathDir2, ts.fpath]);
+                spres   = AFQ_mrtrix_cmd(cmd);
             
             end
         end
