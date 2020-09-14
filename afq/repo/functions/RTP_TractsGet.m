@@ -202,28 +202,28 @@ for nt=1:height(tracts)
 			clean_tract = fgRead(ts.cfpath);
 	        % Add it to fg
     	    if nt==1; fg_clean=clean_tract;
-       		 else; fg_clean(nt)=clean_tract; end
+       		else; fg_clean(nt)=clean_tract; end
         end
         % Read the clip2roi-s
         if exist(ts.c2roipath,'file') 
 			clean_tract_c2roi = fgRead(ts.c2roipath);
 	        % Add it to fg
     	    if nt==1; fg_C2ROI=clean_tract_c2roi;
-       		 else; fg_C2ROI(nt)=clean_tract_c2roi; end
+       		else; fg_C2ROI(nt)=clean_tract_c2roi; end
         end
         % Read the clean SF
         if exist(ts.cfpath_SF,'file') 
 			clean_tract_SF = fgRead(ts.cfpath_SF);
 	        % Add it to fg
     	    if nt==1; fg_clean_SF=clean_tract_SF;
-       		 else; fg_clean_SF(nt)=clean_tract_SF; end
+       		else; fg_clean_SF(nt)=clean_tract_SF; end
         end
         % Read the clip2roi SF
         if exist(ts.c2roipath_SF,'file') 
 			clean_tract_c2roi_SF = fgRead(ts.c2roipath_SF);
 	        % Add it to fg
     	    if nt==1; fg_C2ROI_SF=clean_tract_c2roi_SF;
-       		 else; fg_C2ROI_SF(nt)=clean_tract_c2roi_SF; end
+       		else; fg_C2ROI_SF(nt)=clean_tract_c2roi_SF; end
         end
 	else
         % Solve the dilate text
@@ -354,6 +354,14 @@ for nt=1:height(tracts)
                 tract.fibers = {zeros(3,1)};
             end
         end
+        
+        % Flip fibers so that each fiber in a fiber group passes through roi1
+        % before roi2
+        roi1mat=dtiImportRoiFromNifti(char(roi1));
+		roi2mat=dtiImportRoiFromNifti(char(roi2));
+        tract = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
+               
+        
         
         if nt==1; fg_classified=tract;
     	else; fg_classified(nt)=tract; end
