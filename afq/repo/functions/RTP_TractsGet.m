@@ -357,9 +357,9 @@ for nt=1:height(tracts)
         
         % Flip fibers so that each fiber in a fiber group passes through roi1
         % before roi2
-        roi1mat=dtiImportRoiFromNifti(char(roi1));
-		roi2mat=dtiImportRoiFromNifti(char(roi2));
-        tract = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
+        roi1mat = dtiImportRoiFromNifti(char(roi1));
+		roi2mat = dtiImportRoiFromNifti(char(roi2));
+        tract   = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
                
         
         
@@ -461,51 +461,89 @@ if sum(afq.tracts.wbt) == 0
 end
 
 
-
-% Path to ROIs
-%{
-if notDefined('fsROIdir')
-    fsROIdir = uigetdir([],'Select an ROI directory');
+% We need to calculate VOF and PAF
+% TODO: add option in config file
+% It has some requirements, test them first. 
+getVOF = false;
+% Check if wbt was ordered and Arcuate Fasciculus as well
+if sum(afq.tracts.wbt) > 0 && ...
+                ismember("LAF",afq.tracts.slabel)   && ...
+                ismember("RAF",afq.tracts.slabel)
+    getVOF = true;
+    warning('[RTP_TractsGet] Trying to get VOF and pARC (it will an option in the future).');
 end
-% output directory
-if notDefined('outdir')
-    outdir = uigetdir([],'Select an output directory');
+% Get the id of the LAF and RAF, and check they are not empty
+if getVOF
+    % Check ID
+    for ii=1:length(fg_clean)
+        if strcmp(fg_clean(ii).name,"LAF_clean"); LAFind = ii; end
+        if strcmp(fg_clean(ii).name,"RAF_clean"); RAFind = ii; end
+    end
+    % Check that the fiber is not empty, otherwise abort as well
+    LAFnfibs = size(fg_clean(LAFind).fibers,1);
+    RAFnfibs = size(fg_clean(RAFind).fibers,1);
+    if (LAFnfibs < 100 || RAFnfibs < 100)
+        getVOF = false;
+        warning('[RTP_TractsGet] LAF and RAF too few fibers, it will not segment VOF and pArc');
+    end
 end
-%}
+if getVOF
+    fsIn   = fullfile(fs_dir,'aparc+aseg.nii.gz'); 
+    if ~isfile(fsIn)
+        getVOF = false;
+        warning('[RTP_TractsGet] Cannot find aparc+aseg.nii.gz, it will not segment VOF and pArc');
+    end
+end
+
+if getVOF
+    refT1  = dt.files.t1;  
+    if ~isfile(refT1)
+        getVOF = false;
+        warning('[RTP_TractsGet] Cannot find t1.nii.gz, it will not segment VOF and pArc');
+    end
+end
+
+if getVOF
+    % Obtain ROIs in .mat format
+    outDir = ROIs_dir;
+    vtype  = 'mat';
+    fs_roisFromAllLabels(fsIn,outDir,vtype,refT1);
+    % Obtain VOFs and pArcs
+    wholebrainfgPath = fullfile(fibDir,'WholeBrainFG.mat');
+    L_arcuate        = fg_clean(LAFind);
+    R_arcuate        = fg_clean(RAFind);
+    fsROIdir         = ROIs_dir;
+    outdir           = mrtrixDir;  % It shuold not write anything but just in case
+    thresh           = [.95 .6];   % Remove any fiber that doesn't go vertical (positive z) for thresh% of its  coordinates
+    v_crit           = 1.3;        % Fibers must travel this much farther vertically than other directions
+    savefiles        = false;      % We don't want the mat files, we will save them as tck
+    arcThresh        = 20;  % Default is to define VOF as fibers that have fewer than 20 nodes of overlap with the arcuate
+    parcThresh       =  1;  % Default is to consider fibers that are anterior to the posterior arcuate  as not part of the VOF
+    [L_VOF, R_VOF, L_pArc, R_pArc, L_pArc_vot, R_pArc_vot] = AFQ_FindVOF(...
+                                                                         wholebrainfgPath,...
+                                                                         L_arcuate,...
+                                                                         R_arcuate,...
+                                                                         fsROIdir,...
+                                                                         outdir,...
+                                                                         thresh,...
+                                                                         v_crit, ...
+                                                                         dt, ...
+                                                                         savefiles, ...
+                                                                         arcThresh, ...
+                                                                         parcThresh)
+
+
+end
 
 
 
 
-% TODO: add vof as an option
-% Obtain ROIs in .mat format
-% fsIn   = fullfile(fs_dir,'aparc+aseg.nii.gz'); 
-% outDir = ROIs_dir;
-% vtype  = 'mat';
-% refT1  = dt.files.t1;  
-% fs_roisFromAllLabels(fsIn,outDir,vtype,refT1)
-% Obtain VOFs and pArcs
-% wholebrainfgPath = fg ;
-% L_arcuate        = fgRead(tracts.cfpath(tracts.label=="Left_Arcuate"));
-% R_arcuate        = fgRead(tracts.cfpath(tracts.label=="Right_Arcuate"));
-% fsROIdir         = ROIs_dir;
-% outdir           = mrtrixDir;  % It shuold not write anything but just in case
-% thresh           = [.95 .6];  % Remove any fiber that doesn't go vertical (positive z) for thresh% of its  coordinates
-% v_crit           = 1.3;  % Fibers must travel this much farther vertically than other directions
-% savefiles        = false;  % We don't want the mat files, we will save them as tck
-% arcThresh        = 20;  % Default is to define VOF as fibers that have fewer than 20 nodes of overlap with the arcuate
-% parcThresh       =  1;  % Default is to consider fibers that are anterior to the posterior arcuate  as not part of the VOF
-% [L_VOF, R_VOF, L_pArc, R_pArc, L_pArc_vot, R_pArc_vot] = AFQ_FindVOF(...
-%                                                                      wholebrainfgPath,...
-%                                                                      L_arcuate,...
-%                                                                      R_arcuate,...
-%                                                                      fsROIdir,...
-%                                                                      outdir,...
-%                                                                      thresh,...
-%                                                                      v_crit, ...
-%                                                                      dt, ...
-%                                                                      savefiles, ...
-%                                                                      arcThresh, ...
-%                                                                      parcThresh)
+
+
+
+
+
+
 
 
 
