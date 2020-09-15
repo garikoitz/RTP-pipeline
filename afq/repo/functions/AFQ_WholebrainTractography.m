@@ -1,4 +1,4 @@
-function fg = AFQ_WholebrainTractography(dt, run_mode, afq))
+function fg = AFQ_WholebrainTractography(dt, run_mode, afq)
 % Perform whole brain deterministic tractography within a white matter mask
 %
 %      fg = AFQ_WholebrainTractography(dt, [run_mode], params)
