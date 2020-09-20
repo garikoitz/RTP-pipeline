@@ -1,4 +1,5 @@
-function [L_FG, R_FG, L_roi_1, L_roi_2, R_roi_1, R_roi_2] = AFQ_Segment_PostArcuate(dt, wholebrainFG, varargin)
+function [L_FG, R_FG, L_roi_1, L_roi_2, R_roi_1, R_roi_2] = ...
+                        AFQ_Segment_PostArcuate(dt, wholebrainFG, baseDir, varargin)
 % Define the posterior segment of the arcuate from a wholebrain fiber group
 %
 % [L_FG, R_FG, L_roi_1, L_roi_2, R_roi_1, R_roi_2] = AFQ_Segment_PostArcuate(dt, wholebrainFG, varargin)
@@ -18,71 +19,78 @@ elseif ischar(dt)
     dt = dtiLoadDt6(dt);
 end
 if ~exist('wholebrainFG','var') || isempty(wholebrainFG)
-    fprintf('Wholebrain fiber group was not supplied. Tracking fibers');
+    fprintf('[AFQ_Segment_PostArcuate] Wholebrain fiber group was not supplied. Tracking fibers');
     wholebrainFG = AFQ_WholebrainTractography(dt);
 elseif ischar(wholebrainFG) && exist(wholebrainFG,'file')
+    fprintf('[AFQ_Segment_PostArcuate] Reading Wholebrain fiber group');
     wholebrainFG = dtiReadFibers(wholebrainFG);
 elseif ischar(wholebrainFG) && ~exist(wholebrainFG,'file')
-    fprintf('Wholebrain fiber group was not found. Tracking fibers');
+    fprintf('[AFQ_Segment_PostArcuate] Wholebrain fiber group was not found. Tracking fibers');
     wholebrainFG = AFQ_WholebrainTractography(dt);
 end
 if ~exist('sub_dir','var') || isempty(sub_dir)
     sub_dir = fileparts(dt.dataFile);
 end
 
-if ~isempty(varargin)
-    % Check if inverse deformation was passed in so computations can be skipped
-    for ii = 1:length(varargin)
-        if isstruct(varargin{ii}) && isfield(varargin{ii},'deformX')...
-                && isfield(varargin{ii},'coordLUT')...
-                && isfield(varargin{ii},'inMat')
-            invDef= varargin{ii};
-        end
-    end
-    % Check if rois and fibers should be saved
-    for ii = 1:length(varargin)
-        if strcmpi('saveFiles',varargin{ii}) && length(varargin) > ii
-            saveFiles = varargin{ii+1};
-        end
-    end
-end
-
-% Save figures by default
-if ~exist('saveFiles','var') || isempty(saveFiles)
-    saveFiles = 1;
-end
+% if ~isempty(varargin)
+%     % Check if inverse deformation was passed in so computations can be skipped
+%     for ii = 1:length(varargin)
+%         if isstruct(varargin{ii}) && isfield(varargin{ii},'deformX')...
+%                 && isfield(varargin{ii},'coordLUT')...
+%                 && isfield(varargin{ii},'inMat')
+%             invDef= varargin{ii};
+%         end
+%     end
+%     % Check if rois and fibers should be saved
+%     for ii = 1:length(varargin)
+%         if strcmpi('saveFiles',varargin{ii}) && length(varargin) > ii
+%             saveFiles = varargin{ii+1};
+%         end
+%     end
+% end
+% 
+% % Save figures by default
+% if ~exist('saveFiles','var') || isempty(saveFiles)
+%     saveFiles = 1;
+% end
 
 %% Create ROIs and segment the posterior segment of the arcuate
 % Path to the templates directory
-tdir = fullfile(fileparts(which('mrDiffusion.m')), 'templates');
-template = fullfile(tdir,'MNI_EPI.nii.gz');
+% tdir = fullfile(fileparts(which('mrDiffusion.m')), 'templates');
+% template = fullfile(tdir,'MNI_EPI.nii.gz');
+% 
+% % Path to the VOF ROIs in MNI space
+% AFQbase = AFQ_directories;
+% % L_roi_2 = fullfile(AFQbase,'templates', 'L_Arcuate_PostSegment.nii.gz');
+% % R_roi_2 = fullfile(AFQbase,'templates', 'R_Arcuate_PostSegment.nii.gz');
+ROIsdir = fullfile(baseDir,'fs','ROIs');
+L_roi_2 = fullfile(ROIsdir,'L_Parietal.nii.gz');
+R_roi_2 = fullfile(ROIsdir,'R_Parietal.nii.gz');
+% % L_roi_2 = fullfile(AFQbase,'templates', 'L_LateralParietal.nii.gz');
+% % R_roi_2 = fullfile(AFQbase,'templates', 'R_LateralParietal.nii.gz');
+% 
+% % Compute spatial normalization
+% if ~exist('invDef','var') || isempty(invDef)
+%     [sn, Vtemplate, invDef] = mrAnatComputeSpmSpatialNorm(dt.b0, dt.xformToAcpc, template);
+% end
+% 
+% % Load up template ROIs in MNI space and transform them to the subjects
+% % native space.  dtiCreateRoiFromMniNifti also saves the ROIs
+% [~, ~, L_roi_2]=dtiCreateRoiFromMniNifti(dt.dataFile, L_roi_2, invDef, 1);
+% [~, ~, R_roi_2]=dtiCreateRoiFromMniNifti(dt.dataFile, R_roi_2, invDef, 1);
 
-% Path to the VOF ROIs in MNI space
-AFQbase = AFQ_directories;
-% L_roi_2 = fullfile(AFQbase,'templates', 'L_Arcuate_PostSegment.nii.gz');
-% R_roi_2 = fullfile(AFQbase,'templates', 'R_Arcuate_PostSegment.nii.gz');
-L_roi_2 = fullfile(AFQbase,'templates', 'L_Parietal.nii.gz');
-R_roi_2 = fullfile(AFQbase,'templates', 'R_Parietal.nii.gz');
-% L_roi_2 = fullfile(AFQbase,'templates', 'L_LateralParietal.nii.gz');
-% R_roi_2 = fullfile(AFQbase,'templates', 'R_LateralParietal.nii.gz');
-
-% Compute spatial normalization
-if ~exist('invDef','var') || isempty(invDef)
-    [sn, Vtemplate, invDef] = mrAnatComputeSpmSpatialNorm(dt.b0, dt.xformToAcpc, template);
-end
-
-% Load up template ROIs in MNI space and transform them to the subjects
-% native space.  dtiCreateRoiFromMniNifti also saves the ROIs
-[~, ~, L_roi_2]=dtiCreateRoiFromMniNifti(dt.dataFile, L_roi_2, invDef, 1);
-[~, ~, R_roi_2]=dtiCreateRoiFromMniNifti(dt.dataFile, R_roi_2, invDef, 1);
-% Name the ROIs
-L_roi_2.name = 'L_Parietal';
-R_roi_2.name = 'R_Parietal';
+L_roi_2 = dtiImportRoiFromNifti(char(L_roi_2));
+R_roi_2 = dtiImportRoiFromNifti(char(R_roi_2));
 
 % Load up predefined ROIs for the Arcuate fasciculus. These are computed in
 % AFQ_SegmentFiberGroups
-[L_roi_not, L_roi_1] = AFQ_LoadROIs(19,sub_dir);
-[R_roi_not, R_roi_1] = AFQ_LoadROIs(20,sub_dir);
+% [L_roi_not, L_roi_1] = AFQ_LoadROIs(19,sub_dir);
+% [R_roi_not, R_roi_1] = AFQ_LoadROIs(20,sub_dir);
+L_roi_not = dtiImportRoiFromNifti(fullfile(ROIsdir,'SLF_roi1_L.nii.gz'));
+R_roi_not = dtiImportRoiFromNifti(fullfile(ROIsdir,'SLF_roi1_R.nii.gz'));
+L_roi_1 = dtiImportRoiFromNifti(fullfile(ROIsdir,'SLFt_roi2_L.nii.gz'));
+R_roi_1 = dtiImportRoiFromNifti(fullfile(ROIsdir,'SLFt_roi2_R.nii.gz'));
+
 
 % To eliminate fibers that head too far anterior we will create a full
 % plane at the y coordinate of the anterior slf roi (around the central
@@ -143,19 +151,19 @@ L_FG.name = 'L_Arcuate_Posterior';
 R_FG.name = 'R_Arcuate_Posterior';
 
 % Save the segmented fiber groups and ROIs
-if saveFiles == 1
-    dtiWriteFiberGroup(L_FG,fullfile(sub_dir,'fibers',L_FG.name));
-    dtiWriteFiberGroup(R_FG,fullfile(sub_dir,'fibers',R_FG.name));
-    dtiWriteRoi(L_roi_2,fullfile(sub_dir,'ROIs',L_roi_2.name));
-    dtiWriteRoi(R_roi_2,fullfile(sub_dir,'ROIs',R_roi_2.name));
-end
+% if saveFiles == 1
+%     dtiWriteFiberGroup(L_FG,fullfile(sub_dir,'fibers',L_FG.name));
+%     dtiWriteFiberGroup(R_FG,fullfile(sub_dir,'fibers',R_FG.name));
+%     dtiWriteRoi(L_roi_2,fullfile(sub_dir,'ROIs',L_roi_2.name));
+%     dtiWriteRoi(R_roi_2,fullfile(sub_dir,'ROIs',R_roi_2.name));
+% end
 
 % Show the fiber group if desired
-if sum(strcmpi('showfibers', varargin)) > 0
-    AFQ_RenderFibers(L_FG,'color',[0 0 1],'numfibers',300);
-    b0 = readFileNifti(dt.files.b0);
-    AFQ_AddImageTo3dPlot(b0,[-30 0 0]);
-    AFQ_RenderRoi(L_roi_1);
-end
+% if sum(strcmpi('showfibers', varargin)) > 0
+%     AFQ_RenderFibers(L_FG,'color',[0 0 1],'numfibers',300);
+%     b0 = readFileNifti(dt.files.b0);
+%     AFQ_AddImageTo3dPlot(b0,[-30 0 0]);
+%     AFQ_RenderRoi(L_roi_1);
+% end
 
 return

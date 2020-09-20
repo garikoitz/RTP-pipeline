@@ -67,7 +67,7 @@ try
        stepSize = str2double(header{strmatch('step_size:',header)}(11:end));
     else
        stepSize = 1;
-       warning('Cloud not read stepSize from .tck file header, assuming stepSize=1');
+       % warning('Cloud not read stepSize from .tck file header, assuming stepSize=1');
     end
     
     % Tuck the whole header into an fg.params field.

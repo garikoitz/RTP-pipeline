@@ -1,4 +1,5 @@
-function [L_fg_vert, R_fg_vert] = AFQ_FindVerticalFibers(fgPath,fsROIdir,outdir,thresh, v_crit, minLength)
+function [L_fg_vert, R_fg_vert] = AFQ_FindVerticalFibers(...
+                                fgPath,fsROIdir,outdir,thresh, v_crit, minLength)
 % Find vertically oriented fibers projecting to VOT
 %
 % [L_fg_vert, R_fg_vert] = AFQ_FindVerticalFibers(fgPath,fsROIdir,outdir,thresh,v_crit, minLength)
@@ -70,13 +71,13 @@ if iscell(fgPath)
     end
 elseif ischar(fgPath)
     fg = fgRead(fgPath);
-elseif isstruct(fgPath);
+elseif isstruct(fgPath)
     fg = fgPath;
 end
 
 % Remove fibers that are less than 2cm
 L = cellfun(@(x) length(x),fg.fibers);
-fg.fibers = fg.fibers(L>minLength);
+rfg.fibers = fg.fibers(L>minLength);
 
 % Remove fibers that pass the anterior boundary
 ac = cellfun(@(x) max(x(2,:)),fg.fibers);
@@ -102,6 +103,7 @@ R_roi_all.coords = unique(floor(R_roi_all.coords),'rows');
 %% Find all vertical fibers projecting to VOT
 
 % Intersect fibers with ROI
+% dtiIntersectFibersWithRoi(handles, options, minDist, roi, fg)
 L_fg = dtiIntersectFibersWithRoi([],{'and' 'endpoints'},4,L_roi_all,fg);
 R_fg = dtiIntersectFibersWithRoi([],{'and' 'endpoints'},4,R_roi_all,fg);
 

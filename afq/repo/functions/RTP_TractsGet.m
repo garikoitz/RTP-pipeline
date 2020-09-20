@@ -1,4 +1,4 @@
-function [fg_classified,fg_clean,fg,fg_C2ROI]=RTP_TractsGet(dt6File,afq) 
+function [fg_classified,fg_clean,fg,fg_C2ROI,afq]=RTP_TractsGet(dt6File,afq) 
 % Categorizes each fiber in a group into one of the 20 tracts defined in
 % the Mori white matter atlas. 
 %
@@ -159,22 +159,26 @@ end
 
 % Start simple, with the existing tracts that we only want to do the tckedit
 % CREATE NAME
-afq.tracts.fname     = strcat(afq.tracts.slabel,".tck");
-afq.tracts.fnameDir1 = strcat(afq.tracts.slabel,"_Dir1.tck");
-afq.tracts.fnameDir2 = strcat(afq.tracts.slabel,"_Dir2.tck");
-afq.tracts.cfname    = strcat(afq.tracts.slabel,"_clean.tck");
-afq.tracts.c2roiname = strcat(afq.tracts.slabel,"_clean_C2ROI.tck");
-afq.tracts.cfname_SF = strcat(afq.tracts.slabel,"_clean_SF.tck");
-afq.tracts.c2roiname_SF = strcat(afq.tracts.slabel,"_clean_C2ROI_SF.tck");
+afq.tracts.fname          = strcat(afq.tracts.slabel,".tck");
+afq.tracts.fnameDir1      = strcat(afq.tracts.slabel,"_Dir1.tck");
+afq.tracts.fnameDir2      = strcat(afq.tracts.slabel,"_Dir2.tck");
+afq.tracts.cfname         = strcat(afq.tracts.slabel,"_clean.tck");
+afq.tracts.cfnamefabin    = strcat(afq.tracts.slabel,"_clean_fa_bin.nii.gz");
+afq.tracts.c2roiname      = strcat(afq.tracts.slabel,"_clean_C2ROI.tck");
+afq.tracts.cfname_SF      = strcat(afq.tracts.slabel,"_clean_SF.tck");
+afq.tracts.cfname_SFfabin = strcat(afq.tracts.slabel,"_clean_SF_fa_bin.nii.gz");
+afq.tracts.c2roiname_SF   = strcat(afq.tracts.slabel,"_clean_C2ROI_SF.tck");
 % CREATE PATH
-afq.tracts.fdir      = repmat(mrtrixDir,[height(afq.tracts),1]);
-afq.tracts.fpath     = strcat(afq.tracts.fdir,filesep,afq.tracts.fname);
-afq.tracts.fpathDir1 = strcat(afq.tracts.fdir,filesep,afq.tracts.fnameDir1);
-afq.tracts.fpathDir2 = strcat(afq.tracts.fdir,filesep,afq.tracts.fnameDir2);
-afq.tracts.cfpath    = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname);
-afq.tracts.c2roipath = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname);
-afq.tracts.cfpath_SF = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname_SF);
-afq.tracts.c2roipath_SF = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname_SF);
+afq.tracts.fdir        = repmat(mrtrixDir,[height(afq.tracts),1]);
+afq.tracts.fpath       = strcat(afq.tracts.fdir,filesep,afq.tracts.fname);
+afq.tracts.fpathDir1   = strcat(afq.tracts.fdir,filesep,afq.tracts.fnameDir1);
+afq.tracts.fpathDir2   = strcat(afq.tracts.fdir,filesep,afq.tracts.fnameDir2);
+afq.tracts.cfpath      = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname);
+afq.tracts.cfpathfabin = strcat(afq.tracts.fdir,filesep,afq.tracts.cfnamefabin);
+afq.tracts.c2roipath   = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname);
+afq.tracts.cfpath_SF   = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname_SF);
+afq.tracts.cfpath_SF_fabin = strcat(afq.tracts.fdir,filesep,afq.tracts.cfname_SFfabin);
+afq.tracts.c2roipath_SF    = strcat(afq.tracts.fdir,filesep,afq.tracts.c2roiname_SF);
 % CREATE OTHERS
 afq.tracts.nfibers   = zeros(height(afq.tracts),1);
 afq.tracts.cnfibers  = zeros(height(afq.tracts),1);
@@ -336,7 +340,7 @@ for nt=1:height(tracts)
             
             end
         end
-    
+        
     
         
 
@@ -370,7 +374,7 @@ for nt=1:height(tracts)
         ts.nfibers = size(tract.fibers,1);
     
         % If more than 10 fibers clean it, otherwise copy it as it is
-        if ts.nfibers>10
+        if size(tract.fibers,1) > 0
            clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
     	else
     	   clean_tract = tract;
@@ -396,7 +400,7 @@ for nt=1:height(tracts)
 		roi2mat=dtiImportRoiFromNifti(char(roi2));
         if nt==1
             % Check for empty fibers
-            if ts.nfibers>0
+            if size(clean_tract.fibers,1) > 0
                 fg_C2ROI=dtiClipFiberGroupToROIs(fg_clean,roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI, ts.c2roipath,'tck');
@@ -418,7 +422,7 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF = fg_clean;
             end
         else
-            if ts.nfibers>0
+            if size(clean_tract.fibers,1) > 0
                 fg_C2ROI(nt)=dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
@@ -440,10 +444,31 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF(nt) = fg_clean(nt);
             end
         end
-        if ts.nfibers>0
+        if size(clean_tract.fibers,1) > 0
             fileattrib(ts.c2roipath, '+w +x') % make it readable and writeable
             fileattrib(ts.cfpath_SF, '+w +x') % make it readable and writeable
             fileattrib(ts.c2roipath_SF, '+w +x') % make it readable and writeable
+            
+            %% To get intersection of fibers and superfibers with greymatter
+            % It will be done in FS
+            % Here create the binary maps of the tracks, so that we can do vol2surf later on
+            cmd = ['tckmap -force -quiet -template ' ...
+                   fullfile(baseDir,'t1.nii.gz ') ...
+                   '-contrast scalar_map -image ' ...
+                   fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath) ' ' ...
+                   '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpathfabin)];
+            cmdr = system(cmd)
+            fileattrib(ts.cfpathfabin, '+w +x') % make it readable and writeable
+
+            % Now the SF
+            cmd = ['tckmap -force -quiet -template ' ...
+                   fullfile(baseDir,'t1.nii.gz ') ...
+                   '-contrast scalar_map -image ' ...
+                   fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath_SF) ' ' ...
+                   '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpath_SF_fabin)];
+            cmdr = system(cmd)
+            fileattrib(ts.cfpath_SF_fabin, '+w +x') % make it readable and writeable
+
         end
 
 
@@ -464,14 +489,67 @@ end
 % We need to calculate VOF and PAF
 % TODO: add option in config file
 % It has some requirements, test them first. 
-getVOF = false;
+
 % Check if wbt was ordered and Arcuate Fasciculus as well
+ROIsdir = fullfile(baseDir,'fs','ROIs');
+
 if sum(afq.tracts.wbt) > 0 && ...
-                ismember("LAF",afq.tracts.slabel)   && ...
-                ismember("RAF",afq.tracts.slabel)
+                ismember("LAF",afq.tracts.slabel) && ...
+                ismember("RAF",afq.tracts.slabel) && ...
+                isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')) && ...
+                isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')) && ...
+                isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz'))  && ...
+                isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz'))
     getVOF = true;
     warning('[RTP_TractsGet] Trying to get VOF and pARC (it will an option in the future).');
+    if (isfile(fullfile(mrtrixDir,'L_VOF_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'L_VOF_clean_SF.tck')) && ...
+        isfile(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean_SF.tck')) && ...
+        isfile(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean_SF.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_VOF_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_Arcuate_Posterior_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_posteriorArcuate_vot_clean.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_VOF_clean_SF.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_Arcuate_Posterior_clean_SF.tck')) && ...
+        isfile(fullfile(mrtrixDir,'R_posteriorArcuate_vot_clean_SF.tck')))
+    
+        warning('[RTP_TractsGet] They already exist, will not recalculate');
+        
+        % Read and add them to the structures
+        % Read the tracts, we want to have the same fg struct as before
+        fg_clean(nt+1) = fgRead(fullfile(mrtrixDir,'L_VOF_clean.tck'));
+        fg_clean(nt+2) = fgRead(fullfile(mrtrixDir,'R_VOF_clean.tck'));
+        fg_clean(nt+3) = fgRead(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean.tck'));
+        fg_clean(nt+4) = fgRead(fullfile(mrtrixDir,'R_Arcuate_Posterior_clean.tck'));
+        fg_clean(nt+5) = fgRead(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean.tck'));
+        fg_clean(nt+6) = fgRead(fullfile(mrtrixDir,'R_posteriorArcuate_vot_clean.tck'));
+        
+        fg_clean_SF(nt+1) = fgRead(fullfile(mrtrixDir,'L_VOF_clean_SF.tck'));
+        fg_clean_SF(nt+2) = fgRead(fullfile(mrtrixDir,'R_VOF_clean_SF.tck'));
+        fg_clean_SF(nt+3) = fgRead(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean_SF.tck'));
+        fg_clean_SF(nt+4) = fgRead(fullfile(mrtrixDir,'R_Arcuate_Posterior_clean_SF.tck'));
+        fg_clean_SF(nt+5) = fgRead(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean_SF.tck'));
+        fg_clean_SF(nt+6) = fgRead(fullfile(mrtrixDir,'R_posteriorArcuate_vot_clean_SF.tck'));
+        % Assign the clip2roi-s: they will be different
+        % for ii=[1,2,3,4,5,6]
+        %     fg_C2ROI(nt+ii)    = fg_clean(nt+ii);
+        %     fg_C2ROI_SF(nt+ii) = fg_clean_SF(nt+ii);
+        % end
+        % Flag to edit AFQ at the end
+        editAFQ = true;
+        getVOF  = false;
+    else
+        editAFQ = true;
+        getVOF  = true;
+    end
+else
+    warning('[RTP_TractsGet] Conditions not met to obtain vOF and pARC.');
+    editAFQ = false;
+    getVOF  = false;
 end
+
 % Get the id of the LAF and RAF, and check they are not empty
 if getVOF
     % Check ID
@@ -494,7 +572,6 @@ if getVOF
         warning('[RTP_TractsGet] Cannot find aparc+aseg.nii.gz, it will not segment VOF and pArc');
     end
 end
-
 if getVOF
     refT1  = dt.files.t1;  
     if ~isfile(refT1)
@@ -502,7 +579,6 @@ if getVOF
         warning('[RTP_TractsGet] Cannot find t1.nii.gz, it will not segment VOF and pArc');
     end
 end
-
 if getVOF
     % Obtain ROIs in .mat format
     outDir = ROIs_dir;
@@ -519,48 +595,117 @@ if getVOF
     savefiles        = false;      % We don't want the mat files, we will save them as tck
     arcThresh        = 20;  % Default is to define VOF as fibers that have fewer than 20 nodes of overlap with the arcuate
     parcThresh       =  1;  % Default is to consider fibers that are anterior to the posterior arcuate  as not part of the VOF
-    [L_VOF, R_VOF, L_pArc, R_pArc, L_pArc_vot, R_pArc_vot] = AFQ_FindVOF(...
-                                                                         wholebrainfgPath,...
-                                                                         L_arcuate,...
-                                                                         R_arcuate,...
-                                                                         fsROIdir,...
-                                                                         outdir,...
-                                                                         thresh,...
-                                                                         v_crit, ...
-                                                                         dt, ...
-                                                                         savefiles, ...
-                                                                         arcThresh, ...
-                                                                         parcThresh)
+    [L_VOF, R_VOF, L_pArc, R_pArc, ...
+     L_pArc_vot, R_pArc_vot] = AFQ_FindVOF(  wholebrainfgPath,...
+                                             L_arcuate,...
+                                             R_arcuate,...
+                                             fsROIdir,...
+                                             outdir,...
+                                             thresh,...
+                                             v_crit, ...
+                                             dt, ...
+                                             savefiles, ...
+                                             arcThresh, ...
+                                             parcThresh, ...
+                                             baseDir);
+end
+if getVOF
+    % Do all the steps as we did to the other fibers. 
+    % 1st: flip fibers so that each fiber in a fiber group passes through roi1 before roi2
+    % IF necessary do it inside the funcion, I think not required for these tracts
+    % roi1mat = dtiImportRoiFromNifti(char(roi1));
+    % roi2mat = dtiImportRoiFromNifti(char(roi2));
+    % tract   = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
+               
+        
+    % Add VOF and pARC to the fg_clean and obtain the stats
+    fg_classified(nt+1) = L_VOF;
+    fg_classified(nt+2) = R_VOF;
+    fg_classified(nt+3) = rmfield(L_pArc,'coordspace');
+    fg_classified(nt+4) = rmfield(R_pArc,'coordspace');
+    fg_classified(nt+5) = L_pArc_vot;
+    fg_classified(nt+6) = R_pArc_vot;
+    
+    for ii=[1,2,3,4,5,6]
+        fpath  = fullfile(mrtrixDir,[fg_classified(nt+ii).name '.tck']);
+        AFQ_fgWrite(fg_classified(nt+ii),fpath,'tck');
+        fileattrib(fpath, '+w +x') 
+        qcname      = [fg_classified(nt+ii).name '_quasi_clean'];
+        qcfpath     = fullfile(mrtrixDir,[qcname '.tck']);
+        cname       = [fg_classified(nt+ii).name '_clean'];
+        cfpath      = fullfile(mrtrixDir,[cname '.tck']);
+        cfpathfabin = fullfile(mrtrixDir,[cname '_fa_bin.tck']);
+        
+        if size(fg_classified(nt+ii).fibers{1},2) > 0
+            fprintf('[RTP_TractsGet] VOF-pARC: Cleaning cerebellum\n')
+            % Crear cerebellum mask and truncate fibers 
+            cmd = ['mrcalc -quiet ' fullfile(ROIs_dir,'Left-Cerebellum-Cortex.nii.gz ') ...
+                   fullfile(ROIs_dir,'Left-Cerebellum-White-Matter.nii.gz ') ...
+                   '-add - | mrcalc -quiet - ' ...
+                   fullfile(ROIs_dir,'Right-Cerebellum-Cortex.nii.gz ') ...
+                   '-add - | mrcalc -quiet - ' ...
+                   fullfile(ROIs_dir,'Right-Cerebellum-White-Matter.nii.gz ') ...
+                   '-add - | mrcalc -quiet - 0.2 -lt - | ' ...
+                   'tckedit -force -quiet -mask - ' fpath ' ' qcfpath]; 
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            % Clean small fibers less than 2cm: it fails if done in one step
+            % And it fails using -force with the same name...
+            cmd = ['tckedit -force -quiet -minlength 10 ' qcfpath ' ' cfpath];
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(cfpath, '+w +x')
+            delete(qcfpath);
+            
+            % Write it in nifti form
+            cmd = ['tckmap -force -quiet -template ' ...
+                   fullfile(baseDir,'t1.nii.gz ') ...
+                   '-contrast scalar_map -image ' ...
+                   fullfile(mrtrixDir, 'dwi_fa.mif ') cfpath ' ' ...
+                   '- | mrcalc -force -quiet - 0.1 -gt ' cfpathfabin];
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(cfpathfabin, '+w +x') % make it readable and writeable
 
-
+            % Update fg_clean
+            fg_clean(nt+ii) = fgRead(cfpath);
+            fg_clean(nt+ii).name = cname;
+        end
+    end    
 end
 
+if getVOF
+    % Create and write the superfiber now that we've got the clean good ones
+    for ii=[1,2,3,4,5,6]
+        if size(fg_clean(nt+ii).fibers{1},2) > 0
+            fprintf('[RTP_TractsGet] VOF-pARC: obtaining SF. C2ROI is the same as the non C2ROI one\n')
+            % fg_C2ROI(nt+ii)    = fg_clean(nt+ii);
+            fg_clean_SF(nt+ii) = fg_clean(nt+ii);
+            fg_clean_SF(nt+ii).name = [fg_clean_SF(nt+ii).name '_SF'];
+            SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF(nt+ii),[],100);
+            fg_clean_SF(nt+ii).fibers= SuperFiber.fibers;
+            % fg_C2ROI_SF(nt+ii) = fg_clean_SF(nt+ii);
+            % Write super fiber
+            cfpathSF = fullfile(mrtrixDir,[fg_clean_SF(nt+ii).name '.tck']);
+            cfpathSFfabin = fullfile(mrtrixDir,[fg_clean_SF(nt+ii).name '_fa_bin.nii.gz']);
+            AFQ_fgWrite(fg_clean_SF(nt+ii),cfpathSF,'tck');fileattrib(cfpathSF, '+w +x') 
+            fileattrib(cfpathSF, '+w +x') % make it readable and writeable
+            % Write it in nifti form
+            cmd = ['tckmap -force -quiet -template ' ...
+                   fullfile(baseDir,'t1.nii.gz ') ...
+                   '-contrast scalar_map -image ' ...
+                   fullfile(mrtrixDir, 'dwi_fa.mif ') cfpathSF ' ' ...
+                   '- | mrcalc -force -quiet - 0.1 -gt ' cfpathSFfabin];
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(cfpathSFfabin, '+w +x') % make it readable and writeable
 
+        else
+            fprintf('[RTP_TractsGet] Empty tract: No obtaining SF ...\n')
+            % fg_C2ROI(nt+ii)    = fg_clean(nt+ii);
+            fg_clean_SF(nt+ii) = fg_clean(nt+ii);
+            % fg_C2ROI_SF(nt+ii) = fg_clean(nt+ii);
+        end
+    end    
+end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+%% Rnf processing
 afq = rmfield(afq,'tracts');
 afq.tracts = tracts;
 

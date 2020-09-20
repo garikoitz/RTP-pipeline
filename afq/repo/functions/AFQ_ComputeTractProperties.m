@@ -145,8 +145,7 @@ for jj=1:numfg
             fprintf('\n Assuming that it is equivalent to %s',fgnames{jj});
         end
     else
-        fgnum = jj;
-        ts    = tracts(fgnum,:);
+        fgnum = jj;     
     end
     
     % clip the fiber group to the portion spanning between the two ROIs if
@@ -155,6 +154,7 @@ for jj=1:numfg
     %     [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir,tracts);
     % else
     if clip2rois==1
+        ts    = tracts(fgnum,:);
         [roi1, roi2] = AFQ_LoadROIs(fgnum,subDir,ts);
     else
         roi1=[]; roi2=[];
