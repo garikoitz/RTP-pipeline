@@ -37,3 +37,9 @@ system(cmd3);
 
 
 help polyxpoly
+
+surfindv = read_surf(fullfile(getenv('SUBJECTS_DIR'),'s0001','surf','lh.inflated'));
+SFindv   = read_mrtrix_tracks(fullfile(pipeOutdir,'RTP','mrtrix','LUF_clean_SF.tck'));
+SFindv   = SFindv.data{1};
+
+
