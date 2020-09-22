@@ -3,14 +3,23 @@ setenv('SUBJECTS_DIR','/share/wandell/users/glerma/TESTDATA/FS/17_CAMINO_6835_do
 % ln -s $FREESURFER_HOME/subjects/fsaverage $SUBJECTS_DIR/fsaverage
 
 
-pipeOutdir = '/share/wandell/users/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output';
+pipeOutdir = '/share/wandell/users/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output432c';
 subname  = 's0001';
 movname  = fullfile(pipeOutdir,'RTP','mrtrix','LUF_clean_SF_fa_bin.nii.gz'); 
 oname    = fullfile(pipeOutdir,'RTP','surf','LUF_clean_SF_fa_bin_projdist0.mgh'); 
 oname305 = fullfile(pipeOutdir,'RTP','surf','LUF_clean_SF_fa_bin_305_projdist0.mgh'); 
+
+
+movname  = fullfile(pipeOutdir,'RTP','mrtrix','LUF_clean_fa_bin.nii.gz'); 
+oname    = fullfile(pipeOutdir,'RTP','surf','LUF_clean_fa_bin_projdist-1.mgh'); 
+oname305 = fullfile(pipeOutdir,'RTP','surf','LUF_clean_fa_bin_305_projdist-1.mgh'); 
+
+
+
+
 cmd2 =  ['mri_vol2surf ' ...
        '--srcsubject '  subname  ' ' ...
-       '--projdist 0 ' ... % '--projfrac 0.5 ' ... %  
+       '--projdist -1 ' ... % '--projfrac 0.5 ' ... %  
        '--interp trilinear ' ...
        '--hemi lh ' ...
        '--regheader '  subname  ' ' ...

@@ -51,6 +51,14 @@ then
   exit 1
 fi
 
+
+# To make singularity run as a container as similar to Docker as possible we willrun it with the options 
+#  --cleanenv and --containall
+# it seems that we need to pass our home directory as well, otherwise it wont't work
+export MCR_CACHE_ROOT=${OUTPUT_DIR}
+
+
+
 # Make the directories
 #mkdir $WORK_DIR
 
