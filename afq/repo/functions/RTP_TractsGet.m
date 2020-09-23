@@ -457,7 +457,7 @@ for nt=1:height(tracts)
                    '-contrast scalar_map -image ' ...
                    fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath) ' ' ...
                    '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpathfabin)];
-            cmdr = system(cmd)
+            cmdr = AFQ_mrtrix_cmd(cmd)
             fileattrib(ts.cfpathfabin, '+w +x') % make it readable and writeable
 
             % Now the SF
@@ -466,7 +466,7 @@ for nt=1:height(tracts)
                    '-contrast scalar_map -image ' ...
                    fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath_SF) ' ' ...
                    '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpath_SF_fabin)];
-            cmdr = system(cmd)
+            cmdr = AFQ_mrtrix_cmd(cmd)
             fileattrib(ts.cfpath_SF_fabin, '+w +x') % make it readable and writeable
 
         end
@@ -545,7 +545,14 @@ if sum(afq.tracts.wbt) > 0 && ...
         getVOF  = true;
     end
 else
-    warning('[RTP_TractsGet] Conditions not met to obtain vOF and pARC.');
+    warning('\n[RTP_TractsGet] Conditions not met to obtain vOF and pARC.\n');
+    if ~sum(afq.tracts.wbt) > 0 ; disp('Failed: ');end
+    if ~ismember("LAF",afq.tracts.slabel) ; disp('Failed: LAF');end
+    if ~ismember("RAF",afq.tracts.slabel); disp('Failed: RAF');end
+    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')); disp('Failed: ');end
+    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')); disp('Failed: ');end
+    if ~isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz')); disp('Failed: ');end
+    if ~isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz')); disp('Failed: ');end
     editAFQ = false;
     getVOF  = false;
 end
