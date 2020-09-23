@@ -374,7 +374,7 @@ for nt=1:height(tracts)
         ts.nfibers = size(tract.fibers,1);
     
         % If more than 10 fibers clean it, otherwise copy it as it is
-        if size(tract.fibers,1) > 0
+        if size(tract.fibers,1) > 10
            clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
     	else
     	   clean_tract = tract;
@@ -400,7 +400,8 @@ for nt=1:height(tracts)
 		roi2mat=dtiImportRoiFromNifti(char(roi2));
         if nt==1
             % Check for empty fibers
-            if size(clean_tract.fibers,1) > 0
+            % if size(clean_tract.fibers,1) > 0
+            if size(clean_tract.fibers{1},2) > 0
                 fg_C2ROI=dtiClipFiberGroupToROIs(fg_clean,roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI, ts.c2roipath,'tck');
@@ -422,7 +423,8 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF = fg_clean;
             end
         else
-            if size(clean_tract.fibers,1) > 0
+            % if size(clean_tract.fibers,1) > 0
+            if size(clean_tract.fibers{1},2) > 0
                 fg_C2ROI(nt)=dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
@@ -444,7 +446,8 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF(nt) = fg_clean(nt);
             end
         end
-        if size(clean_tract.fibers,1) > 0
+        % if size(clean_tract.fibers,1) > 0
+        if size(clean_tract.fibers{1},2) > 0
             fileattrib(ts.c2roipath, '+w +x') % make it readable and writeable
             fileattrib(ts.cfpath_SF, '+w +x') % make it readable and writeable
             fileattrib(ts.c2roipath_SF, '+w +x') % make it readable and writeable
