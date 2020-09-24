@@ -342,16 +342,27 @@ for nt=1:height(tracts)
         end
         
     
-        
+        % In some systems fails when reading empty fibers. Check this first:
+        [~,result]=AFQ_mrtrix_cmd(['tckinfo ' ts.fpath '  -count -quiet']);
+        if strcmp(result(end-2:end-1),' 0') 
+            tckIsEmpty = true;
+        else
+            tckIsEmpty = false;
+        end
+
 
         % Read the tract, we want to have the same fg struct as before
-        if isfile(ts.fpath)
+        if isfile(ts.fpath) || ~tckIsEmpty
             tract = fgRead(ts.fpath);
         else
             if nt==1
-                error('it was not possible to even get the first tract, check options')
+                error('[RTP_TractsGet] It was not possible to even get the first tract or it zero, check options')
             else
-                warning('%s could not be tracked',ts.fpath)
+                if tckIsEmpty
+                    warning('[RTP_TractsGet] %s could not be tracked (there is a file, but 0 files were found)',ts.fpath);
+                else
+                    warning('[RTP_TractsGet] %s could not be tracked (no file)',ts.fpath);
+                end
                 tract        = fg_classified(1);
                 [~, n, ~]    = fileparts(ts.fpath);
                 tract.name   = n;
@@ -361,10 +372,11 @@ for nt=1:height(tracts)
         
         % Flip fibers so that each fiber in a fiber group passes through roi1
         % before roi2
-        roi1mat = dtiImportRoiFromNifti(char(roi1));
-		roi2mat = dtiImportRoiFromNifti(char(roi2));
-        tract   = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
-               
+        if ~tckIsEmpty
+            roi1mat = dtiImportRoiFromNifti(char(roi1));
+            roi2mat = dtiImportRoiFromNifti(char(roi2));
+            tract   = AFQ_ReorientFibers(tract,roi1mat,roi2mat);
+        end       
         
         
         if nt==1; fg_classified=tract;
