@@ -13,7 +13,7 @@
         "track_faFodThresh": 0.05,
         "life_discretization": 360,
         "life_num_iterations": 10,
-        "life_runLife": true,
+        "life_runLife": false,
         "life_saveOutput": false,
         "life_test": false,
         "life_writePDB": false,

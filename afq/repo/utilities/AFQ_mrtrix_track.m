@@ -120,16 +120,18 @@ end
 optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
 
 % Depending on the algo, the input files are different
-
+siftNfibs = 500000;
 switch lower(algo)
     case {'sd_stream','ifod1','ifod2'}
         input_file = files.wmCsd;
+        numFibs = siftNfibs;
     case {'tensor_det','tensor_prob'}
         if multishell
             input_file = char(join([files.dwiSS, "-grad " files.bSS]));
         else
             input_file = char(join([files.dwi, "-grad " files.b]));
         end
+        numFibs = ET_numberFibers;
     otherwise
         error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
 end
@@ -166,7 +168,6 @@ else
     disp('Running Ensemble Tractography with mrTrix3 and no ACT.');
     tck_file = fullfile(pathstr,strcat(strip_ext(files.csd), '_', algo, ...
                                       '-',num2str(nSeeds),'_ET.tck'));
-    siftNfibs = 500000;
     numconcatenate = [];
     for na=1:length(ET_angleValues)
         fgFileName_presift{na}=['ET_fibs-' num2str(ET_numberFibers) ...
@@ -193,15 +194,28 @@ else
         cmd_sift = ['tcksift -force ' ...
                     '-term_number ' num2str(siftNfibs) ' ' ...
                     fgFileNameWithDir_presift{na} ' ' ...
+                    input_file ' ' ...
                     fgFileNameWithDir{na}];
         % Run it, if the file is not there (this is for debugging)
         if ~exist(fgFileNameWithDir{na},'file')
             [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
-            [status,results] = AFQ_mrtrix_cmd(cmd_sift, bkgrnd, verbose,mrtrixVersion);
+            switch lower(algo)
+                case {'sd_stream','ifod1','ifod2'}
+                    [status,results] = AFQ_mrtrix_cmd(cmd_sift, bkgrnd, verbose,mrtrixVersion);
+                    numFibs = siftNfibs;
+                otherwise
+                    numFibs = ET_numberFibers;
+            end
         end
-        numconcatenate = [numconcatenate, siftNfibs];
+        numconcatenate = [numconcatenate, numFibs];
     end
-    fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
+    switch lower(algo)
+        case {'sd_stream','ifod1','ifod2'}
+            fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
+        otherwise
+            fg = et_concatenateconnectomes(fgFileNameWithDir_presift, tck_file, numconcatenate, 'tck'); 
+    end
+    
 end
 
 if life_runLife
