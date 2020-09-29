@@ -345,7 +345,7 @@ for nt=1:height(tracts)
         
     
         % In some systems fails when reading empty fibers. Check this first:
-        [~,result]=AFQ_mrtrix_cmd(['tckinfo ' ts.fpath '  -count -quiet']);
+        [~,result]=AFQ_mrtrix_cmd(['tckinfo ' char(ts.fpath) '  -count -quiet']);
         if strcmp(result(end-2:end-1),' 0') 
             tckIsEmpty = true;
         else
