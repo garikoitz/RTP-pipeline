@@ -267,11 +267,13 @@ for nt=1:height(tracts)
            % Select the tracts that go in to tckedit
            % I had a bug that .tck was added twice. It seems it is not
            % required. Do not risk it, check it and that's it
-           [pp,ff,ee] = fileparts(fg.name);
-           if strcmp(ee, '.tck')
-               tracks_in = fullfile(char(ts.fdir), fg.name);
-           else
-               tracks_in = fullfile(char(ts.fdir), [fg.name '.tck']);
+           tracks_in = fg.name;
+           [pp,ff,ee] = fileparts(tracks_in);
+           if isempty(ee)
+               tracks_in = [tracks_in '.tck'];
+           end
+           if isempty(pp)
+               tracks_in = fullfile(mrtrixDir, tracks_in);
            end
            
            cmd       = join(["tckedit -quiet ", ...

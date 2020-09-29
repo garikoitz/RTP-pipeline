@@ -211,9 +211,14 @@ else
     end
     switch lower(algo)
         case {'sd_stream','ifod1','ifod2'}
-            fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, numconcatenate, 'tck'); 
+            disp('[AFQ_mrtrix_track] Concatenate connectommes, CSD algo')
+            disp(['[AFQ_mrtrix_track] Saving to filename: ' tck_file '\n'])
+            fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, ...
+                                           numconcatenate, 'tck'); 
         otherwise
-            fg = et_concatenateconnectomes(fgFileNameWithDir_presift, tck_file, numconcatenate, 'tck'); 
+            disp('[AFQ_mrtrix_track] Concatenate connectommes, non-CSD algo')
+            fg = et_concatenateconnectomes(fgFileNameWithDir_presiftf, tck_file, ...
+                                            numconcatenate, 'tck'); 
     end
     
 end

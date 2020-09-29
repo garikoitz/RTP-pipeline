@@ -123,7 +123,7 @@ else
 
 
   # Get basename for RTP ouput zip
-  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` .mat)
+  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` RTP_ZIP  )
 
   # Rename and Compress RTP_DIR
   cd $OUTPUT_DIR
