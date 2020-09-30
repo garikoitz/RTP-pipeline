@@ -21,15 +21,17 @@
             "ET_angleValues": [
                 45.0,
                 45.0,
+                45.0,
                 25.0,
                 25.0,
                 25.0,
-                5.0,
-                5.0
+                10.0,
+                10.0
             ],
             "ET_maxlength": [
                 100.0,
                 150.0,
+                200.0,
                 100.0,
                 150.0,
                 200.0,
@@ -37,13 +39,16 @@
                 200.0
             ],
             "ET_minlength": 20,
-            "ET_numberFibers": 1000000,
+            "ET_numberFibers": 2000000,
             "ET_stepSizeMm": 999,
             "faFodThresh": 0.05,
             "faMaskThresh": 0.2,
+            "get_vofparc": true,
+            "sift_runSift": true,
+            "sift_nFibers": 500000,
+            "life_runLife": false,
             "life_discretization": 360,
             "life_num_iterations": 10,
-            "life_runLife": false,
             "life_saveOutput": false,
             "life_test": false,
             "life_writePDB": false,

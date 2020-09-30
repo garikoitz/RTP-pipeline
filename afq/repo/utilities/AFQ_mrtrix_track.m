@@ -11,6 +11,9 @@ function [status, results, fg, pathstr] = AFQ_mrtrix_track( files, ...
 multishell          = opts.track.multishell;
 useACT              = opts.track.mrtrix_useACT;
 faFodThresh         = opts.track.faFodThresh;
+% SIFT
+sift_runSift        = opts.track.sift_runSift; 
+sift_nFibers        = opts.track.sift_nFibers;
 % Life
 life_runLife        = opts.track.life_runLife  ; 
 life_discretization = opts.track.life_discretization;
@@ -65,9 +68,11 @@ if notDefined('clobber'),  clobber = false;end
 if notDefined('mrtrixVersion'),    mrtrixVersion = 3; end
 if notDefined('multishell'),  multishell = false;end
 if notDefined('useACT'),  useACT = false;end
-
+% SIFT
+if notDefined('sift_runSift'), sift_runSift = true; end
+if notDefined('sift_nFibers'), sift_nFibers = 500000; end
 % LiFE
-if notDefined('life_runLife'), life_runLife = true; end
+if notDefined('life_runLife'), life_runLife = false; end
 if notDefined('life_discretization'), life_discretization = 360; end
 if notDefined('life_num_iterations'), life_num_iterations = 100; end
 if notDefined('life_test'), life_test = false; end
@@ -120,11 +125,10 @@ end
 optionalStr = [faFodThreshStr ET_minlengthStr ET_stepSizeMmStr];
 
 % Depending on the algo, the input files are different
-siftNfibs = 500000;
 switch lower(algo)
     case {'sd_stream','ifod1','ifod2'}
         input_file = files.wmCsd;
-        numFibs = siftNfibs;
+        numFibs = sift_nFibers;
     case {'tensor_det','tensor_prob'}
         if multishell
             input_file = char(join([files.dwiSS, "-grad " files.bSS]));
@@ -132,6 +136,10 @@ switch lower(algo)
             input_file = char(join([files.dwi, "-grad " files.b]));
         end
         numFibs = ET_numberFibers;
+        if sift_runSift
+            warning('[AFQ_mrtrix_track] sift_runSift was true, but sift can only work on CSD, so it will be set to false')
+            sift_runSift = false;
+        end
     otherwise
         error('[RTP_TractsGet] %s not recognized, use: SD_STREAM,iFOD1,iFOD2,Tensor_Det,Tensor_Prob',ts.algorithm)
 end
@@ -170,18 +178,20 @@ else
                                       '-',num2str(nSeeds),'_ET.tck'));
     numconcatenate = [];
     for na=1:length(ET_angleValues)
-        fgFileName_presift{na}=['ET_fibs-' num2str(ET_numberFibers) ...
+        if sift_runSift
+            fgFileName_presift{na}=['ET_fibs-' num2str(ET_numberFibers) ...
                                 '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
                                 '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
                                 '.tck'];
-        fgFileNameWithDir_presift{na}=fullfile(fileparts(tck_file), fgFileName_presift{na});
-        fgFileName{na}=['ET_fibs-' num2str(ET_numberFibers) ...
-                                '_siftNfibs' num2str(siftNfibs) ...
+            fgFileNameWithDir_presift{na}=fullfile(fileparts(tck_file), ...
+                                fgFileName_presift{na});
+            fgFileName{na}=['ET_fibs-' num2str(ET_numberFibers) ...
+                                '_siftNfibs' num2str(sift_nFibers) ...
                                 '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
                                 '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
                                 '.tck'];
-        fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
-        cmd_str = ['tckgen -force ' ...
+            fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
+            cmd_str = ['tckgen -force ' ...
                     '-algo ' algo ...
                     optionalStr ...
                     '-seed_image ' roi ' ' ...
@@ -191,35 +201,42 @@ else
                     '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
                     input_file ' ' ...
                     fgFileNameWithDir_presift{na}];
-        cmd_sift = ['tcksift -force ' ...
-                    '-term_number ' num2str(siftNfibs) ' ' ...
+            cmd_sift = ['tcksift -force ' ...
+                    '-term_number ' num2str(sift_nFibers) ' ' ...
                     fgFileNameWithDir_presift{na} ' ' ...
                     input_file ' ' ...
                     fgFileNameWithDir{na}];
+        else
+            fgFileName{na}=['ET_fibs-' num2str(ET_numberFibers) ...
+                                '_angle' strrep(num2str(ET_angleValues(na)),'.','p') ...
+                                '_maxlen' strrep(num2str(ET_maxlength(na)),'.','p') ...
+                                '.tck'];
+            fgFileNameWithDir{na}=fullfile(fileparts(tck_file), fgFileName{na});
+            cmd_str = [ 'tckgen -force ' ...
+                        '-algo ' algo ...
+                        optionalStr ...
+                        '-seed_image ' roi ' ' ...
+                        '-mask ' mask ' ' ...
+                        '-angle ' num2str(ET_angleValues(na)) ' ' ...
+                        '-select ' num2str(ET_numberFibers) ' ' ...
+                        '-maxlength ' num2str(ET_maxlength(na)) ' ' ...
+                        input_file ' ' ...
+                        fgFileNameWithDir{na}];
+        end
+
         % Run it, if the file is not there (this is for debugging)
         if ~exist(fgFileNameWithDir{na},'file')
             [status,results] = AFQ_mrtrix_cmd(cmd_str, bkgrnd, verbose,mrtrixVersion);
-            switch lower(algo)
-                case {'sd_stream','ifod1','ifod2'}
-                    [status,results] = AFQ_mrtrix_cmd(cmd_sift, bkgrnd, verbose,mrtrixVersion);
-                    numFibs = siftNfibs;
-                otherwise
-                    numFibs = ET_numberFibers;
+            if sift_runSift
+                numFibs = sift_nFibers;
+                [status,results] = AFQ_mrtrix_cmd(cmd_sift, bkgrnd, verbose,mrtrixVersion);
+            else
+                numFibs = ET_numberFibers;
             end
         end
         numconcatenate = [numconcatenate, numFibs];
     end
-    switch lower(algo)
-        case {'sd_stream','ifod1','ifod2'}
-            disp('[AFQ_mrtrix_track] Concatenate connectommes, CSD algo')
-            disp(['[AFQ_mrtrix_track] Saving to filename: ' tck_file '\n'])
-            fg = et_concatenateconnectomes(fgFileNameWithDir, tck_file, ...
-                                           numconcatenate, 'tck'); 
-        otherwise
-            disp('[AFQ_mrtrix_track] Concatenate connectommes, non-CSD algo')
-            fg = et_concatenateconnectomes(fgFileNameWithDir_presiftf, tck_file, ...
-                                            numconcatenate, 'tck'); 
-    end
+    fg = et_concatenateconnectomes(fgFileNameWithDir,tck_file,numconcatenate,'tck');
     
 end
 

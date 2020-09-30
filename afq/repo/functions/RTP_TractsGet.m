@@ -509,16 +509,17 @@ end
 
 % Check if wbt was ordered and Arcuate Fasciculus as well
 ROIsdir = fullfile(baseDir,'fs','ROIs');
-
-if sum(afq.tracts.wbt) > 0 && ...
-                ismember("LAF",afq.tracts.slabel) && ...
-                ismember("RAF",afq.tracts.slabel) && ...
-                isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')) && ...
-                isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')) && ...
-                isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz'))  && ...
-                isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz'))
-    getVOF = true;
-    warning('[RTP_TractsGet] Trying to get VOF and pARC (it will an option in the future).');
+getVOF  = afq.params.track.get_vofparc;
+if  getVOF && ...
+    sum(afq.tracts.wbt) > 0 && ...
+    ismember("LAF",afq.tracts.slabel) && ...
+    ismember("RAF",afq.tracts.slabel) && ...
+    isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')) && ...
+    isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')) && ...
+    isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz'))  && ...
+    isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz'))
+    disp('[RTP_TractsGet] Trying to get VOF and pARC (it will an option in the future).');
+    % Check if they exist and so read them
     if (isfile(fullfile(mrtrixDir,'L_VOF_clean.tck')) && ...
         isfile(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean.tck')) && ...
         isfile(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean.tck')) && ...
@@ -549,11 +550,7 @@ if sum(afq.tracts.wbt) > 0 && ...
         fg_clean_SF(nt+4) = fgRead(fullfile(mrtrixDir,'R_Arcuate_Posterior_clean_SF.tck'));
         fg_clean_SF(nt+5) = fgRead(fullfile(mrtrixDir,'L_posteriorArcuate_vot_clean_SF.tck'));
         fg_clean_SF(nt+6) = fgRead(fullfile(mrtrixDir,'R_posteriorArcuate_vot_clean_SF.tck'));
-        % Assign the clip2roi-s: they will be different
-        % for ii=[1,2,3,4,5,6]
-        %     fg_C2ROI(nt+ii)    = fg_clean(nt+ii);
-        %     fg_C2ROI_SF(nt+ii) = fg_clean_SF(nt+ii);
-        % end
+        
         % Flag to edit AFQ at the end
         editAFQ = true;
         getVOF  = false;
@@ -562,7 +559,7 @@ if sum(afq.tracts.wbt) > 0 && ...
         getVOF  = true;
     end
 else
-    warning('\n[RTP_TractsGet] Conditions not met to obtain vOF and pARC.\n');
+    disp('\n[RTP_TractsGet] Conditions not met to obtain vOF and pARC.\n');
     if ~sum(afq.tracts.wbt) > 0 ; disp('Failed: ');end
     if ~ismember("LAF",afq.tracts.slabel) ; disp('Failed: LAF');end
     if ~ismember("RAF",afq.tracts.slabel); disp('Failed: RAF');end
@@ -578,8 +575,8 @@ end
 if getVOF
     % Check ID
     for ii=1:length(fg_clean)
-        if strcmp(fg_clean(ii).name,"LAF_clean"); LAFind = ii; end
-        if strcmp(fg_clean(ii).name,"RAF_clean"); RAFind = ii; end
+        if contains(fg_clean(ii).name,"LAF"); LAFind = ii; end
+        if contains(fg_clean(ii).name,"RAF"); RAFind = ii; end
     end
     % Check that the fiber is not empty, otherwise abort as well
     LAFnfibs = size(fg_clean(LAFind).fibers,1);
@@ -644,11 +641,12 @@ if getVOF
         
     % Add VOF and pARC to the fg_clean and obtain the stats
     fg_classified(nt+1) = L_VOF;
-    fg_classified(nt+2) = R_VOF;
-    fg_classified(nt+3) = rmfield(L_pArc,'coordspace');
-    fg_classified(nt+4) = rmfield(R_pArc,'coordspace');
-    fg_classified(nt+5) = L_pArc_vot;
-    fg_classified(nt+6) = R_pArc_vot;
+    firstFields         = fields(L_VOF);
+    fg_classified(nt+2) = sameFields(R_VOF,firstFields);
+    fg_classified(nt+3) = sameFields(L_pArc,firstFields);
+    fg_classified(nt+4) = sameFields(R_pArc,firstFields);
+    fg_classified(nt+5) = sameFields(L_pArc_vot,firstFields);
+    fg_classified(nt+6) = sameFields(R_pArc_vot,firstFields);
     
     for ii=[1,2,3,4,5,6]
         fpath  = fullfile(mrtrixDir,[fg_classified(nt+ii).name '.tck']);
@@ -658,7 +656,7 @@ if getVOF
         qcfpath     = fullfile(mrtrixDir,[qcname '.tck']);
         cname       = [fg_classified(nt+ii).name '_clean'];
         cfpath      = fullfile(mrtrixDir,[cname '.tck']);
-        cfpathfabin = fullfile(mrtrixDir,[cname '_fa_bin.tck']);
+        cfpathfabin = fullfile(mrtrixDir,[cname '_fa_bin.nii.gz']);
         
         if size(fg_classified(nt+ii).fibers{1},2) > 0
             fprintf('[RTP_TractsGet] VOF-pARC: Cleaning cerebellum\n')

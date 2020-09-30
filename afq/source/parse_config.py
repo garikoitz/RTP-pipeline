@@ -53,6 +53,11 @@ def parse_config(input_file,
     config['params']['track']['mrtrix_lmax']         = config['params']['mrtrix_lmax']
     config['params']['track']['mrTrixAlgo']          = config['params']['mrtrix_mrTrixAlgo']
 
+    config['params']['track']['get_vofparc']         = config['params']['get_vofparc']
+
+    config['params']['track']['sift_runSift']        = config['params']['sift_runSift']
+    config['params']['track']['sift_nFibers']        = config['params']['sift_nFibers']
+
     config['params']['track']['life_runLife']        = config['params']['life_runLife']
     config['params']['track']['life_discretization'] = config['params']['life_discretization']
     config['params']['track']['life_num_iterations'] = config['params']['life_num_iterations']
@@ -74,7 +79,12 @@ def parse_config(input_file,
     del config['params']['mrtrix_autolmax']
     del config['params']['mrtrix_lmax']
     del config['params']['mrtrix_mrTrixAlgo']
+
+    del config['params']['get_vofparc']
      
+    del config['params']['sift_runSift']
+    del config['params']['sift_nFibers']
+
     del config['params']['life_runLife']
     del config['params']['life_discretization']
     del config['params']['life_num_iterations']
