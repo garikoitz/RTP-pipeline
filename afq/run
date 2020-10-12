@@ -119,18 +119,21 @@ else
   # Copy some other files interesting for debugging
   cp $RTP_DIR/bin/*.nii.gz $OUTPUT_DIR
   cp $RTP_DIR/mrtrix/*wmCsd*mif $OUTPUT_DIR
+  cp $RTP_DIR/mrtrix/*.nii.gz $OUTPUT_DIR
   cp $RTP_DIR/afq*.mat $OUTPUT_DIR
 
 
   # Get basename for RTP ouput zip
-  RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq*.mat"` RTP_ZIP  )
+  # RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq_20*.mat"` RTP_ZIP  )
+  # RTP_NAME=$(`find $RTP_DIR/ -type f -name "afq_20*.mat"` RTP_ZIP  )
+  RTP_NAME="RTP_PIPELINE_ALL_OUTPUT"
 
   # Rename and Compress RTP_DIR
   cd $OUTPUT_DIR
   mv RTP $RTP_NAME
   chmod -R 777 $OUTPUT_DIR
   echo -e "$CONTAINER  compressing outputs..."
-  zip -r RTP_Output_$RTP_NAME.zip $RTP_NAME && rm -rf $RTP_NAME
+  zip -r $RTP_NAME.zip $RTP_NAME && rm -rf $RTP_NAME
 
   # Set permissions for outputs (prevent root only r/w)
   chmod -R 777 $OUTPUT_DIR
