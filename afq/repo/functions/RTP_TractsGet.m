@@ -493,8 +493,8 @@ for nt=1:height(tracts)
                    '-contrast scalar_map -image ' ...
                    fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath) ' ' ...
                    '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpathfabin)];
-            cmdr = AFQ_mrtrix_cmd(cmd)
-            fileattrib(ts.cfpathfabin, '+w +x') % make it readable and writeable
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(ts.cfpathfabin, '+w +x'); % make it readable and writeable
 
             % Now the SF
             cmd = ['tckmap -force -quiet -template ' ...
@@ -502,8 +502,8 @@ for nt=1:height(tracts)
                    '-contrast scalar_map -image ' ...
                    fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.cfpath_SF) ' ' ...
                    '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.cfpath_SF_fabin)];
-            cmdr = AFQ_mrtrix_cmd(cmd)
-            fileattrib(ts.cfpath_SF_fabin, '+w +x') % make it readable and writeable
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(ts.cfpath_SF_fabin, '+w +x'); % make it readable and writeable
             
             % Now the C2ROI
             cmd = ['tckmap -force -quiet -template ' ...
@@ -511,8 +511,8 @@ for nt=1:height(tracts)
                    '-contrast scalar_map -image ' ...
                    fullfile(mrtrixDir, 'dwi_fa.mif ') char(ts.c2roipath) ' ' ...
                    '- | mrcalc -force -quiet - 0.1 -gt ' char(ts.c2roipathfabin)];
-            cmdr = AFQ_mrtrix_cmd(cmd)
-            fileattrib(ts.c2roipathfabin, '+w +x') % make it readable and writeable
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(ts.c2roipathfabin, '+w +x'); % make it readable and writeable
             
             
             
@@ -528,8 +528,8 @@ for nt=1:height(tracts)
                    '-precise ' ...
                     char(ts.cfpath) ' ' ...
                     char(ts.cfpathfbcnt)];
-            cmdr = AFQ_mrtrix_cmd(cmd)
-            fileattrib(ts.cfpathfbcnt, '+w +x') % make it readable and writeable
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(ts.cfpathfbcnt, '+w +x'); % make it readable and writeable
             
             % Now the C2ROI
             cmd = ['tckmap -force -quiet -template ' ...
@@ -537,8 +537,8 @@ for nt=1:height(tracts)
                    '-precise ' ...
                    char(ts.c2roipath) ' ' ...
                    char(ts.c2roipathfbcnt)];
-            cmdr = AFQ_mrtrix_cmd(cmd)
-            fileattrib(ts.c2roipathfbcnt, '+w +x') % make it readable and writeable            
+            cmdr = AFQ_mrtrix_cmd(cmd);
+            fileattrib(ts.c2roipathfbcnte, '+w +x'); % make it readable and writeable            
             
             
             

@@ -359,7 +359,8 @@ end
 
 % Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
 % Create list of all ROIs
-checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3)];
+checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3); ...
+                  strcat(A.roi4,A.extroi4);strcat(A.roi5,A.extroi5);strcat(A.roi6,A.extroi6)];
 % If there is an AND, this means that there are two ROIs 
 % Create a new list with the individual ROIs to create, after checking the individuals are there
 createROInew = [];
@@ -466,7 +467,36 @@ for nl=1:height(A)
 				error('[RTP] ROI could not be created, this was the command: %s', cmd)
 			end
 		end
-	end
+    end
+	if ts.dilroi5>0 && ~strcmp(ts.roi5,"NO")
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi5,ts.extroi5)));
+		outroi = char(fullfile(J.params.roi_dir, ...
+                      strcat(ts.roi5,'_dil-',num2str(ts.dilroi5),ts.extroi5)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi5)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		if isfile(outroi)
+			disp('ROI exist, not recreating')
+		else
+			cmdr   = AFQ_mrtrix_cmd(cmd);
+			if cmdr ~= 0
+				error('[RTP] ROI could not be created, this was the command: %s', cmd)
+			end
+		end
+    end
+	if ts.dilroi6>0 && ~strcmp(ts.roi6,"NO")
+		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi6,ts.extroi6)));
+		outroi = char(fullfile(J.params.roi_dir, strcat(ts.roi6,'_dil-',num2str(ts.dilroi6),ts.extroi6)));
+		cmd    = ['maskfilter -quiet -force -npass ' num2str(ts.dilroi6)  ' ' inroi  ' dilate - | '...
+				  'mrthreshold -force -abs 0.5 - ' outroi];
+		if isfile(outroi)
+			disp('ROI exist, not recreating')
+		else
+			cmdr   = AFQ_mrtrix_cmd(cmd);
+			if cmdr ~= 0
+				error('[RTP] ROI could not be created, this was the command: %s', cmd)
+			end
+		end
+	end    
 end
 % FINISHED ROI CHECK AND CREATION
 
