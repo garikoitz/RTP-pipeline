@@ -538,7 +538,7 @@ for nt=1:height(tracts)
                    char(ts.c2roipath) ' ' ...
                    char(ts.c2roipathfbcnt)];
             cmdr = AFQ_mrtrix_cmd(cmd);
-            fileattrib(ts.c2roipathfbcnte, '+w +x'); % make it readable and writeable            
+            fileattrib(ts.c2roipathfbcnt, '+w +x'); % make it readable and writeable            
             
             
             
