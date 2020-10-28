@@ -5,8 +5,7 @@ function [fg_classified,fg_clean,fg,fg_C2ROI,afq]=RTP_TractsGet(dt6File,afq)
 %  [fg_classified, fg_unclassified, classification, fg] = ...
 %      AFQ_SegmentFiberGroups(dt6File, fg, [Atlas='MNI_JHU_tracts_prob.nii.gz'], ...
 %      [useRoiBasedApproach=true], [useInterhemisphericSplit=true], [antsInvWarp]);
-%
-%  Fibers are segmented in two steps. Fibers become candidates for a fiber
+%  Fibers are segmented in two steps. Fibers become candidates for a fiber 
 %  group if the pass through the 2 waypoint ROIs that define the
 %  tracjectory of the tract. Then each fiber is compared to a fiber
 %  proability map and high probability fibers are retained in the group.
@@ -616,10 +615,10 @@ else
     if ~sum(afq.tracts.wbt) > 0 ; disp('Failed: ');end
     if ~ismember("LAF",afq.tracts.slabel) ; disp('Failed: LAF');end
     if ~ismember("RAF",afq.tracts.slabel); disp('Failed: RAF');end
-    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')); disp('Failed: ');end
-    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')); disp('Failed: ');end
-    if ~isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz')); disp('Failed: ');end
-    if ~isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz')); disp('Failed: ');end
+    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_L.nii.gz')); disp('Failed: SLFt_roi2_L.nii.gz ');end
+    if ~isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')); disp('Failed: SLFt_roi2_R.nii.gz');end
+    if ~isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz')); disp('Failed: L_Parietal.nii.gz');end
+    if ~isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz')); disp('Failed: R_Parietal.nii.gz');end
     editAFQ = false;
     getVOF  = false;
 end

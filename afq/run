@@ -122,7 +122,8 @@ else
   cp $RTP_DIR/mrtrix/*wmCsd*mif $OUTPUT_DIR
   cp $RTP_DIR/mrtrix/*.nii.gz $OUTPUT_DIR
   cp $RTP_DIR/afq*.mat $OUTPUT_DIR
-
+  
+  zip -r $OUTPUT_DIR/fs.zip $RTP_DIR/fs
 
   # Get basename for RTP ouput zip
   # RTP_NAME=$(basename `find $RTP_DIR/ -type f -name "afq_20*.mat"` RTP_ZIP  )
@@ -135,6 +136,7 @@ else
   chmod -R 777 $OUTPUT_DIR
   echo -e "$CONTAINER  compressing outputs..."
   zip -r $RTP_NAME.zip $RTP_NAME 
+  
   # Clean the folders so that they dont go to FW results
   rm -rf $OUTPUT_DIR/$RTP_NAME
   rm -rf $OUTPUT_DIR/tmp
