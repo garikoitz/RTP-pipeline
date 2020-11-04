@@ -570,7 +570,7 @@ if  getVOF && ...
     isfile(fullfile(ROIsdir, 'SLFt_roi2_R.nii.gz')) && ...
     isfile(fullfile(ROIsdir, 'L_Parietal.nii.gz'))  && ...
     isfile(fullfile(ROIsdir, 'R_Parietal.nii.gz'))
-    disp('[RTP_TractsGet] Trying to get VOF and pARC (it will an option in the future).');
+    disp('[RTP_TractsGet] Trying to get VOF and pARC, checking if conditions are met.');
     % Check if they exist and so read them
     if (isfile(fullfile(mrtrixDir,'L_VOF_clean.tck')) && ...
         isfile(fullfile(mrtrixDir,'L_Arcuate_Posterior_clean.tck')) && ...
@@ -654,6 +654,7 @@ if getVOF
 end
 if getVOF
     % Obtain ROIs in .mat format
+    disp('[RTP_TractsGet] Obtaining ROIs in .mat format');
     outDir = ROIs_dir;
     vtype  = 'mat';
     fs_roisFromAllLabels(fsIn,outDir,vtype,refT1);
@@ -692,6 +693,7 @@ if getVOF
                
         
     % Add VOF and pARC to the fg_clean and obtain the stats
+    disp('[RTP_TractsGet]  Add VOF and pARC to fg_clean, adding sequentially to fiber number');
     fg_classified(nt+1) = L_VOF;
     firstFields         = fields(L_VOF);
     fg_classified(nt+2) = sameFields(R_VOF,firstFields);
@@ -701,6 +703,7 @@ if getVOF
     fg_classified(nt+6) = sameFields(R_pArc_vot,firstFields);
     
     for ii=[1,2,3,4,5,6]
+        disp(['[RTP_TractsGet] Fiber no ' num2str(nt) ' + ' num2str(ii)]);
         fpath  = fullfile(mrtrixDir,[fg_classified(nt+ii).name '.tck']);
         AFQ_fgWrite(fg_classified(nt+ii),fpath,'tck');
         fileattrib(fpath, '+w +x') 
@@ -711,7 +714,7 @@ if getVOF
         cfpathfabin = fullfile(mrtrixDir,[cname '_fa_bin.nii.gz']);
         
         if size(fg_classified(nt+ii).fibers{1},2) > 0
-            fprintf('[RTP_TractsGet] VOF-pARC: Cleaning cerebellum\n')
+            disp('[RTP_TractsGet] VOF-pARC: Cleaning cerebellum')
             % Crear cerebellum mask and truncate fibers 
             cmd = ['mrcalc -quiet ' fullfile(ROIs_dir,'Left-Cerebellum-Cortex.nii.gz ') ...
                    fullfile(ROIs_dir,'Left-Cerebellum-White-Matter.nii.gz ') ...

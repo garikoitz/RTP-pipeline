@@ -627,7 +627,7 @@ for nt=1:length(clean_tcks)
 	srctckname = fullfile(mrtrixdir, clean_tcks(nt).name);
 	dsttckname = fullfile(tck_dir  , clean_tcks(nt).name);
 	dstplyname = fullfile(tck_dir  , strrep(clean_tcks(nt).name,'tck','ply'));
-	copyfile(srctckname,dsttckname)
+	% copyfile(srctckname,dsttckname)
 	% Use the same step tc create the ply file in the vis folder. We wil convert them to obj with python
 	% TODO: make it optional
 	% cmd  = sprintf('tckconvert -force -dec %s %s', dsttckname, dstplyname);
