@@ -682,6 +682,12 @@ if getVOF
                                              arcThresh, ...
                                              parcThresh, ...
                                              baseDir);
+                                         
+    if (isempty(L_VOF) || isempty(R_VOF) || isempty(L_pArc) || ...
+        isempty(R_pArc) || isempty(L_pArc_vot) || isempty(R_pArc_vot))
+        warning('One of the vof or parcs was empty, cancelling the process')
+        getVOF=false;
+    end
 end
 if getVOF
     % Do all the steps as we did to the other fibers. 
@@ -713,7 +719,7 @@ if getVOF
         cfpath      = fullfile(mrtrixDir,[cname '.tck']);
         cfpathfabin = fullfile(mrtrixDir,[cname '_fa_bin.nii.gz']);
         
-        if size(fg_classified(nt+ii).fibers{1},2) > 0
+        if ~isempty(fg_classified(nt+ii).fibers)
             disp('[RTP_TractsGet] VOF-pARC: Cleaning cerebellum')
             % Crear cerebellum mask and truncate fibers 
             cmd = ['mrcalc -quiet ' fullfile(ROIs_dir,'Left-Cerebellum-Cortex.nii.gz ') ...
@@ -751,7 +757,7 @@ end
 if getVOF
     % Create and write the superfiber now that we've got the clean good ones
     for ii=[1,2,3,4,5,6]
-        if size(fg_clean(nt+ii).fibers{1},2) > 0
+        if ~isempty(fg_classified(nt+ii).fibers)
             fprintf('[RTP_TractsGet] VOF-pARC: obtaining SF. C2ROI is the same as the non C2ROI one\n')
             % fg_C2ROI(nt+ii)    = fg_clean(nt+ii);
             fg_clean_SF(nt+ii) = fg_clean(nt+ii);
