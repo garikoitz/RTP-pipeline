@@ -750,9 +750,13 @@ if getVOF
             % Update fg_clean
             fg_clean(nt+ii) = fgRead(cfpath);
             fg_clean(nt+ii).name = cname;
+        else
+            disp('[RTP_TractsGet] Fiber is empty')
+            fg_clean(nt+ii) = fg_classified(nt+ii);
         end
-    end    
-end
+   end
+end    
+
 
 if getVOF
     % Create and write the superfiber now that we've got the clean good ones

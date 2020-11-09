@@ -1,4 +1,4 @@
-function [afq afq_C2ROI] = AFQ_run(sub_dirs, sub_group, afq)
+function [afq, afq_C2ROI] = AFQ_run(sub_dirs, sub_group, afq)
 % function [afq patient_data control_data norms abn abnTracts afq_C2ROI] = AFQ_run(sub_dirs, sub_group, afq)
 % Run AFQ analysis on a set of subjects to generate Tract Profiles of white
 % matter properties.
@@ -258,185 +258,185 @@ if 0  % maybe make it optional in the future
 end
 
 if 0 % maintain old code here for reference until solving all the functionalities
-fiberRois = {R_VOF, R_pArc, R_pArc_vot, R_arcuate};
-for fr =1:length(fiberRois)
-    fg = fiberRois{fr};
-    segmentation = niftiRead(im);
-    fdImg = zeros([size(segmentation.data) length(fg)]);
-    % Extraido de AFQ_RenderFibersOnCortex
-    % Check if the segmentation is binary or is mrVista format
-    if length(unique(segmentation.data(:)))>2
-        segmentation.data = uint8(segmentation.data==3 | segmentation.data==4);
+    fiberRois = {R_VOF, R_pArc, R_pArc_vot, R_arcuate};
+    for fr =1:length(fiberRois)
+        fg = fiberRois{fr};
+        segmentation = niftiRead(im);
+        fdImg = zeros([size(segmentation.data) length(fg)]);
+        % Extraido de AFQ_RenderFibersOnCortex
+        % Check if the segmentation is binary or is mrVista format
+        if length(unique(segmentation.data(:)))>2
+            segmentation.data = uint8(segmentation.data==3 | segmentation.data==4);
+        end
+        for ii = 1:length(fg)
+            fdImg(:,:,:,ii) = smooth3(dtiComputeFiberDensityNoGUI(...
+                                      fg(ii), ... % Fibras en .mat
+                                      segmentation.qto_xyz, ... % matriz del segmentation.nii.gz
+                                      size(segmentation.data), ... % tamano en voxels
+                                      1, ... % = 1, Normalize to 1. =0, fiber count 
+                                      [],... % FibreGroupNum: si quieres elegir solo alguna fibra concreta
+                                      0), ...% endptFlag=1, solo usar fiber endpoints. LO CAMBIO!!
+                               'gaussian', ...
+                               5); 
+        end
+
+        % Tack on an extra volume that will mark voxels with no fibers
+        fdImg      = cat(4,zeros(size(fdImg(:,:,:,1)))+.000001,fdImg);
+        % Find the volume with the highest fiber density in each voxel
+        [~,fdMax]  = max(fdImg,[],4);
+        % clear fdImg; % Lo inicializo arriba con zeros a ver si arregla el
+        % parfor
+
+        % Zero out voxels with no fibers
+        fdMax      = fdMax-1;
+        % Make into a nifti volume
+        fdNii      = segmentation;
+        fdNii.data = fdMax;
+
+        % niftiWrite(fdNii, fdNii.fname)
+
+        % Render it
+        % [p, msh, lightH] =  AFQ_RenderCorticalSurface(segmentation, ...
+        %                         'overlay',fdNii, ...
+        %                         'boxfilter',1, ...
+        %                         'thresh',[1 20], ...
+        %                         'interp','nearest', ...
+        %                         'cmap',colormap);
+
+
+        % Al archivo anterior le he dicho que escriba el nifti con el overlap entre
+        % los tractos y la corteza, que esta dada por el archivo de aparc+aseg. 
+        % Prueba 1. visualizarlo a ver que tal se ve y ver si podre hacer overlay al
+        % espacio individual.
+        % Prueba 2. Podria crear ya los ROIs metidos un par de mm hacia dentro, o
+        % sea, estaran en volumen, y luego podria salvar los tractos en nifti tb y
+        % ver el overlap, luego inflar y buscar el overlap con el white matter...
+
+        % niftiRead-Write y MRIread-write hacen cosas diferentes e inservibles en
+        % freeview, aunque en mrview de mrtrix se vieran bien.
+
+        % fdNii.fname = [dmridir fsp fg.name '_overlayGM_vista.nii.gz'];
+        % niftiWrite(fdNii, fdNii.fname)
+
+        % No hace falta escribirlo en formato mrVista, ya que estos no se
+        % ven vien en freeview, solo se ven bien en mrview de mrtrix, pero
+        % los de MRIwrite si he conseguido que se vean igual tanto en uno
+        % como en otro.
+
+        % en fs ahora
+        segRead = MRIread([dmridir fsp 'segmentation.nii.gz']);
+        segRead.vol = permute(fdNii.data, [2 1 3]);  % mierdas de x,y en Matlab
+        MRIwrite(segRead, [dmridir fsp strrep(fg.name,' ','_') '_tracts.nii.gz']);
+        % MRIwrite(segRead, [dmridir fsp 'NORM_' fg.name '_tracts.nii.gz']);
+
+
+        % Hay que pensar si hago el paso a la superficie con todos los
+        % voxeles que pertenecen a los tractos, o solo me quedo con
+        % aquellos voxeles que coinciden con los ROI de interes y luego
+        % hago el paso a la superifice. >> He pasado todos los voxeles,
+        % luego con aparc podre elegir los voxeles que me interesen para
+        % los rois. Lo de los tractos tiene que ser bidireccional. 
+
+        %{
+        % Y ahora los convertimos a superficie usando fs
+        movname    = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts.nii.gz']);
+        oname      = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts.mgh']);
+        oname305   = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts305.mgh']);
+        % movname    = fullfile(dmridir, ['NORM_' fg.name '_tracts.nii.gz']);
+        % oname      = fullfile(dmridir, ['NORM_' fg.name '_tracts.mgh']);
+        % oname305   = fullfile(dmridir, ['NORM_' fg.name '_tracts305.mgh']);
+
+        % fshomecajal02 = '/usr/local/freesurfer';
+        % fsbincajal02 = '/usr/local/freesurfer/bin';
+
+        % setenv('FREESURFER_HOME', fshome);       
+        % Uso --projfrac -1 para meterlo un poco dentro del cortex, si no
+        % se ve mucho mas cuarteado. He probado con -2 y -3 pero casi no
+        % hay mejora. Al final el problema es que a los gyrus no llegan las
+        % fibras.
+        cmd2 =  [fsbin fsp 'mri_vol2surf ' ...
+                   '--srcsubject '  subname  ' ' ...
+                   '--projdist -1 ' ... % '--projfrac 0.5 ' ... %  
+                   '--interp trilinear ' ...
+                   '--hemi rh ' ...
+                   '--regheader '  subname  ' ' ...
+                   '--mov '  movname  ' ' ...
+                   '--o '  oname ...
+                   ];
+        cmd3 = [fsbin fsp 'mri_surf2surf ' ...
+                   '--srcsubject '  subname  ' ' ...
+                   '--srchemi rh ' ...
+                   '--srcsurfreg sphere.reg ' ...
+                   '--sval '  oname   ' ' ...
+                   '--trgsubject fsaverage ' ...
+                   '--trghemi rh ' ...
+                   '--trgsurfreg sphere.reg ' ...
+                   '--tval '  oname305  ' ' ...
+                   '--sfmt ' ...
+                   '--curv ' ...
+                   '--noreshape ' ...
+                   '--no-cortex ' ...
+                   ];
+
+        system(cmd2);
+        system(cmd3);
+        %}
+    % 
+    % 
+    % %         cortex = fullfile(dmridir, 'segmentation.nii.gz');
+    % %         % overlay = fullfile(AFQdata,'mesh','Left_Arcuate_Endpoints.nii.gz');
+    % %         thresh = .01; % Threshold for the overlay image
+    % %         crange = [.01 .8]; % Color range of the overlay image
+    % %         % Render the cortical surface colored by the arcuate endpoint density 
+    % %         [p, msh, lightH] = AFQ_RenderCorticalSurface(cortex, 'overlay' , overlay, 'crange', crange, 'thresh', thresh)
+    % % 
+    % %         msh = AFQ_meshCreate(cortex, 'color', [.8 .7 .6])
+    % %         AFQ_RenderCorticalSurface(msh)
+    % % 
+    % 
+    % 
+    % 
+    % % 
+    % %         %% Ahora voy a ir con la siguiente solucion en mrtrix para freesurfer
+    % %         % % If you use the read_mrtrix_tracks.m matlab function you can load
+    % %         % .tck files into a matlab structure. Then run a simple loop to keep 
+    % %         % the first and last coordinates of each streamline in the .data structure.
+    % %         % % The streamline coordinates should be in mm space which you can then 
+    % %         % match to freesurfer vertices as follows...
+    % %         % % Load a freesurfer surface (e.g. lh.white) into matlab using the 
+    % %         % read_surf.m function provided in the set of freesurfer matlab functions. 
+    % %         % The vertex_coords variable gives mm coordinates of each vertex. 
+    % %         % You can then find the Euclidean distance between an end point and the 
+    % %         % vertices to find the nearest vertex for a fiber termination.
+    % %         % % Freesurfer then has a bunch of matlab functions to write surface 
+    % %         % overlays or annotation files depending on your desired outcome
+    % %         % (e.g. save_mgh).
+    % %         fname = 'WordHighVsPhaseScrambledWords_Sphere4.tck';
+    % %         fname = 'WordHighVsFF_Sphere5.tck';
+    % % 
+    % % 
+    % %         data =  read_mrtrix_tracks(fullfile(dmridir, 'dti90trilin','mrtrix',fname));
+    % %         endPoints = zeros(2*length(data.data), 3);
+    % %         for ii =1:(2*length(data.data))
+    % %             tractNo = ceil(ii/2);
+    % %             if mod(ii,2)
+    % %                 endPoints(ii,:) = data.data{tractNo}(1,:);
+    % %             else
+    % %                 endPoints(ii,:) = data.data{tractNo}(end,:);
+    % %             end
+    % %         end
+    % %         WhiteSurf = read_surf(fullfile(fs_SUBJECTS_DIR,subname,'surf','lh.white'));
+    % % 
+    % %         % Find the index and coordinate of closest vertex
+    % %         vertexIndex = knnsearch(WhiteSurf, endPoints);
+    % %         vertexPoints = WhiteSurf(knnsearch(WhiteSurf, endPoints),:);
+    % % 
+    % %         % Write it
+    % %         ok = write_label(vertexIndex,[], [], ...
+    % %                      fullfile(dmridir, 'dti90trilin','mrtrix',[fname '.label']));
+    % 
+    % 
     end
-    for ii = 1:length(fg)
-        fdImg(:,:,:,ii) = smooth3(dtiComputeFiberDensityNoGUI(...
-                                  fg(ii), ... % Fibras en .mat
-                                  segmentation.qto_xyz, ... % matriz del segmentation.nii.gz
-                                  size(segmentation.data), ... % tamano en voxels
-                                  1, ... % = 1, Normalize to 1. =0, fiber count 
-                                  [],... % FibreGroupNum: si quieres elegir solo alguna fibra concreta
-                                  0), ...% endptFlag=1, solo usar fiber endpoints. LO CAMBIO!!
-                           'gaussian', ...
-                           5); 
-    end
-
-    % Tack on an extra volume that will mark voxels with no fibers
-    fdImg      = cat(4,zeros(size(fdImg(:,:,:,1)))+.000001,fdImg);
-    % Find the volume with the highest fiber density in each voxel
-    [~,fdMax]  = max(fdImg,[],4);
-    % clear fdImg; % Lo inicializo arriba con zeros a ver si arregla el
-    % parfor
-
-    % Zero out voxels with no fibers
-    fdMax      = fdMax-1;
-    % Make into a nifti volume
-    fdNii      = segmentation;
-    fdNii.data = fdMax;
-
-    % niftiWrite(fdNii, fdNii.fname)
-
-    % Render it
-    % [p, msh, lightH] =  AFQ_RenderCorticalSurface(segmentation, ...
-    %                         'overlay',fdNii, ...
-    %                         'boxfilter',1, ...
-    %                         'thresh',[1 20], ...
-    %                         'interp','nearest', ...
-    %                         'cmap',colormap);
-
-
-    % Al archivo anterior le he dicho que escriba el nifti con el overlap entre
-    % los tractos y la corteza, que esta dada por el archivo de aparc+aseg. 
-    % Prueba 1. visualizarlo a ver que tal se ve y ver si podre hacer overlay al
-    % espacio individual.
-    % Prueba 2. Podria crear ya los ROIs metidos un par de mm hacia dentro, o
-    % sea, estaran en volumen, y luego podria salvar los tractos en nifti tb y
-    % ver el overlap, luego inflar y buscar el overlap con el white matter...
-
-    % niftiRead-Write y MRIread-write hacen cosas diferentes e inservibles en
-    % freeview, aunque en mrview de mrtrix se vieran bien.
-
-    % fdNii.fname = [dmridir fsp fg.name '_overlayGM_vista.nii.gz'];
-    % niftiWrite(fdNii, fdNii.fname)
-
-    % No hace falta escribirlo en formato mrVista, ya que estos no se
-    % ven vien en freeview, solo se ven bien en mrview de mrtrix, pero
-    % los de MRIwrite si he conseguido que se vean igual tanto en uno
-    % como en otro.
-
-    % en fs ahora
-    segRead = MRIread([dmridir fsp 'segmentation.nii.gz']);
-    segRead.vol = permute(fdNii.data, [2 1 3]);  % mierdas de x,y en Matlab
-    MRIwrite(segRead, [dmridir fsp strrep(fg.name,' ','_') '_tracts.nii.gz']);
-    % MRIwrite(segRead, [dmridir fsp 'NORM_' fg.name '_tracts.nii.gz']);
-
-
-    % Hay que pensar si hago el paso a la superficie con todos los
-    % voxeles que pertenecen a los tractos, o solo me quedo con
-    % aquellos voxeles que coinciden con los ROI de interes y luego
-    % hago el paso a la superifice. >> He pasado todos los voxeles,
-    % luego con aparc podre elegir los voxeles que me interesen para
-    % los rois. Lo de los tractos tiene que ser bidireccional. 
-
-    %{
-    % Y ahora los convertimos a superficie usando fs
-    movname    = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts.nii.gz']);
-    oname      = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts.mgh']);
-    oname305   = fullfile(dmridir, [strrep(fg.name,' ','_') '_tracts305.mgh']);
-    % movname    = fullfile(dmridir, ['NORM_' fg.name '_tracts.nii.gz']);
-    % oname      = fullfile(dmridir, ['NORM_' fg.name '_tracts.mgh']);
-    % oname305   = fullfile(dmridir, ['NORM_' fg.name '_tracts305.mgh']);
-
-    % fshomecajal02 = '/usr/local/freesurfer';
-    % fsbincajal02 = '/usr/local/freesurfer/bin';
-
-    % setenv('FREESURFER_HOME', fshome);       
-    % Uso --projfrac -1 para meterlo un poco dentro del cortex, si no
-    % se ve mucho mas cuarteado. He probado con -2 y -3 pero casi no
-    % hay mejora. Al final el problema es que a los gyrus no llegan las
-    % fibras.
-    cmd2 =  [fsbin fsp 'mri_vol2surf ' ...
-               '--srcsubject '  subname  ' ' ...
-               '--projdist -1 ' ... % '--projfrac 0.5 ' ... %  
-               '--interp trilinear ' ...
-               '--hemi rh ' ...
-               '--regheader '  subname  ' ' ...
-               '--mov '  movname  ' ' ...
-               '--o '  oname ...
-               ];
-    cmd3 = [fsbin fsp 'mri_surf2surf ' ...
-               '--srcsubject '  subname  ' ' ...
-               '--srchemi rh ' ...
-               '--srcsurfreg sphere.reg ' ...
-               '--sval '  oname   ' ' ...
-               '--trgsubject fsaverage ' ...
-               '--trghemi rh ' ...
-               '--trgsurfreg sphere.reg ' ...
-               '--tval '  oname305  ' ' ...
-               '--sfmt ' ...
-               '--curv ' ...
-               '--noreshape ' ...
-               '--no-cortex ' ...
-               ];
-
-    system(cmd2);
-    system(cmd3);
-    %}
-% 
-% 
-% %         cortex = fullfile(dmridir, 'segmentation.nii.gz');
-% %         % overlay = fullfile(AFQdata,'mesh','Left_Arcuate_Endpoints.nii.gz');
-% %         thresh = .01; % Threshold for the overlay image
-% %         crange = [.01 .8]; % Color range of the overlay image
-% %         % Render the cortical surface colored by the arcuate endpoint density 
-% %         [p, msh, lightH] = AFQ_RenderCorticalSurface(cortex, 'overlay' , overlay, 'crange', crange, 'thresh', thresh)
-% % 
-% %         msh = AFQ_meshCreate(cortex, 'color', [.8 .7 .6])
-% %         AFQ_RenderCorticalSurface(msh)
-% % 
-% 
-% 
-% 
-% % 
-% %         %% Ahora voy a ir con la siguiente solucion en mrtrix para freesurfer
-% %         % % If you use the read_mrtrix_tracks.m matlab function you can load
-% %         % .tck files into a matlab structure. Then run a simple loop to keep 
-% %         % the first and last coordinates of each streamline in the .data structure.
-% %         % % The streamline coordinates should be in mm space which you can then 
-% %         % match to freesurfer vertices as follows...
-% %         % % Load a freesurfer surface (e.g. lh.white) into matlab using the 
-% %         % read_surf.m function provided in the set of freesurfer matlab functions. 
-% %         % The vertex_coords variable gives mm coordinates of each vertex. 
-% %         % You can then find the Euclidean distance between an end point and the 
-% %         % vertices to find the nearest vertex for a fiber termination.
-% %         % % Freesurfer then has a bunch of matlab functions to write surface 
-% %         % overlays or annotation files depending on your desired outcome
-% %         % (e.g. save_mgh).
-% %         fname = 'WordHighVsPhaseScrambledWords_Sphere4.tck';
-% %         fname = 'WordHighVsFF_Sphere5.tck';
-% % 
-% % 
-% %         data =  read_mrtrix_tracks(fullfile(dmridir, 'dti90trilin','mrtrix',fname));
-% %         endPoints = zeros(2*length(data.data), 3);
-% %         for ii =1:(2*length(data.data))
-% %             tractNo = ceil(ii/2);
-% %             if mod(ii,2)
-% %                 endPoints(ii,:) = data.data{tractNo}(1,:);
-% %             else
-% %                 endPoints(ii,:) = data.data{tractNo}(end,:);
-% %             end
-% %         end
-% %         WhiteSurf = read_surf(fullfile(fs_SUBJECTS_DIR,subname,'surf','lh.white'));
-% % 
-% %         % Find the index and coordinate of closest vertex
-% %         vertexIndex = knnsearch(WhiteSurf, endPoints);
-% %         vertexPoints = WhiteSurf(knnsearch(WhiteSurf, endPoints),:);
-% % 
-% %         % Write it
-% %         ok = write_label(vertexIndex,[], [], ...
-% %                      fullfile(dmridir, 'dti90trilin','mrtrix',[fname '.label']));
-% 
-% 
-end
 
 end
 
@@ -478,3 +478,4 @@ end
 clear fg fg_classified TractProfile
 % end  % Ends runsubs % It is always 1, remove it, assign ii=1;
 
+return;

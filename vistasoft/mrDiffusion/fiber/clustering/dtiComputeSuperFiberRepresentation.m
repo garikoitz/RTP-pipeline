@@ -102,7 +102,7 @@ SuperFiber.name=[fg.name '_SuperFiber'];
 %The number of fibers in the fiber group
 nfibers = size(fg.fibers, 1);
 % This should be the same numNodes we sent in above
-numNodes= size(fg.fibers{1}, 2);
+% numNodes= size(fg.fibers{1}, 2);
 
 % curves is the 3D representation of each node for each fiber.
 curves  = zeros(3, numNodes, nfibers);
