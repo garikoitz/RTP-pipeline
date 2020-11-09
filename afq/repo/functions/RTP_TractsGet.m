@@ -465,9 +465,18 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF(nt) = fg_C2ROI(nt);
                 % Change the fiber by the superfiber
                 SuperFiber = dtiComputeSuperFiberRepresentation(fg_clean_SF(nt),[],100);
-                fg_clean_SF(nt).fibers= SuperFiber.fibers;
+                if isfield(SuperFiber,'fibers')
+                    fg_clean_SF(nt).fibers= SuperFiber.fibers;
+                else
+                    fg_C2ROI_SF(nt) = fg_clean(nt);
+                end
+                                
                 SuperFiber = dtiComputeSuperFiberRepresentation(fg_C2ROI_SF(nt),[],100);
-                fg_C2ROI_SF(nt).fibers= SuperFiber.fibers;
+                if isfield(SuperFiber,'fibers')
+                    fg_C2ROI_SF(nt).fibers= SuperFiber.fibers;
+                else
+                    fg_C2ROI_SF(nt) = fg_clean(nt);
+                end
                 % Write both super fibers
                 AFQ_fgWrite(fg_clean_SF(nt), ts.cfpath_SF,'tck');
                 AFQ_fgWrite(fg_C2ROI_SF(nt), ts.c2roipath_SF,'tck');

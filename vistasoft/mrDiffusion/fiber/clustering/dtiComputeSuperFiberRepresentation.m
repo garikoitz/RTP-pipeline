@@ -103,13 +103,15 @@ SuperFiber.name=[fg.name '_SuperFiber'];
 nfibers = size(fg.fibers, 1);
 % This should be the same numNodes we sent in above
 % numNodes= size(fg.fibers{1}, 2);
-
-% curves is the 3D representation of each node for each fiber.
-curves  = zeros(3, numNodes, nfibers);
-for ii=1:nfibers
-    curves(:, :, ii) = fg.fibers{ii};
+if nfibers==0
+    
+else
+    % curves is the 3D representation of each node for each fiber.
+    curves  = zeros(3, numNodes, nfibers);
+    for ii=1:nfibers
+        curves(:, :, ii) = fg.fibers{ii};
+    end
 end
-
 % For every cluster, there is a superfiber representation
 % The clusters are labeled as numbers, so max(clusterlabels) is the number
 % of clusters.
