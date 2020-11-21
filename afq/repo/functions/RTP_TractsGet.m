@@ -406,6 +406,8 @@ for nt=1:height(tracts)
         ts.nfibers = size(tract.fibers,1);
     
         % If more than 10 fibers clean it, otherwise copy it as it is
+        % TODO: obtain superfiber with this option, so save some of next
+        %       steps
         if size(tract.fibers,1) > 10
            clean_tract = AFQ_removeFiberOutliers(tract,ts.maxDist,ts.maxLen,ts.numNodes,ts.meanmed,1,ts.maxIter);
     	else
@@ -432,8 +434,7 @@ for nt=1:height(tracts)
 		roi2mat=dtiImportRoiFromNifti(char(roi2));
         if nt==1
             % Check for empty fibers
-            % if size(clean_tract.fibers,1) > 0
-            if size(clean_tract.fibers{1},2) > 0
+            if isempty(clean_tract.fibers)
                 fg_C2ROI=dtiClipFiberGroupToROIs(fg_clean,roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI, ts.c2roipath,'tck');
@@ -455,8 +456,7 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF = fg_clean;
             end
         else
-            % if size(clean_tract.fibers,1) > 0
-            if size(clean_tract.fibers{1},2) > 0
+            if isempty(clean_tract.fibers)
                 fg_C2ROI(nt)=dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
