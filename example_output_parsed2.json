@@ -1,0 +1,48 @@
+{
+    "anat_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical",
+    "bval_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bval",
+    "bvec_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bvec",
+    "fs_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs",
+    "input_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input",
+    "nifti_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi",
+    "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
+    "params": {
+        "fiberWeighting": 1,
+        "input_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input",
+        "numberOfNodes": 100,
+        "outdir": [],
+        "outname": "afq_output",
+        "output_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/output",
+        "phaseEncodeDir": 2,
+        "run_mode": [
+            []
+        ],
+        "track": {
+            "ET_angleValues": [
+                45.0
+            ],
+            "ET_maxlength": [
+                200.0
+            ],
+            "ET_minlength": 20,
+            "ET_numberFibers": 200000,
+            "ET_stepSizeMm": 999,
+            "faFodThresh": 0.1,
+            "faMaskThresh": 0.2,
+            "get_vofparc": false,
+            "sift_runSift": true,
+            "sift_nFibers": 150000,
+            "life_runLife": false,
+            "life_discretization": 360,
+            "life_num_iterations": 10,
+            "life_saveOutput": false,
+            "life_test": false,
+            "life_writePDB": false,
+            "mrTrixAlgo": "iFOD2",
+            "mrtrix_autolmax": true,
+            "mrtrix_lmax": 6,
+            "mrtrix_useACT": false
+        }
+    },
+    "tractparams_dir": "/black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams"
+}

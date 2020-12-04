@@ -9,7 +9,7 @@ function RTP(jsonargs)
 %       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-    jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed.json";
+    jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed2.json";
     RTP(jsonargs);
 %}
 %
