@@ -434,7 +434,7 @@ for nt=1:height(tracts)
 		roi2mat=dtiImportRoiFromNifti(char(roi2));
         if nt==1
             % Check for empty fibers
-            if ~isempty(clean_tract.fibers) && length(clean_tract.fibers) > 2
+            if ~isempty(clean_tract.fibers) && length(clean_tract.fibers) > 1
                 fg_C2ROI=dtiClipFiberGroupToROIs(fg_clean,roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI, ts.c2roipath,'tck');
@@ -456,7 +456,7 @@ for nt=1:height(tracts)
                 fg_C2ROI_SF = fg_clean;
             end
         else
-            if ~isempty(clean_tract.fibers)  && length(clean_tract.fibers) > 2
+            if ~isempty(clean_tract.fibers)  && length(clean_tract.fibers) > 1
                 fg_C2ROI(nt)=dtiClipFiberGroupToROIs(fg_clean(nt),roi1mat,roi2mat);
                 % Write the clipped fiber as well
                 AFQ_fgWrite(fg_C2ROI(nt), ts.c2roipath,'tck');
