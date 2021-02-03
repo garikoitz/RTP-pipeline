@@ -78,6 +78,8 @@
     }
   },
   "config": {
+    "save_output": "False",
+    "segmentSLF": "False",
     "numberOfNodes": {
       "description": "AFQ: The number of nodes to represent each fiber.",
       "default": 100,

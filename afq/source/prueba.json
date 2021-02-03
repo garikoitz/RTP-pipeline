@@ -1,0 +1,140 @@
+{
+    "anat_dir": "/flywheel/v0/input/anatomical",
+    "bval_dir": "/flywheel/v0/input/bval",
+    "bvec_dir": "/flwywheel/v0/input/bvec",
+    "fs_dir": "/flywheel/v0/input/fs",
+    "input_dir": "/flwywheel/v0/input",
+    "nifti_dir": "/flwywheel/v0/input/dwi",
+    "output_dir": "/flywheel/v0/output",
+    "params": {
+        "fiberWeighting": {
+            "default": 1,
+            "description": "RTP: Set the amount of weighting that will be applied when calculating tract profiles. 0 means that each fiber contributes equally. 1 means that we apply gaussian weighting where each fibers contribution to the measurement at a node is weighted by its gaussian distance from the tract core. Values greater than 1 mean that the core of the tract is weighted more heavily and fibers further from the core are weighted less heavily (faster fall off than a gaussian).  See ComputeTractProperties.",
+            "type": "integer"
+        },
+        "input_dir": "/flwywheel/v0/input",
+        "numberOfNodes": {
+            "default": 100,
+            "description": "AFQ: The number of nodes to represent each fiber.",
+            "type": "integer"
+        },
+        "outdir": [],
+        "output_dir": "/flywheel/v0/output",
+        "run_mode": [
+            []
+        ],
+        "track": {
+            "ET_angleValues": [
+                45.0,
+                45.0,
+                25.0,
+                25.0,
+                25.0,
+                5.0,
+                5.0
+            ],
+            "ET_maxlength": [
+                100.0,
+                150.0,
+                100.0,
+                150.0,
+                200.0,
+                150.0,
+                200.0
+            ],
+            "ET_minlength": {
+                "default": 999,
+                "description": "ET: Minimum fiber length (in mm). This value will be used for mrTrix regardless of ET. If 999, the default from mrTrix will be used (see mrTrix documentation). DEFAULT=999",
+                "type": "number"
+            },
+            "ET_numberFibers": {
+                "default": 200000,
+                "description": "ET: Number of fibers to generate in each tractotram. As many tractograms as specified with ET_maxlength and ET_angleValues number of pairs will be generated and concatenated. DEFAULT=200000",
+                "type": "number"
+            },
+            "ET_stepSizeMm": {
+                "default": 999,
+                "description": "ET: track stepSizeMm.  DEFAULT=999",
+                "type": "number"
+            },
+            "faFodThresh": {
+                "default": 999,
+                "description": "MRTRIX: Stopping criteria when tracking, FA for DTI and FOD for CSD. Mrtrix uses defaults depending on the algo and depending on the algo these number will refer to FA or FOD. If 999 use the defaults, otherwise use the value here. See mrTrix docs for defaults",
+                "type": "number"
+            },
+            "faMaskThresh": {
+                "default": 0.3,
+                "description": "MRTRIX: FA mask threshold from which to initialize tracking. It is used to create the wmMask that is used to seed the whole brain connectome in mrTrix",
+                "type": "number"
+            },
+            "get_vofparc": {
+                "default": false,
+                "description": "If conditions are met (whole brain tractogram is created and arcuate fasciculus is tracked), obtain VOF and pARC bundles. DEFAULT=false",
+                "type": "boolean"
+            },
+            "life_discretization": {
+                "default": 360,
+                "description": "LiFE: Discretization parameter (this parameter defines the resolution of the Phi tensor in describing the orientation of the fascicles in the connectome (number of orientations encoded in Phi, more specifically the size of Phi in mode 1) DEFAULT=360",
+                "type": "number"
+            },
+            "life_num_iterations": {
+                "default": 10,
+                "description": "LiFE: Number of iterations for LiFE algorithm. DEFAULT=10",
+                "type": "number"
+            },
+            "life_runLife": {
+                "default": false,
+                "description": "LiFE: Run LiFE algorithm. DEFAULT=false",
+                "type": "boolean"
+            },
+            "life_saveOutput": {
+                "default": false,
+                "description": "LiFE: Save outputs from LiFE algorithm. DEFAULT=true",
+                "type": "boolean"
+            },
+            "life_test": {
+                "default": false,
+                "description": "LiFE: Run LiFE in test mode. DEFAULT=False",
+                "type": "boolean"
+            },
+            "life_writePDB": {
+                "default": false,
+                "description": "LiFE: Write fibers out in PDB. This is a legacy format for the program Quench. DEFAULT=False",
+                "type": "boolean"
+            },
+            "mrTrixAlgo": {
+                "default": "iFOD2",
+                "description": "MRTRIX: Tracking algorithm for mrTrix's tckgen. Options are: iFOD1, iFOD2, SD_STREAM, Tensor_Det, Tensor_prob. DEFAULT='iFOD2'",
+                "type": "string"
+            },
+            "mrtrix_autolmax": {
+                "default": false,
+                "description": "MRTRIX: Calculate lmax automatically from number of directions. DEFAULT=True",
+                "type": "boolean"
+            },
+            "mrtrix_lmax": {
+                "default": 6,
+                "description": "MRTRIX: specify lmax for CSD. Only used if mrtrix_autolmax==0. DEFAULT=6",
+                "type": "integer"
+            },
+            "mrtrix_useACT": {
+                "default": false,
+                "description": "MRTRIX: Use ACT for tracking. DEFAULT=False",
+                "type": "boolean"
+            },
+            "sift_nFibers": {
+                "default": 500000,
+                "description": "SIFT: Reduce whole brain tractogram until this number of fibers. DEFAULT=500000",
+                "type": "number"
+            },
+            "sift_runSift": {
+                "default": true,
+                "description": "SIFT: Run SIFT algorithm. DEFAULT=true",
+                "type": "boolean"
+            }
+        }
+    },
+    "save_output": "False",
+    "segmentSLF": "False",
+    "tractparams_dir": "/flywheel/v0/input/tractparams"
+}

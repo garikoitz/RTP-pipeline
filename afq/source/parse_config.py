@@ -1,15 +1,15 @@
 #! /usr/bin/env python
 
 # Parse a config file and create a dtiInit params json file.
-def parse_config(input_file, 
-                 output_file, 
-                 input_dir, 
-                 output_dir, 
-                 bvec_dir, 
-                 bval_dir, 
-                 nifti_dir, 
+def parse_config(input_file,
+                 output_file,
+                 input_dir,
+                 output_dir,
+                 bvec_dir,
+                 bval_dir,
+                 nifti_dir,
                  anat_dir,
-                 fs_dir, 
+                 fs_dir,
                  tractparams_dir):
     import os
     import json
@@ -66,8 +66,8 @@ def parse_config(input_file,
     config['params']['track']['life_writePDB']       = config['params']['life_writePDB']
 
     config['params']['track']['ET_numberFibers']     = config['params']['ET_numberFibers']
-    config['params']['track']['ET_angleValues']      = [ float(x) for x in config['params']['ET_angleValues'].split(',') ]
-    config['params']['track']['ET_maxlength']        = [ float(x) for x in config['params']['ET_maxlength'].split(',') ]
+    config['params']['track']['ET_angleValues']      = [ float(x) for x in config['params']['ET_angleValues']['default'].split(',') ]
+    config['params']['track']['ET_maxlength']        = [ float(x) for x in config['params']['ET_maxlength']['default'].split(',') ]
     config['params']['track']['ET_minlength']        = config['params']['ET_minlength']
     config['params']['track']['ET_stepSizeMm']       = config['params']['ET_track_stepSizeMm']
 
@@ -81,7 +81,7 @@ def parse_config(input_file,
     del config['params']['mrtrix_mrTrixAlgo']
 
     del config['params']['get_vofparc']
-     
+
     del config['params']['sift_runSift']
     del config['params']['sift_nFibers']
 
@@ -107,6 +107,12 @@ def parse_config(input_file,
     config['anat_dir']        = anat_dir
     config['fs_dir']          = fs_dir
     config['tractparams_dir'] = tractparams_dir
+    # new parameters: save_output (delcare if save .zip) and segmentSLF
+    # (declare if apply segmentSLF)
+    config['save_output']     = config['params']['save_output']
+    del config['params']['save_output']
+    config['segmentSLF']      = config['params']['segmentSLF']
+    del config['params']['segmentSLF']
     # Add additional keys
     config['params']['run_mode'] = [],
     config['params']['outdir'] = []
@@ -133,15 +139,15 @@ if __name__ == '__main__':
 
     args = ap.parse_args()
 
-    parse_config(args.input_file, 
-                 args.output_file, 
-                 args.input_dir, 
-                 args.output_dir, 
-                 args.bvec_dir, 
-                 args.bval_dir, 
-                 args.nifti_dir, 
-                 args.anat_dir, 
-                 args.fs_dir, 
+    parse_config(args.input_file,
+                 args.output_file,
+                 args.input_dir,
+                 args.output_dir,
+                 args.bvec_dir,
+                 args.bval_dir,
+                 args.nifti_dir,
+                 args.anat_dir,
+                 args.fs_dir,
                  args.tractparams_dir)
 
 
@@ -156,5 +162,3 @@ if __name__ == '__main__':
    #         --anat_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical \
    #         --fs_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs \
    #         --tractparams_dir /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams
-
-           
