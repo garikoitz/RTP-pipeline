@@ -9,7 +9,7 @@ function RTP(jsonargs)
 %       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-    jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed2.json";
+    jsonargs = "/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/prueba.json";
     RTP(jsonargs);
 %}
 %
@@ -35,6 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
+jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/prueba.json';
 disp(jsonargs)
 
 % Read the file in the variable P
@@ -57,8 +58,8 @@ tractparams_dir = P.tractparams_dir;
 save_output     = P.save_output;
 segmentSLF      = P.segmentSLF;
 
-fprintf('Save afq output: \n',  save_output);
-fprintf('SLF segmentation: \n',  segmentSLF);
+fprintf('Save afq output: %s\n',  save_output);
+fprintf('SLF segmentation: %s\n',  segmentSLF);
 
 % Obtain the input filenames
 input_t1        = dir(fullfile(anat_dir ,'*.nii.gz'))   ;

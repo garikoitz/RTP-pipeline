@@ -23,6 +23,8 @@
         "mrtrix_mrTrixAlgo": "iFOD2",
         "mrtrix_autolmax": true,
         "mrtrix_lmax": 6,
-        "mrtrix_useACT": false
+        "mrtrix_useACT": false,
+        "save_output": false,
+        "segmentSLF": false
     }
 }

@@ -66,8 +66,13 @@ def parse_config(input_file,
     config['params']['track']['life_writePDB']       = config['params']['life_writePDB']
 
     config['params']['track']['ET_numberFibers']     = config['params']['ET_numberFibers']
-    config['params']['track']['ET_angleValues']      = [ float(x) for x in config['params']['ET_angleValues']['default'].split(',') ]
-    config['params']['track']['ET_maxlength']        = [ float(x) for x in config['params']['ET_maxlength']['default'].split(',') ]
+    if MANIFEST:
+        config['params']['track']['ET_angleValues']      = [ float(x) for x in config['params']['ET_angleValues']['default'].split(',') ]
+        config['params']['track']['ET_maxlength']        = [ float(x) for x in config['params']['ET_maxlength']['default'].split(',') ]
+    else:
+        config['params']['track']['ET_angleValues']      = [ float(x) for x in config['params']['ET_angleValues'].split(',') ]
+        config['params']['track']['ET_maxlength']        = [ float(x) for x in config['params']['ET_maxlength'].split(',') ]
+
     config['params']['track']['ET_minlength']        = config['params']['ET_minlength']
     config['params']['track']['ET_stepSizeMm']       = config['params']['ET_track_stepSizeMm']
 
