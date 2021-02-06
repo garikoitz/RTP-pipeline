@@ -138,7 +138,7 @@ if __name__ == '__main__':
     ap.add_argument('--bvec_dir', default='/flwywheel/v0/input/bvec', help='Full path to the input file.')
     ap.add_argument('--bval_dir', default='/flywheel/v0/input/bval', help='Full path to the output file.')
     ap.add_argument('--nifti_dir', default='/flwywheel/v0/input/dwi', help='Full path to the input file.')
-    ap.add_argument('--anat_dir', default='/flywheel/v0/input/anatomical', help='Full path to the output file.')
+    ap.add_argument('--anat_dir', default='/flywheel/v0/input/anat', help='Full path to the output file.')
     ap.add_argument('--fs_dir', default='/flywheel/v0/input/fs', help='Full path to the freesurfer directory.')
     ap.add_argument('--tractparams_dir', default='/flywheel/v0/input/tractparams', help='Full path to the parameters file.')
 
