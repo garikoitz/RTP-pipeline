@@ -156,7 +156,7 @@ if __name__ == '__main__':
                  args.tractparams_dir)
 
 
-    # Example, for copy and pase
+   # # Example, for copy and pase
    # python parse_config.py --input_file /data/localhome/glerma/soft/RTP-pipeline/example_config.json \
    #         --output_file /data/localhome/glerma/soft/RTP-pipeline/example_output_parsed_kkkkkkk.json \
    #         --input_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input \
