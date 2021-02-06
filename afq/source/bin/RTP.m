@@ -35,7 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-jsonargs = '/export/home/llecca/.local/testdata/Nifti/derivatives/rtp-pipeline_4.3.7/analysis-01/sub-BC01/ses-T01/output/params.json';
+%jsonargs = '/export/home/llecca/.local/testdata/Nifti/derivatives/rtp-pipeline_4.3.7/analysis-01/sub-BC01/ses-T01/output/params.json';
 %jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/pruebas.json';
 %disp(jsonargs)
 
