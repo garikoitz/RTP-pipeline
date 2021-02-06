@@ -89,7 +89,7 @@ if ~exist(rtp_dir)  % ;error('[RTP] rtp_dir exists in %s', rtp_dir)
 end
 
 % We need these files in root dir (rtp_dir) to start working
-t1_file         = fullfile(rtp_dir, 't1.nii.gz');
+t1_file         = fullfile(rtp_dir, 'T1.nii.gz');
 bvec_file       = fullfile(rtp_dir, 'dwi.bvecs');
 bval_file       = fullfile(rtp_dir, 'dwi.bvals');
 dwi_file        = fullfile(rtp_dir, 'dwi.nii.gz');
@@ -97,8 +97,8 @@ fs_file         = fullfile(rtp_dir, 'fs.zip');
 csv_file        = fullfile(rtp_dir, 'params.csv');
 
 % Copy input files to output/RTP/
-copyfile(input_t1   , rtp_dir)  ;
-copyfile(input_bvec , rtp_dir);
+copyfile(input_t1   , t1_file)  ;
+copyfile(input_bvec , bvec_file);
 copyfile(input_bval , bval_file);
 copyfile(input_dwi  , dwi_file) ;
 copyfile(input_fszip, fs_file)  ;
