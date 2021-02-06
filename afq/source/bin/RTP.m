@@ -35,7 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-jsonargs = 'params.json';
+%jsonargs = 'params.json';
 disp(jsonargs)
 
 % Read the file in the variable P
