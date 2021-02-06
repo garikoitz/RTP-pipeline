@@ -35,6 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
+jsonargs = '/export/home/llecca/.local/testdata/Nifti/derivatives/rtp-pipeline_4.3.7/analysis-01/sub-BC01/ses-T01/output/params.json';
 %jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/pruebas.json';
 %disp(jsonargs)
 
@@ -96,8 +97,8 @@ fs_file         = fullfile(rtp_dir, 'fs.zip');
 csv_file        = fullfile(rtp_dir, 'params.csv');
 
 % Copy input files to output/RTP/
-copyfile(input_t1   , t1_file)  ;
-copyfile(input_bvec , bvec_file);
+copyfile(input_t1   , rtp_dir)  ;
+copyfile(input_bvec , rtp_dir);
 copyfile(input_bval , bval_file);
 copyfile(input_dwi  , dwi_file) ;
 copyfile(input_fszip, fs_file)  ;
