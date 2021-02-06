@@ -9,7 +9,7 @@ function RTP(jsonargs)
 %       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-    jsonargs = "/bcbl/home/home_g-m/llecca/llecca/RTP-pipeline/afq/source/prueba.json";
+    jsonargs = "/bcbl/home/home_g-m/llecca/llecca/RTP-pipeline/afq/source/pruebas.json";
     RTP(jsonargs);
 %}
 %
