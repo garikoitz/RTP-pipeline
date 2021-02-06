@@ -35,8 +35,8 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-%jsonargs = 'params.json';
-disp(jsonargs)
+%jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/pruebas.json';
+%disp(jsonargs)
 
 % Read the file in the variable P
 if exist('jsonargs', 'var') && ~isempty(jsonargs)
