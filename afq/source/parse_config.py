@@ -164,6 +164,6 @@ if __name__ == '__main__':
    #         --bvec_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bvec \
    #         --bval_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/bval \
    #         --nifti_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/dwi \
-   #         --anat_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anatomical \
+   #         --anat_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/anat \
    #         --fs_dir  /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/fs \
    #         --tractparams_dir /black/localhome/glerma/TESTDATA/FS/17_CAMINO_6835_docker/pipeline/input/tractparams
