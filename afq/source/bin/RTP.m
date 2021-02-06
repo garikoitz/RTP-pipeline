@@ -35,7 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/prueba.json';
+jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/pruebas.json';
 disp(jsonargs)
 
 % Read the file in the variable P
@@ -55,11 +55,11 @@ bvec_dir        = P.bvec_dir;
 fs_dir          = P.fs_dir;
 nifti_dir       = P.nifti_dir;
 tractparams_dir = P.tractparams_dir;
-save_output     = P.save_output;
-segmentSLF      = P.segmentSLF;
+save_output     = params.save_output;
+segmentSLF      = params.segmentSLF;
 
-fprintf('Save afq output: %s\n',  save_output);
-fprintf('SLF segmentation: %s\n',  segmentSLF);
+fprintf('Save afq output: %s\n',  string(save_output));
+fprintf('SLF segmentation: %s\n',  string(segmentSLF));
 
 % Obtain the input filenames
 input_t1        = dir(fullfile(anat_dir ,'*.nii.gz'))   ;

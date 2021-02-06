@@ -25,6 +25,6 @@
         "mrtrix_lmax": 6,
         "mrtrix_useACT": false,
         "save_output": false,
-        "segmentSLF": false
+        "segmentSLF": true
     }
 }

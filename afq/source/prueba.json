@@ -7,6 +7,8 @@
     "nifti_dir": "/flwywheel/v0/input/dwi",
     "output_dir": "/flywheel/v0/output",
     "params": {
+    "save_output": false,
+    "segmentSLF": true,
         "fiberWeighting": {
             "default": 1,
             "description": "RTP: Set the amount of weighting that will be applied when calculating tract profiles. 0 means that each fiber contributes equally. 1 means that we apply gaussian weighting where each fibers contribution to the measurement at a node is weighted by its gaussian distance from the tract core. Values greater than 1 mean that the core of the tract is weighted more heavily and fibers further from the core are weighted less heavily (faster fall off than a gaussian).  See ComputeTractProperties.",
@@ -131,10 +133,18 @@
                 "default": true,
                 "description": "SIFT: Run SIFT algorithm. DEFAULT=true",
                 "type": "boolean"
-            }
+            },
+	    "segmentSLF": {
+		"default": true,
+		"description": "Superior Longitudinal Fasciculus segmentation",
+                "type": "boolean"
+	    },
+            "save_output": {
+		"default": false,
+		"description": "Decide whether save output results",
+		"type": "boolean"
+	    },
         }
     },
-    "save_output": "False",
-    "segmentSLF": "False",
     "tractparams_dir": "/flywheel/v0/input/tractparams"
 }

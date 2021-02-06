@@ -114,10 +114,10 @@ def parse_config(input_file,
     config['tractparams_dir'] = tractparams_dir
     # new parameters: save_output (delcare if save .zip) and segmentSLF
     # (declare if apply segmentSLF)
-    config['save_output']     = config['params']['save_output']
-    del config['params']['save_output']
-    config['segmentSLF']      = config['params']['segmentSLF']
-    del config['params']['segmentSLF']
+    config['params']['save_output']     = config['params']['save_output']
+   # del config['params']['save_output']
+    config['params']['segmentSLF']      = config['params']['segmentSLF']
+   # del config['params']['segmentSLF']
     # Add additional keys
     config['params']['run_mode'] = [],
     config['params']['outdir'] = []
