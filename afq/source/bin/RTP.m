@@ -89,7 +89,7 @@ if ~exist(rtp_dir)  % ;error('[RTP] rtp_dir exists in %s', rtp_dir)
 end
 
 % We need these files in root dir (rtp_dir) to start working
-t1_file         = fullfile(rtp_dir, 'T1.nii.gz');
+t1_file         = fullfile(rtp_dir, 't1.nii.gz');
 bvec_file       = fullfile(rtp_dir, 'dwi.bvecs');
 bval_file       = fullfile(rtp_dir, 'dwi.bvals');
 dwi_file        = fullfile(rtp_dir, 'dwi.nii.gz');
