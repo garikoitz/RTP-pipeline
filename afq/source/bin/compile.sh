@@ -3,14 +3,12 @@
 cat > build.m <<END
 
 addpath(genpath('/bcbl/home/home_g-m/llecca/RTP-pipeline'));
-% rmpath(genpath('/data/localhome/glerma/soft/RTP-pipeline/local'));
+rmpath(genpath('/bcbl/home/home_g-m/llecca/RTP-pipeline/local'));
 
 addpath(genpath('/bcbl/home/home_g-m/llecca/toolboxes/jsonlab'));
 addpath(genpath('/bcbl/home/home_g-m/llecca/toolboxes/JSONio'));
 
 addpath(genpath('/bcbl/home/home_g-m/llecca/brain-life/encode'));
-addpath(genpath('/bcbl/home/home_g-m/llecca/brain-life/vistasoft'));
-addpath(genpath('/bcbl/home/home_g-m/llecca/brain-life/mba'));
 addpath(genpath('/bcbl/home/home_g-m/llecca/brain-life/app-life'));
 
 addpath(genpath('/bcbl/home/home_g-m/llecca/toolboxes/freesurfer_mrtrix_afni_matlab_tools'));

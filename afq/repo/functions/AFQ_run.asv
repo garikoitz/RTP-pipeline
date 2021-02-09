@@ -133,15 +133,10 @@ if (length(fg_clean) - size(afq.fgnames,2))==6
 end
 
 
-%% Remove big files
-fprintf('[AFQ_run] This is save_output: %s', afq.params.save_output)
-if afq.params.save_output
-    mrtrixdir = strcat(afq.params.output_dir,'/mrtrix/');
-    files2remove = dir(strcat(mrtrixdir,'ET_fibs-*'));
-    for i=1:length(files)
-        delete(strcat(mrtrixdir,files2remove(i).name))
-    end
-end
+%% 
+
+
+
 
 
 %% Compute Tract properties

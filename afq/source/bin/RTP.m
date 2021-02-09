@@ -35,8 +35,7 @@ segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-%jsonargs = '/export/home/llecca/.local/testdata/Nifti/derivatives/rtp-pipeline_4.3.7/analysis-01/sub-BC01/ses-T01/output/params.json';
-%jsonargs = '/bcbl/home/home_g-m/llecca/RTP-pipeline/afq/source/pruebas.json';
+%jsonargs = '/export/home/llecca/llecca/RTP-pipeline/local/parsed_config.json';
 %disp(jsonargs)
 
 % Read the file in the variable P
@@ -57,7 +56,7 @@ fs_dir          = P.fs_dir;
 nifti_dir       = P.nifti_dir;
 tractparams_dir = P.tractparams_dir;
 save_output     = params.save_output;
-segmentSLF      = params.segmentSLF;
+segmentSLF      = params.track.segmentSLF;
 
 fprintf('Save afq output: %s\n',  string(save_output));
 fprintf('SLF segmentation: %s\n',  string(segmentSLF));
@@ -541,14 +540,12 @@ end
 
 % Write the afq file
 % Save each iteration of afq run if an output directory was defined
-fprintf('Save afq output: \n',  save_output);
-if save_output
-	outname = fullfile(rtp_dir,['afq_' datestamp]);
-	save(outname,'afq');
-	outname = fullfile(rtp_dir,['afq_C2ROI' datestamp]);
-	save(outname,'afq_C2ROI');
-end
-fprintf('Run SLF segmentation: \n',segmentSLF)
+outname = fullfile(rtp_dir,['afq_' datestamp]);
+save(outname,'afq');
+outname = fullfile(rtp_dir,['afq_C2ROI' datestamp]);
+save(outname,'afq_C2ROI');
+
+
 
 %% Export the data to csv files
 disp('[RTP] Exporting data to csv files...');

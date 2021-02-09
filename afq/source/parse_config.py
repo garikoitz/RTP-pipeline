@@ -75,6 +75,7 @@ def parse_config(input_file,
 
     config['params']['track']['ET_minlength']        = config['params']['ET_minlength']
     config['params']['track']['ET_stepSizeMm']       = config['params']['ET_track_stepSizeMm']
+    config['params']['track']['segmentSLF']          = config['params']['segmentSLF']
 
     # Remove the other track_ fields
     del config['params']['track_faMaskThresh']
@@ -102,6 +103,7 @@ def parse_config(input_file,
     del config['params']['ET_maxlength']
     del config['params']['ET_minlength']
     del config['params']['ET_track_stepSizeMm']
+    del config['params']['segmentSLF']
 
     # Add input directory for dtiInit
     config['input_dir']       = input_dir
@@ -112,12 +114,8 @@ def parse_config(input_file,
     config['anat_dir']        = anat_dir
     config['fs_dir']          = fs_dir
     config['tractparams_dir'] = tractparams_dir
-    # new parameters: save_output (delcare if save .zip) and segmentSLF
-    # (declare if apply segmentSLF)
+    # new parameters: save_output (delcare if save .zip)
     config['params']['save_output']     = config['params']['save_output']
-   # del config['params']['save_output']
-    config['params']['segmentSLF']      = config['params']['segmentSLF']
-   # del config['params']['segmentSLF']
     # Add additional keys
     config['params']['run_mode'] = [],
     config['params']['outdir'] = []

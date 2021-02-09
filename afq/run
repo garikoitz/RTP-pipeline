@@ -89,9 +89,9 @@ $FLYWHEEL_BASE/parse_config.py \
 # read if save_output
 export save_output=($(jq '.config.save_output' $CONFIG_FILE))
 if [ "$save_output" == "true" ]; then
-	echo "You choosed to save the output (.zip)"
+	echo "You chose to save the output (.zip)"
 else
-	echo "You choosed to not save the output"
+	echo "You chose to not save the output"
 fi
 # Make sure the params file is saved with the output
 # cp ${PARAMS_FILE} ${OUTPUT_DIR}
