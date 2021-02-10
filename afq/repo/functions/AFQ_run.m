@@ -136,9 +136,9 @@ end
 %% Remove big files
 fprintf('[AFQ_run] This is save_output: %s', afq.params.save_output)
 if afq.params.save_output
-    mrtrixdir = strcat(afq.params.output_dir,'/mrtrix/');
+    mrtrixdir = strcat(afq.params.output_dir,'/RTP/mrtrix/');
     files2remove = dir(strcat(mrtrixdir,'ET_fibs-*'));
-    for i=1:length(files)
+    for i=1:length(files2remove)
         delete(strcat(mrtrixdir,files2remove(i).name))
     end
 end
