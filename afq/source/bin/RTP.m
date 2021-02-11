@@ -659,7 +659,6 @@ R.analysis.params   = afq.params;
 R.analysis.subject  = sub_dirs;
 
 save(fullfile(output_dir,'Reproduce.mat'), 'R');
-savejson('', R, fullfile(output_dir,'Reproduce.json'));
 
 %% END
 
