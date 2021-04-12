@@ -12,9 +12,9 @@ RUN apt-get -qq update && apt-get -qq install -y \
     mkdir /mcr-install && \
     mkdir /opt/mcr && \
     cd /mcr-install && \
-    wget https://ssd.mathworks.com/supportfiles/downloads/R2020b/Release/4/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2020b_Update_4_glnxa64.zip && \
+    wget https://ssd.mathworks.com/supportfiles/downloads/R2020b/Release/5/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2020b_Update_5_glnxa64.zip && \
     cd /mcr-install && \
-    unzip -q MATLAB_Runtime_R2020b_Update_4_glnxa64.zip && \ 
+    unzip -q MATLAB_Runtime_R2020b_Update_5_glnxa64.zip && \ 
     ./install -destinationFolder /opt/mcr -agreeToLicense yes -mode silent && \
     cd / && \
     rm -rf mcr-install
