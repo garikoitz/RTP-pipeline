@@ -13,9 +13,13 @@ source /etc/fsl/5.0/fsl.sh
 
 # Configure the ENV
 export FSLOUTPUTTYPE=NIFTI_GZ
-export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
-export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
-export MCR_CACHE_FOLDER_NAME=.mcrCache9.5
+# export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
+# export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
+# export MCR_CACHE_FOLDER_NAME=.mcrCache9.5
+export LD_LIBRARY_PATH=/opt/mcr/v99/runtime/glnxa64:/opt/mcr/v99/bin/glnxa64:/opt/mcr/v99/sys/os/glnxa64:/opt/mcr/v99/extern/bin/glnxa64:$LD_LIBRARY_PATH
+export XAPPLRESDIR=/opt/mcr/v99/X11/app-defaults
+export MCR_CACHE_FOLDER_NAME=.mcrCache9.9
+
 
 # Add mrtrix and ants to the path
 # export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
