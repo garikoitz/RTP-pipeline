@@ -9,7 +9,7 @@ function RTP(jsonargs)
 %       params:     Key-Value pair of params for RTP_Create
 %{
 % EXAMPLE USAGE:
-    jsonargs = "/data/localhome/glerma/soft/RTP-pipeline/example_output_parsed2.json";
+    jsonargs = "/bcbl/home/home_g-m/llecca/llecca/RTP-pipeline/afq/source/pruebas.json";
     RTP(jsonargs);
 %}
 %
@@ -30,10 +30,13 @@ bvec_dir        = [];
 fs_dir          = [];
 nifti_dir       = [];
 tractparams_dir = [];
+save_output     = [];
+segmentSLF      = [];
 
 %% Handle jsonargs
 disp('[RTP] This is the json string to be read by loadjson:')
-disp(jsonargs)
+%jsonargs = '/export/home/llecca/llecca/RTP-pipeline/local/parsed_config.json';
+%disp(jsonargs)
 
 % Read the file in the variable P
 if exist('jsonargs', 'var') && ~isempty(jsonargs)
@@ -46,31 +49,35 @@ P
 input_dir       = P.input_dir;
 output_dir      = P.output_dir;
 params          = P.params;
-params          = P.params;
 anat_dir        = P.anat_dir;
 bval_dir        = P.bval_dir;
 bvec_dir        = P.bvec_dir;
 fs_dir          = P.fs_dir;
 nifti_dir       = P.nifti_dir;
 tractparams_dir = P.tractparams_dir;
+save_output     = params.save_output;
+segmentSLF      = params.track.segmentSLF;
+
+fprintf('Save afq output: %s\n',  string(save_output));
+fprintf('SLF segmentation: %s\n',  string(segmentSLF));
 
 % Obtain the input filenames
-input_t1        = dir(fullfile(anat_dir ,'*.nii.gz'))   ; 
+input_t1        = dir(fullfile(anat_dir ,'*.nii.gz'))   ;
 input_t1        = fullfile(input_t1.folder   ,input_t1.name);
 
-input_bvec      = dir(fullfile(bvec_dir ,'*.bvec*'))    ; 
+input_bvec      = dir(fullfile(bvec_dir ,'*.bvec*'))    ;
 input_bvec      = fullfile(input_bvec.folder ,input_bvec.name);
 
-input_bval      = dir(fullfile(bval_dir ,'*.bval*'))    ; 
+input_bval      = dir(fullfile(bval_dir ,'*.bval*'))    ;
 input_bval      = fullfile(input_bval.folder ,input_bval.name);
 
-input_dwi       = dir(fullfile(nifti_dir,'*.nii.gz'))   ; 
+input_dwi       = dir(fullfile(nifti_dir,'*.nii.gz'))   ;
 input_dwi       = fullfile(input_dwi.folder  ,input_dwi.name);
 
-input_fszip     = dir(fullfile(fs_dir   ,'*.zip'))      ; 
+input_fszip     = dir(fullfile(fs_dir   ,'*.zip'))      ;
 input_fszip     = fullfile(input_fszip.folder,input_fszip.name);
 
-input_csv       = dir(fullfile(tractparams_dir,'*.csv')); 
+input_csv       = dir(fullfile(tractparams_dir,'*.csv'));
 input_csv       = fullfile(input_csv.folder  ,input_csv.name);
 
 %% Copy input files to working directory
@@ -117,7 +124,7 @@ if ~exist(fullfile(rtp_dir,'fs','brainmask.nii.gz'),'file');error('[RTP] fs/ROIs
 % reading in FW output Only one subject, but until changed this is a cell array
 sub_dirs{1} = rtp_dir;
 
-%% Initialize diffusion parameters. This was for dtiInit and dt6Creation. 
+%% Initialize diffusion parameters. This was for dtiInit and dt6Creation.
 % Not really required. TODO: remove this
 dwParams            = dtiInitParams;
 dwParams.outDir     = output_dir;
@@ -143,9 +150,9 @@ dlmwrite(bval_file, roundedBval, 'delimiter',' ');
 %% Run (the equivalent ) dtiInit
 % From 3.0.5 onwards I am forking dtiInit and giving it less
 % functionalities. I will remove the tensor fitting and do it with mrTrix,
-% it is much faster and the rest of the code relies in it anyways. 
+% it is much faster and the rest of the code relies in it anyways.
 % First iteration, stop dtiInit doing it and later on mrtrixInit will paste
-% the fa to the bin folder. 
+% the fa to the bin folder.
 % 3.1.1 it was doing nothing already
 % 3.1.2 I am removing the call altogether to make this thing simpler
 %        AFQ_dtiInit(J.dwi_file, J.t1_file, dwParams);
@@ -196,7 +203,7 @@ if(~exist('adcUnits','var')); adcUnits = ''; end
 
 params.input_dir    = rtp_dir;
 params.output_dir   = output_dir;
-params.buildDate    = datestamp; 
+params.buildDate    = datestamp;
 l = license('inuse');
 params.buildId      = sprintf('%s on Matlab R%s (%s)',l(1).user,version('-release'),computer);
 if(ischar(dwRawFileName)); [dataDir,rawDataFileName] = fileparts(dwRawFileName);  % dwRawAligned);
@@ -286,7 +293,7 @@ for nc=1:length(checkfiles)
                 fslRASbval = fullfile(p,[f 'ras.bval']);
                 cmd = sprintf('mrconvert -quiet -force -fslgrad %s %s -stride 1,2,3,4  -export_grad_fsl %s %s %s %s', ...
                               J.files.alignedDwBvecs, J.files.alignedDwBvals,fslRASbvec,fslRASbval,fname, fslRASname);
-                
+
                 s = AFQ_mrtrix_cmd(cmd); if s~=0;error('[RTP] Could not change the strides to RAS');end
                 % 2: change filenames to continue with processing normally
                 J.files.alignedDwBvecs = fslRASbvec;
@@ -357,11 +364,11 @@ end
 
 
 
-% Check that all ROIs are available in the fs/ROIs folder, if not, throw error. 
+% Check that all ROIs are available in the fs/ROIs folder, if not, throw error.
 % Create list of all ROIs
 checkTheseRois = [strcat(A.roi1,A.extroi1);strcat(A.roi2,A.extroi2);strcat(A.roi3,A.extroi3); ...
                   strcat(A.roi4,A.extroi4);strcat(A.roi5,A.extroi5);strcat(A.roi6,A.extroi6)];
-% If there is an AND, this means that there are two ROIs 
+% If there is an AND, this means that there are two ROIs
 % Create a new list with the individual ROIs to create, after checking the individuals are there
 createROInew = [];
 createROI1   = [];
@@ -372,19 +379,19 @@ for nc=1:length(checkTheseRois)
 		% do nothing
 	elseif contains(rname,'_AND_')
 		% Add the ROI to be created
-		createROInew = [createROInew; rname];	
+		createROInew = [createROInew; rname];
 		% Check if the individuals exist
 		rois12 = strsplit(rname,'_AND_');
 
-		% ROI1				
+		% ROI1
 		rpath  = fullfile(J.params.roi_dir,strcat(rois12{1},".nii.gz"));
 		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
-		createROI1 = [createROI1; strcat(rois12{1},".nii.gz")];	
-	
+		createROI1 = [createROI1; strcat(rois12{1},".nii.gz")];
+
 		% ROI2
 		rpath  = fullfile(J.params.roi_dir,rois12{2});
 		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
-		createROI2 = [createROI2; string(rois12{2})];	
+		createROI2 = [createROI2; string(rois12{2})];
 	else
 		rpath  = fullfile(J.params.roi_dir,rname);
 		if ~isfile(rpath);error('ROI %s is required and it is not in the ROIs folder',rpath);end
@@ -403,14 +410,14 @@ for nt=1:length(createROInew)
 		nR   = R1;
 		nR.fname = char(nroi);
 		nR.data  = uint8(R1.data | R2.data);
-		niftiWrite(nR);  
+		niftiWrite(nR);
 	end
 end
 
 % Dilate those ROIs that require it using mrtrix's tool maskfilter
-% maskfilter input filter(dilate) output 
-for nl=1:height(A)	
-	% Check line by line and create the dilated ROIs.  
+% maskfilter input filter(dilate) output
+for nl=1:height(A)
+	% Check line by line and create the dilated ROIs.
 	ts = A(nl,:);
 	if ts.dilroi1>0
 		inroi  = char(fullfile(J.params.roi_dir, strcat(ts.roi1,ts.extroi1)));
@@ -496,7 +503,7 @@ for nl=1:height(A)
 				error('[RTP] ROI could not be created, this was the command: %s', cmd)
 			end
 		end
-	end    
+	end
 end
 % FINISHED ROI CHECK AND CREATION
 
@@ -512,7 +519,7 @@ if length(paramsShells) > 1;J.params.track.multishell=true;end
 J.params.track.tool       = 'freesurfer';
 J.params.track.algorithm  = 'mrtrix';
 J.params.computeCSD       = true;
-afq = AFQ_Create(sub_dirs{1}, J.params, A);  
+afq = AFQ_Create(sub_dirs{1}, J.params, A);
 disp('[RTP] ... end running AFQ_Create')
 
 %% RUN RTP
@@ -531,12 +538,14 @@ for i = 1:numel(afq.TractProfiles)
     end
 end
 
-% Write the afq file 
+% Write the afq file
 % Save each iteration of afq run if an output directory was defined
 outname = fullfile(rtp_dir,['afq_' datestamp]);
 save(outname,'afq');
 outname = fullfile(rtp_dir,['afq_C2ROI' datestamp]);
 save(outname,'afq_C2ROI');
+
+
 
 %% Export the data to csv files
 disp('[RTP] Exporting data to csv files...');
@@ -634,7 +643,7 @@ for nt=1:length(clean_tcks)
 	% rcmd = AFQ_mrtrix_cmd(cmd);
 end
 
-%TODO: add a flag, saveIntermediateFilesForQC 
+%TODO: add a flag, saveIntermediateFilesForQC
 % It will show the files showns below in the results folder
 
 %% Save reproducibility info
@@ -650,7 +659,6 @@ R.analysis.params   = afq.params;
 R.analysis.subject  = sub_dirs;
 
 save(fullfile(output_dir,'Reproduce.mat'), 'R');
-savejson('', R, fullfile(output_dir,'Reproduce.json'));
 
 %% END
 

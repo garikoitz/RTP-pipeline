@@ -2,7 +2,7 @@ RTP Executable
 
 1. Prerequisites for Deployment 
 
-Verify that version 9.5 (R2018b) of the MATLAB Runtime is installed.   
+Verify that version 9.9 (R2020b) of the MATLAB Runtime is installed.   
 If not, you can run the MATLAB Runtime installer.
 To find its location, enter
   
@@ -10,10 +10,10 @@ To find its location, enter
       
 at the MATLAB prompt.
 
-Alternatively, download and install the Linux version of the MATLAB Runtime for R2018b 
+Alternatively, download and install the Linux version of the MATLAB Runtime for R2020b 
 from the following link on the MathWorks website:
 
-    http://www.mathworks.com/products/compiler/mcr/index.html
+    https://www.mathworks.com/products/compiler/mcr/index.html
    
 For more information about the MATLAB Runtime and the MATLAB Runtime installer, see 
 "Distribute Applications" in the MATLAB Compiler documentation  
@@ -31,14 +31,14 @@ Files to Package for Standalone
        ./run_RTP.sh <mcr_directory> <argument_list>
        
     at Linux or Mac command prompt. <mcr_directory> is the directory 
-    where version 9.5 of the MATLAB Runtime is installed or the directory where 
+    where version 9.9 of the MATLAB Runtime is installed or the directory where 
     MATLAB is installed on the machine. <argument_list> is all the 
     arguments you want to pass to your application. For example, 
 
-    If you have version 9.5 of the MATLAB Runtime installed in 
-    /mathworks/home/application/v95, run the shell script as:
+    If you have version 9.9 of the MATLAB Runtime installed in 
+    /mathworks/home/application/v99, run the shell script as:
     
-       ./run_RTP.sh /mathworks/home/application/v95
+       ./run_RTP.sh /mathworks/home/application/v99
        
     If you have MATLAB installed in /mathworks/devel/application/matlab, 
     run the shell script as:
@@ -56,7 +56,7 @@ Files to Package for Standalone
 3. Definitions
 
 For information on deployment terminology, go to
-http://www.mathworks.com/help and select MATLAB Compiler >
+https://www.mathworks.com/help and select MATLAB Compiler >
 Getting Started > About Application Deployment >
 Deployment Product Terms in the MathWorks Documentation
 Center.
@@ -64,21 +64,21 @@ Center.
 4. Appendix 
 
 A. Linux systems:
-In the following directions, replace MR/v95 by the directory on the target machine where 
+In the following directions, replace MR/v99 by the directory on the target machine where 
    MATLAB is installed, or MR by the directory where the MATLAB Runtime is installed.
 
 (1) Set the environment variable XAPPLRESDIR to this value:
 
-MR/v95/X11/app-defaults
+MR/v99/X11/app-defaults
 
 
 (2) If the environment variable LD_LIBRARY_PATH is undefined, set it to the following:
 
-MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64
+MR/v99/runtime/glnxa64:MR/v99/bin/glnxa64:MR/v99/sys/os/glnxa64:MR/v99/sys/opengl/lib/glnxa64
 
 If it is defined, set it to the following:
 
-${LD_LIBRARY_PATH}:MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64
+${LD_LIBRARY_PATH}:MR/v99/runtime/glnxa64:MR/v99/bin/glnxa64:MR/v99/sys/os/glnxa64:MR/v99/sys/opengl/lib/glnxa64
 
     For more detailed information about setting the MATLAB Runtime paths, see Package and 
    Distribute in the MATLAB Compiler documentation in the MathWorks Documentation Center.

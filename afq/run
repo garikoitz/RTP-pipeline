@@ -13,9 +13,13 @@ source /etc/fsl/5.0/fsl.sh
 
 # Configure the ENV
 export FSLOUTPUTTYPE=NIFTI_GZ
-export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
-export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
-export MCR_CACHE_FOLDER_NAME=.mcrCache9.5
+# export LD_LIBRARY_PATH=/opt/mcr/v95/runtime/glnxa64:/opt/mcr/v95/bin/glnxa64:/opt/mcr/v95/sys/os/glnxa64:$LD_LIBRARY_PATH
+# export XAPPLRESDIR=/opt/mcr/v95/X11/app-defaults
+# export MCR_CACHE_FOLDER_NAME=.mcrCache9.5
+export LD_LIBRARY_PATH=/opt/mcr/v99/runtime/glnxa64:/opt/mcr/v99/bin/glnxa64:/opt/mcr/v99/sys/os/glnxa64:/opt/mcr/v99/extern/bin/glnxa64:$LD_LIBRARY_PATH
+export XAPPLRESDIR=/opt/mcr/v99/X11/app-defaults
+export MCR_CACHE_FOLDER_NAME=/flywheel/v0/output/.mcrCache9.9
+
 
 # Add mrtrix and ants to the path
 # export PATH=/usr/lib/ants:/usr/lib/mrtrix3/bin:$PATH
@@ -86,6 +90,13 @@ $FLYWHEEL_BASE/parse_config.py \
     	--fs_dir ${FS_DIR} \
         --tractparams_dir ${TRACTPARAMS_DIR}
 
+# read if save_output
+export save_output=($(jq '.config.save_output' $CONFIG_FILE))
+if [ "$save_output" == "true" ]; then
+	echo "You chose to save the output (.zip)"
+else
+	echo "You chose to not save the output"
+fi
 # Make sure the params file is saved with the output
 # cp ${PARAMS_FILE} ${OUTPUT_DIR}
 mkdir ${OUTPUT_DIR}/tmp
@@ -136,7 +147,10 @@ else
   mv RTP $RTP_NAME
   chmod -R 777 $OUTPUT_DIR
   echo -e "$CONTAINER  compressing outputs..."
-  zip -r $RTP_NAME.zip $RTP_NAME 
+  if [ "$save_output" ==  "true" ]; then
+        zip -r $RTP_NAME.zip $RTP_NAME 
+  fi
+  #zip -r $RTP_NAME.zip $RTP_NAME 
   
   # Clean the folders so that they dont go to FW results
   rm -rf $OUTPUT_DIR/$RTP_NAME
