@@ -1,0 +1,28 @@
+{
+    "config": {
+        "basedir": "/export/home/llecca/llecca/Scripts/SLF123",
+        "codedir":"/export/home/llecca/llecca/Scripts/SLF123/codes",	
+        "MNIpackage": "MNI_JHU_tracts_ROIs_transformed2MNI152_withPeds",
+        "MNItemplate":"FSL_MNI152_FreeSurferConformed_1mm",
+        "logdir":"/export/home/llecca/llecca/logs/SLF123",
+	"host":"BCBL",
+	"qsub":"true",
+        "script":"skullStripping.sh"	
+    },
+    "BCBL": {
+	"mem":"60G",
+        "que":"short.q",
+	"ants_ver":"ants/latest",
+	"mrtrix_ver":"mrtrix3/oct2019",
+	"fsl_ver":"fsl/6.0.3",
+	"gcc_ver":"gcc/7.3.0",
+	"core":6
+    },
+    "DIPC": {
+	"mem":"100G",
+	"que":"bcbl",
+	"ants_ver":"ANTs/2.3.5-foss-2019b-Python-3.7.4",
+	"fsl_ver":"FSL/6.0.0-foss-2018b",
+	"core":6
+    }
+}
