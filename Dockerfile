@@ -12,25 +12,25 @@ RUN apt-get -qq update && apt-get -qq install -y \
     mkdir /mcr-install && \
     mkdir /opt/mcr && \
     cd /mcr-install && \
-    wget https://ssd.mathworks.com/supportfiles/downloads/R2020b/Release/4/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2020b_Update_4_glnxa64.zip && \
+    wget https://ssd.mathworks.com/supportfiles/downloads/R2020b/Release/5/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2020b_Update_5_glnxa64.zip && \
     cd /mcr-install && \
-    unzip -q MATLAB_Runtime_R2020b_Update_4_glnxa64.zip && \ 
+    unzip -q MATLAB_Runtime_R2020b_Update_5_glnxa64.zip && \ 
     ./install -destinationFolder /opt/mcr -agreeToLicense yes -mode silent && \
     cd / && \
     rm -rf mcr-install
 
 # Configure environment variables for MCR
-ENV LD_LIBRARY_PATH /opt/mcr/v99/runtime/glnxa64:/opt/mcr/v99/bin/glnxa64:/opt/mcr/v99/sys/os/glnxa64:/opt/mcr/v99/extern/bin/glnxa64
+# ENV LD_LIBRARY_PATH /opt/mcr/v99/runtime/glnxa64:/opt/mcr/v99/bin/glnxa64:/opt/mcr/v99/sys/os/glnxa64:/opt/mcr/v99/extern/bin/glnxa64
 
 # Start with the Matlab r2018b runtime container
 # FROM  flywheel/matlab-mcr:v95
-MAINTAINER Garkoitz Lerma-Usabiaga  <garikoitz@gmail.com>
+MAINTAINER Garikoitz Lerma-Usabiaga  <garikoitz@gmail.com>
 
 ENV FLYWHEEL /flywheel/v0
 WORKDIR ${FLYWHEEL}
 
 # Because we're coming in from a Matlab-MCR we need to unset LD_LIBRARY_PATH
-# ENV LD_LIBRARY_PATH ""
+ENV LD_LIBRARY_PATH ""
 
 RUN apt-get update --fix-missing \
  && apt-get install -y wget bzip2 ca-certificates \
