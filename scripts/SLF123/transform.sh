@@ -29,7 +29,7 @@ fi
 fi
 
 # for loop for subjects in the DB
-for proj in $(cat ${BASEDIR}/subSesList.txt);do
+for proj in $(cat ${BASEDIR}/subjectList.txt);do
 
 MRI_DIR=${BASEDIR}/${proj}/structural
 ROI_DIR=${BASEDIR}/${proj}/ROIs
@@ -51,7 +51,7 @@ qsub -q $que -l mem=$mem,nodes=1:ppn=$core \
 	-N sub_$[proj]_transform \
 	-o ${logdir}/${proj}_transform.o \
 	-e ${logdir}/${proj}_transform.e \
-	-v roidir=${ROI_DIR},  ref=${MRI_DIR}/antsWarped.nii.gz , transform1=${MRI_DIR}/ants1Warp.nii.gz , transform2=${MRI_DIR}/ants0GenericAffine.mat , ants_ver=$ants_ver \
+	-v roidir=${ROI_DIR},MRI_DIR=${MRI_DIR},ants_ver=$ants_ver \
 	${codedir}/runANTsApplyTransforms.sh
 fi
 

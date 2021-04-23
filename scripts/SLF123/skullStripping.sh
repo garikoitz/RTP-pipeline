@@ -24,7 +24,7 @@ module load $mrtrix_ver
 module load $fsl_ver
 
 # for loop for subjects in the DB
-for proj in $(cat ${BASEDIR}/subSesList.txt);do
+for proj in $(cat ${BASEDIR}/subjectList.txt);do
 
 printf "Working on $proj \n"
 MRI_DIR=${BASEDIR}/${proj}/structural

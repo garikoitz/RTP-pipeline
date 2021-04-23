@@ -11,7 +11,7 @@ import os
 import json
 import subprocess as sp
 
-parser = argparse.ArgumentParser(description='''ANTsRegistrationSyN.py 'pathTo/config.json' ''')
+parser = argparse.ArgumentParser(description='''SLF123.py 'pathTo/config.json' ''')
 # # Required positional argument
 parser.add_argument('configFile', type=str, help='path to the config file')
 

@@ -31,7 +31,7 @@ fi
 templ=${BASEDIR}/${MNI_package}/${MNI_template}.nii.gz
 
 # for loop for subjects in the DB
-for proj in $(cat ${BASEDIR}/subSesList.txt);do
+for proj in $(cat ${BASEDIR}/subjectList.txt);do
 
 printf "Working on $proj \n"
 
