@@ -11,19 +11,18 @@ printf "#### roi directory: $roidir \n"
 printf "#### reference image: $ref \n"
 printf "#### transform1: $transform1 \n"
 printf "#### transform2: $transform2 \n"
+printf "#### BASEDIR: $BASEDIR \n"
 
-for ROI in $roidir/*.nii.gz;do
-roiname=$(basename $ROI)
-roiname=${roiname%%.*}
+for ROI in $(cat $BASEDIR/roisList.txt);do
 
-printf "Transforming $roiname \n"
+printf "Transforming $ROI \n"
 
 antsApplyTransforms -d 3 \
--i $ROI \
+-i $roidir/$ROI.nii.gz \
 -r $ref \
--n BSpline \
+-n linear \
 -t $transform1 \
 -t $transform2 \
--o $roidir/${roiname}-MNISegment.nii.gz
+-o $roidir/$ROI-MNISegment-linear.nii.gz
 
 done
