@@ -11,7 +11,9 @@ database.
   3. transform.sh: transform native ROIs to the warped brain to obtain ROIs in the reference space
 
 - if ROIs are in mat, before transform  convert them to Nifti by running rois_mat2nifti.m
-- probabilisticMap.m : once registration and transformation are completed, run this matlab script to obtain the probabilistic maps
+- probabilisticMap.m : once registration and transformation are completed, run this matlab script to obtain the probabilistic maps. Furtheremore, it contains the option of cleaning the maps, i.e., select one ROI for the voxels that are labeled by more than one ROI (it selects the ROI with higher number of subjects for those voxels).
+
+- probabilisticMap folder: it contains all the matlab functions needed for the probabilisticMap.m
 
 ## Usage
 
