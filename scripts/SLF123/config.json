@@ -12,19 +12,19 @@
     "BCBL": {
         "mem":"60G",
         "que":"short.q",
-		"ants_ver":"ants/latest",
-		"mrtrix_ver":"mrtrix3/oct2019",
-		"fsl_ver":"fsl/6.0.3",
-		"gcc_ver":"gcc/7.3.0",
-		"core":6
+	"ants_ver":"ants/latest",
+	"mrtrix_ver":"mrtrix3/oct2019",
+	"fsl_ver":"fsl/6.0.3",
+	"gcc_ver":"gcc/7.3.0",
+	"core":6
     },
     "DIPC": {
-		"mem":"100G",
-		"que":"bcbl",
-		"ants_ver":"ANTs/2.3.5-foss-2019b-Python-3.7.4",
-		"fsl_ver":"FSL/6.0.0-foss-2018b",
-		"mrtrix_ver":"MRtrix/3.0.0-foss-2020a-Python-3.8.2",
-		"gcc_ver":"GCC/9.3.0",
-		"core":6
+	"mem":"100G",
+	"que":"bcbl",
+	"ants_ver":"ANTs/2.3.5-foss-2019b-Python-3.7.4",
+	"fsl_ver":"FSL/6.0.0-foss-2018b",
+	"mrtrix_ver":"MRtrix/3.0.0-foss-2020a-Python-3.8.2",
+	"gcc_ver":"GCC/9.3.0",
+	"core":6
     }
 }
