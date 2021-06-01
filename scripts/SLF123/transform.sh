@@ -41,7 +41,7 @@ qsub -q $que -N sub_${proj}_transform \
      -o ${logdir}/${proj}_transform.o \
      -e ${logdir}/${proj}_transform.e \
      -l mem_free=$mem \
-     -v roidir=${ROI_DIR},MRI_DIR=${MRI_DIR},ants_ver=$ants_ver \
+     -v roidir=${ROI_DIR},MRI_DIR=${MRI_DIR},ants_ver=$ants_ver,BASEDIR=${BASEDIR} \
      ${codedir}/runANTsApplyTransforms.sh	
 fi
 
@@ -51,13 +51,13 @@ qsub -q $que -l mem=$mem,nodes=1:ppn=$core \
 	-N sub_$[proj]_transform \
 	-o ${logdir}/${proj}_transform.o \
 	-e ${logdir}/${proj}_transform.e \
-	-v roidir=${ROI_DIR},MRI_DIR=${MRI_DIR},ants_ver=$ants_ver \
+	-v roidir=${ROI_DIR},MRI_DIR=${MRI_DIR},ants_ver=$ants_ver,BASEDIR={$BASEDIR} \
 	${codedir}/runANTsApplyTransforms.sh
 fi
 
 else
 antsApplyTransforms -d 3 \
--i ${ROI} \
+-i ${ROI_DIR}/${roiname}.nii.gz \
 -r ${MRI_DIR}/antsWarped.nii.gz \
 -n BSpline \
 -t ${MRI_DIR}/ants1Warp.nii.gz \

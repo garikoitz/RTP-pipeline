@@ -105,3 +105,10 @@ elif script == "skullStripping.sh":
     print(cmdstr)
     sp.call(cmdstr, shell=True)
 
+elif script == "binarize.sh":
+    cmdstr = (f"{codedir}/binarize.sh "+
+	       f"-b {basedir} " +
+	       f"-f {fsl_ver} ")
+    print(cmdstr)
+    sp.call(cmdstr, shell=True)
+

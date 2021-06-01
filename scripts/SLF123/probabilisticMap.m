@@ -1,53 +1,47 @@
+%% Initialize 
+% Set up vistasoft and probabilisticMaps functions and your basedir
+% -------------------------------------------------------------------------
 % load vistasoft functions
 addpath(genpath('/export/home/llecca/llecca/Scripts/SLF123/vistasoft'));
-
+% load probabilisticMap functions
+addpath '/export/home/llecca/public/Gari/SLF123/codes/probabilisticMaps'
 % define subjects database
-BASEDIR = '/export/home/llecca/llecca/Scripts/SLF123';
+BASEDIR = '/export/home/llecca/public/Gari/SLF123';
 
-% read the subjects to convert
-fileID = fopen(strcat(BASEDIR,'/roisList.txt'));
-tlineRoi = fgetl(fileID);
+%% Probabilistic map generation
+probMapGeneration(BASEDIR,'roisList','subjectList',...
+    'testing','-MNISegment-linear','-linear-map');
 
-roiprob = 0;
-counter = 0;
+%% Select for voxels with more than one ROI the ROI with higher number of 
+%  subjects
+%--------------------------------------------------------------------------
+% 1)
+% Binarize all the probabilistic maps so we can find where there are voxels
+% that are labeled with more than one ROI
 
-% create probabilisticMaps folder if does not exist
-maps_dir = fullfile(BASEDIR,'probabilisticMaps');
-if ~exist(maps_dir,'dir')
-    mkdir(maps_dir);
-end
+roi_thres = binarizeMaps(BASEDIR,'roisList','testing','-linear-map',...
+    '-linear-binary','ROIs_sum');
 
-while ischar(tlineRoi)
-    fprintf('Loading ROI %s for all subjects list \n',tlineRoi)
-    
-    fileIDsub = fopen(strcat(BASEDIR,'/subjectList.txt'));
-    tlinesub = fgetl(fileIDsub);
-    
-    while ischar(tlinesub)
-        input_dir = strcat(BASEDIR,'/',tlinesub);
-        roiFullPath = fullfile(input_dir,'ROIs',strcat(tlineRoi,...
-            '-MNISegment.nii.gz'));
-        % read roi for subject
-        roi = niftiRead(roiFullPath);
-        % set zero for values under zero
-        roi.data(roi.data<0)=0;
-        roi.data = roi.data ./ max(roi.data(:));
-        % add subject data to the roi
-        roiprob = roi.data+roiprob;
-        % subject counter
-        counter = counter+1; disp(counter);
-        tlinesub = fgetl(fileIDsub);
-    end
-    fclose(fileIDsub); 
-    roiprob = (roiprob ./ counter).*100;
-    % change img data
-    roi.data = round(roiprob);
-    roi.cal_min = min(roiprob(:));
-    roi.cal_max = max(roiprob(:));
-    roi.fname = fullfile(maps_dir,strcat(tlineRoi,'-map.nii.gz'));
-    writeFileNifti(roi)
-    roiprob = 0;
-    counter = 0;
-    tlineRoi = fgetl(fileID);
-end
-fclose(fileID);
+% let's find voxels with are more than 1 ROI:
+idx = find(roi_thres > 1);
+[row, col, z] = ind2sub(size(roi_thres),idx);
+
+% 2)
+% Now let's obtain the sum of all the ROIs for all the sujects. This will 
+% be useful to then count how many subjects are for each ROI in the 
+% conflicting voxels
+rois = countVoxels(BASEDIR,'roisList','subjectList',...
+    '-MNISegment-linear-binary','countVoxels-testing');
+
+% 3)
+% Voting matrix generation
+load(fullfile(BASEDIR,'countVoxels_ROIs_testing.mat'));
+voting = votingMtrx(BASEDIR,'roisList',rois,row,col,z);
+
+% now select for each voxel the ROI with maximum number of subjects: 
+[~,idx] = max(voting,[],2);
+
+% 4)
+% Finally, clean the maps
+cleanMaps(BASEDIR,'roisList','testing',idx,'-linear-map',...
+    '-linear-thresholded-map',row,col,z);
